@@ -1,0 +1,501 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+app/
+  actions/
+    consumeItem.ts
+    createPrinted.ts
+    updateProcess.ts
+  item/
+    [id]/
+      page.tsx
+  print/
+    page.tsx
+  layout.tsx
+  page.tsx
+lib/
+  supabase.ts
+.gitignore
+next.config.js
+package.json
+README.md
+tsconfig.json
+tsconfig.node.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="app/layout.tsx">
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "SN-923",
+  description: "在庫管理アプリケーション",
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="ja">
+      <body>{children}</body>
+    </html>
+  )
+}
+</file>
+
+<file path=".gitignore">
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+</file>
+
+<file path="next.config.js">
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+}
+
+module.exports = nextConfig
+</file>
+
+<file path="package.json">
+{
+  "name": "sn-923",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next": "^14.0.0",
+    "@supabase/supabase-js": "^2.38.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/node": "^20.0.0"
+  }
+}
+</file>
+
+<file path="README.md">
+# SN-923
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "useDefineForClassFields": true,
+    "lib": [
+      "es2020",
+      "dom",
+      "dom.iterable"
+    ],
+    "module": "esnext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    /* Next.js */
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "incremental": true,
+    /* Path mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowJs": true,
+    "strict": false,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+</file>
+
+<file path="tsconfig.node.json">
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path="app/actions/consumeItem.ts">
+'use server' // このファイルがサーバーサイドで実行されることを示す
+
+import { supabase } from '@/lib/supabase'
+
+/**
+ * 部品アイテムを消費済みにするサーバーアクション
+ * @param itemId - 消費する部品アイテムのID
+ */
+export async function consumeItem(itemId: string) {
+  await supabase
+    .from('part_items') // 'part_items'テーブルを選択
+    .update({
+      status: 'consumed', // ステータスを'consumed'（消費済み）に更新
+      current_process: 'assembled', // 現在の工程を'assembled'（組み立て済み）に更新
+      storage_case_id: null // 保管ケースIDをnullに設定
+    })
+    .eq('id', itemId) // 指定されたIDのアイテムを対象とする
+}
+</file>
+
+<file path="app/actions/createPrinted.ts">
+'use server' // このファイルがサーバーサイドで実行されることを示す
+
+import { supabase } from '@/lib/supabase'
+
+/**
+ * 3Dプリントされた新しい部品アイテムを作成するサーバーアクション
+ * @param partId - 部品のID
+ * @param qty - 数量
+ * @param storageCaseId - 保管ケースのID
+ */
+export async function createPrinted(
+  partId: string,
+  qty: number,
+  storageCaseId: string
+) {
+  // 指定された数量だけループを実行
+  for (let i = 0; i < qty; i++) {
+    // 'part_items'テーブルに新しいレコードを挿入
+    const { data, error } = await supabase
+      .from('part_items')
+      .insert({
+        part_id: partId, // 部品ID
+        current_process: 'printed', // 現在の工程を'printed'に設定
+        storage_case_id: storageCaseId // 保管ケースID
+      })
+      .select() // 挿入したレコードをSELECT
+      .single() // 単一のレコードとして取得
+
+    // 挿入が成功した場合
+    if (data) {
+      // 'part_process_logs'テーブルに工程ログを挿入
+      await supabase.from('part_process_logs').insert({
+        part_item_id: data.id, // 新しく作成された部品アイテムのID
+        process: 'printed' // 工程名
+      })
+    }
+
+    // エラーが発生した場合は、エラーをスロー
+    if (error) throw error
+  }
+}
+</file>
+
+<file path="app/actions/updateProcess.ts">
+'use server' // このファイルがサーバーサイドで実行されることを示す
+
+import { supabase } from '@/lib/supabase'
+
+/**
+ * 部品アイテムの工程を更新するサーバーアクション
+ * @param itemId - 更新する部品アイテムのID
+ * @param nextProcess - 次の工程名
+ */
+export async function updateProcess(
+  itemId: string,
+  nextProcess: string
+) {
+  // 'part_items'テーブルの現在の工程を更新
+  await supabase
+    .from('part_items')
+    .update({ current_process: nextProcess }) // 'current_process'カラムを新しい工程名で更新
+    .eq('id', itemId) // 指定されたIDのアイテムを対象とする
+
+  // 'part_process_logs'テーブルに新しい工程ログを挿入
+  await supabase.from('part_process_logs').insert({
+    part_item_id: itemId, // 部品アイテムのID
+    process: nextProcess // 新しい工程名
+  })
+}
+</file>
+
+<file path="app/item/[id]/page.tsx">
+// Supabaseクライアントとサーバーアクションをインポート
+import { supabase } from '@/lib/supabase'
+import { updateProcess } from '@/app/actions/updateProcess'
+import { consumeItem } from '@/app/actions/consumeItem'
+
+// 利用可能な工程のリスト
+const PROCESS = [
+  'printed', // 印刷済み
+  'surface', // 表面処理
+  'machining', // 機械加工
+  'painting', // 塗装
+  'ready' // 準備完了
+]
+
+// アイテム詳細ページのコンポーネント
+export default async function ItemPage({ params }: any) {
+  // URLのパラメータからアイテムIDを使用して、Supabaseから特定の部品アイテムのデータを取得
+  const { data } = await supabase
+    .from('part_items')
+    .select(`
+      id,
+      current_process,
+      parts ( part_number )
+    `)
+    .eq('id', params.id) // IDでフィルタリング
+    .single() as any // 単一のレコードを取得
+
+  return (
+    <div>
+      {/* 部品番号を表示 */}
+      <h1>{(data?.parts as any)?.[0]?.part_number || data?.parts?.part_number}</h1>
+      {/* 現在の工程を表示 */}
+      <p>現在工程: {data?.current_process}</p>
+
+      {/* 工程更新フォーム */}
+      <form action={async (formData) => {
+        'use server'
+        // updateProcessサーバーアクションを呼び出して、工程を更新
+        await updateProcess(
+          data.id,
+          formData.get('next') as string
+        )
+      }}>
+        {/* 次の工程を選択するドロップダウン */}
+        <select name="next">
+          {PROCESS.map(p => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+        <button>工程更新</button>
+      </form>
+
+      {/* 組み込み完了フォーム */}
+      <form action={async () => {
+        'use server'
+        // consumeItemサーバーアクションを呼び出して、アイテムを消費済みにする
+        await consumeItem(data.id)
+      }}>
+        <button>組み込み完了</button>
+      </form>
+    </div>
+  )
+}
+</file>
+
+<file path="app/print/page.tsx">
+// サーバーアクションとSupabaseクライアントをインポート
+import { createPrinted } from '../actions/createPrinted'
+import { supabase } from '@/lib/supabase'
+
+// 3Dプリント登録ページのコンポーネント
+export default async function PrintPage() {
+  // Supabaseから部品と保管ケースのデータを取得
+  const { data: parts } = await supabase.from('parts').select() as any
+  const { data: cases } = await supabase.from('storage_cases').select() as any
+
+  return (
+    // フォーム送信時にサーバーアクションを実行
+    <form action={async (formData: any) => {
+      'use server' // この関数をサーバーサイドで実行することを示す
+      // createPrintedサーバーアクションを呼び出して、新しいプリントアイテムを作成
+      await createPrinted(
+        formData.get('part') as string, // フォームから部品IDを取得
+        Number(formData.get('qty')), // フォームから数量を取得し、数値に変換
+        formData.get('case') as string // フォームからケースIDを取得
+      )
+    }}>
+      <h1>3Dプリント完了</h1>
+
+      {/* 部品選択のドロップダウン */}
+      <select name="part">
+        {parts?.map((p: any) => (
+          <option key={p.id} value={p.id}>{p.part_number}</option>
+        ))}
+      </select>
+
+      {/* 数量入力フィールド */}
+      <input name="qty" type="number" defaultValue={1} />
+
+      {/* 保管ケース選択のドロップダウン */}
+      <select name="case">
+        {cases?.map((c: any) => (
+          <option key={c.id} value={c.id}>{c.name}</option>
+        ))}
+      </select>
+
+      {/* 登録ボタン */}
+      <button type="submit">登録</button>
+    </form>
+  )
+}
+</file>
+
+<file path="app/page.tsx">
+// SupabaseクライアントとNext.jsのLinkコンポーネントをインポート
+import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
+
+// 在庫一覧ページのメインコンポーネント
+export default async function Home() {
+  // Supabaseから'in_progress'ステータスの部品アイテムのデータを取得
+  const { data } = await supabase
+    .from('part_items') // 'part_items'テーブルを選択
+    .select(`
+      id,
+      current_process,
+      parts ( part_number )
+    `) // 必要なカラム（id, 現在の工程, 関連するpartsテーブルの部品番号）を選択
+    .eq('status', 'in_progress') as any // 'status'が'in_progress'のレコードに絞り込む
+
+  return (
+    <main>
+      <h1>在庫一覧</h1>
+
+      {/* 3Dプリント登録ページへのリンク */}
+      <Link href="/print">▶ 3Dプリント登録</Link>
+
+      {/* 在庫アイテムのリストを表示 */}
+      <ul>
+        {data?.map((item: any) => (
+          <li key={item.id}>
+            {/* 部品番号と現在の工程を表示 */}
+            {(item?.parts as any)?.[0]?.part_number || item?.parts?.part_number} | {item.current_process}
+            {' '}
+            {/* 詳細ページへのリンク */}
+            <Link href={`/item/${item.id}`}>詳細</Link>
+          </li>
+        ))}
+      </ul>
+    </main>
+  )
+}
+</file>
+
+<file path="lib/supabase.ts">
+// Supabaseクライアントをインポート
+import { createClient } from '@supabase/supabase-js'
+
+// SupabaseのURLとサービスロールキーを環境変数から取得
+// 環境変数が設定されていない場合は、プレースホルダーの値を使用
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key'
+
+// Supabaseクライアントを作成
+export const supabase = createClient(
+  supabaseUrl,
+  supabaseKey, // PoCなのでOK
+  { auth: { persistSession: false } } // サーバーサイドでのみ使用するため、セッションの永続化は無効にする
+)
+</file>
+
+</files>
