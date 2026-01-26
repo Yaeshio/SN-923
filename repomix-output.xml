@@ -48,21 +48,20 @@ app/
     consumeItem.ts
     createPrinted.ts
     updateProcess.ts
-  dashboad/
-    components/
-      SummaryCard.tsx
-    constants.ts
-    data.ts
-    page.tsx
-    types.ts
-    utils.ts
+  components/
+    SummaryCard.tsx
   item/
     [id]/
       page.tsx
   print/
     page.tsx
+  constants.ts
+  data.ts
   globals.css
   layout.tsx
+  page.tsx
+  types.ts
+  utils.ts
 lib/
   supabase.ts
 .gitignore
@@ -78,7 +77,33 @@ tsconfig.node.json
 <files>
 This section contains the contents of the repository's files.
 
-<file path="app/dashboad/components/SummaryCard.tsx">
+<file path=".continue/agents/new-config.yaml">
+# This is an example configuration file
+# To learn more, see the full config.yaml reference: https://docs.continue.dev/reference
+
+name: Example Config
+version: 1.0.0
+schema: v1
+
+# Define which models can be used
+# https://docs.continue.dev/customization/models
+models:
+  - name: my gpt-5
+    provider: openai
+    model: gpt-5
+    apiKey: YOUR_OPENAI_API_KEY_HERE
+  - uses: ollama/qwen2.5-coder-7b
+  - uses: anthropic/claude-4-sonnet
+    with:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+# MCP Servers that Continue can access
+# https://docs.continue.dev/customization/mcp-tools
+mcpServers:
+  - uses: anthropic/memory-mcp
+</file>
+
+<file path="app/components/SummaryCard.tsx">
 // app/dashboard/components/SummaryCard.tsx
 import React from 'react';
 
@@ -100,7 +125,7 @@ export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: Summ
 }
 </file>
 
-<file path="app/dashboad/constants.ts">
+<file path="app/constants.ts">
 import { Process } from './types';
 
 export const PROCESSES: { key: Process; name: string }[] = [
@@ -113,7 +138,7 @@ export const PROCESSES: { key: Process; name: string }[] = [
 ];
 </file>
 
-<file path="app/dashboad/data.ts">
+<file path="app/data.ts">
 // app/dashboad/data.ts
 import { Part, PartItem } from './types';
 
@@ -128,108 +153,13 @@ export const partItems: PartItem[] = [
 ];
 </file>
 
-<file path="app/dashboad/page.tsx">
-import Link from 'next/link';
-import { PROCESSES } from './constants';
-import { aggregateProgress } from './utils';
-import { SummaryCard } from './components/SummaryCard';
-// data.ts から直接インポートするように一時的に変更
-import { parts, partItems } from './data'; 
-
-/**
- * ダッシュボードページ
- * サービス層実装前の暫定構成として、直接データを参照します。
- */
-export default function DashboardPage() {
-  // 1. 本来はサービス層で行う集計・計算をここで行う
-  const totalInventory = partItems.length;
-  const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const completedToday = partItems.filter(item => 
-    item.completed_at && new Date(item.completed_at) >= today
-  ).length;
-
-  // 2. マトリックス表示用にデータを集計（引数にデータを渡す）
-  const progressData = aggregateProgress(parts, partItems);
-
-  return (
-    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
-          工程進捗ダッシュボード
-        </h1>
-        <Link href="/print">
-          <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block text-lg">
-            3Dプリント登録
-          </span>
-        </Link>
-      </header>
-
-      {/* サマリーカード */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <SummaryCard title="総在庫数" value={totalInventory} />
-        <SummaryCard title="仕掛品数 (工程進行中)" value={inProgress} valueColor="text-orange-500" />
-        <SummaryCard title="本日完了数" value={completedToday} valueColor="text-green-500" />
-      </div>
-
-      {/* 工程進捗マトリックス */}
-      <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-4 text-lg font-semibold text-gray-700 sticky left-0 bg-gray-100 z-10 w-64 min-w-[250px]">
-                部品番号 / 保管ケース
-              </th>
-              {PROCESSES.map(proc => (
-                <th key={proc.key} className="p-4 text-lg font-semibold text-center text-gray-700 whitespace-nowrap min-w-[120px]">
-                  {proc.name}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {progressData.map(data => (
-              <tr key={data.part_number} className="hover:bg-gray-50">
-                <td className="p-4 sticky left-0 bg-white hover:bg-gray-50 z-10 border-r">
-                  <div className="font-bold text-lg text-gray-900">{data.part_number}</div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    {data.storage_cases.join(', ')}
-                  </div>
-                </td>
-                {PROCESSES.map(proc => {
-                  const count = data.counts[proc.key];
-                  const part = parts.find(p => p.part_number === data.part_number);
-                  const linkHref = part ? `/item/${part.id}?process=${proc.key}` : '#';
-
-                  return (
-                    <td key={proc.key} className="p-4 text-center">
-                      <Link href={linkHref}>
-                        <div 
-                          className={`
-                            text-2xl font-bold rounded-lg w-20 h-14 flex items-center justify-center mx-auto cursor-pointer
-                            transition-all duration-200 transform hover:scale-110 hover:shadow-lg
-                            ${count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-400'}
-                          `}
-                        >
-                          {count}
-                        </div>
-                      </Link>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
+<file path="app/globals.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 </file>
 
-<file path="app/dashboad/types.ts">
+<file path="app/types.ts">
 export type Process = 
   | 'UNPRINTED'
   | 'PRINTED'
@@ -258,7 +188,7 @@ export interface ProgressData {
 }
 </file>
 
-<file path="app/dashboad/utils.ts">
+<file path="app/utils.ts">
 import { Part, PartItem, ProgressData, Process } from './types';
 
 export const aggregateProgress = (parts: Part[], partItems: PartItem[]): ProgressData[] => {
@@ -291,38 +221,6 @@ export const aggregateProgress = (parts: Part[], partItems: PartItem[]): Progres
     counts: data.counts,
   }));
 };
-</file>
-
-<file path=".continue/agents/new-config.yaml">
-# This is an example configuration file
-# To learn more, see the full config.yaml reference: https://docs.continue.dev/reference
-
-name: Example Config
-version: 1.0.0
-schema: v1
-
-# Define which models can be used
-# https://docs.continue.dev/customization/models
-models:
-  - name: my gpt-5
-    provider: openai
-    model: gpt-5
-    apiKey: YOUR_OPENAI_API_KEY_HERE
-  - uses: ollama/qwen2.5-coder-7b
-  - uses: anthropic/claude-4-sonnet
-    with:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-# MCP Servers that Continue can access
-# https://docs.continue.dev/customization/mcp-tools
-mcpServers:
-  - uses: anthropic/memory-mcp
-</file>
-
-<file path="app/globals.css">
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 </file>
 
 <file path=".gitignore">
@@ -742,6 +640,107 @@ export const supabase = createClient(
     "tailwindcss": "^4.1.18",
     "typescript": "^5.3.0"
   }
+}
+</file>
+
+<file path="app/page.tsx">
+import Link from 'next/link';
+import { PROCESSES } from './constants';
+import { aggregateProgress } from './utils';
+import { SummaryCard } from './components/SummaryCard';
+// data.ts から直接インポートするように一時的に変更
+import { parts, partItems } from './data'; 
+
+/**
+ * ダッシュボードページ
+ * サービス層実装前の暫定構成として、直接データを参照します。
+ */
+export default function DashboardPage() {
+  // 1. 本来はサービス層で行う集計・計算をここで行う
+  const totalInventory = partItems.length;
+  const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const completedToday = partItems.filter(item => 
+    item.completed_at && new Date(item.completed_at) >= today
+  ).length;
+
+  // 2. マトリックス表示用にデータを集計（引数にデータを渡す）
+  const progressData = aggregateProgress(parts, partItems);
+
+  return (
+    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
+          工程進捗ダッシュボード
+        </h1>
+        <Link href="/print">
+          <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block text-lg">
+            3Dプリント登録
+          </span>
+        </Link>
+      </header>
+
+      {/* サマリーカード */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <SummaryCard title="総在庫数" value={totalInventory} />
+        <SummaryCard title="仕掛品数 (工程進行中)" value={inProgress} valueColor="text-orange-500" />
+        <SummaryCard title="本日完了数" value={completedToday} valueColor="text-green-500" />
+      </div>
+
+      {/* 工程進捗マトリックス */}
+      <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-4 text-lg font-semibold text-gray-700 sticky left-0 bg-gray-100 z-10 w-64 min-w-[250px]">
+                部品番号 / 保管ケース
+              </th>
+              {PROCESSES.map(proc => (
+                <th key={proc.key} className="p-4 text-lg font-semibold text-center text-gray-700 whitespace-nowrap min-w-[120px]">
+                  {proc.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {progressData.map(data => (
+              <tr key={data.part_number} className="hover:bg-gray-50">
+                <td className="p-4 sticky left-0 bg-white hover:bg-gray-50 z-10 border-r">
+                  <div className="font-bold text-lg text-gray-900">{data.part_number}</div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    {data.storage_cases.join(', ')}
+                  </div>
+                </td>
+                {PROCESSES.map(proc => {
+                  const count = data.counts[proc.key];
+                  const part = parts.find(p => p.part_number === data.part_number);
+                  const linkHref = part ? `/item/${part.id}?process=${proc.key}` : '#';
+
+                  return (
+                    <td key={proc.key} className="p-4 text-center">
+                      <Link href={linkHref}>
+                        <div 
+                          className={`
+                            text-2xl font-bold rounded-lg w-20 h-14 flex items-center justify-center mx-auto cursor-pointer
+                            transition-all duration-200 transform hover:scale-110 hover:shadow-lg
+                            ${count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-400'}
+                          `}
+                        >
+                          {count}
+                        </div>
+                      </Link>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 </file>
 
