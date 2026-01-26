@@ -40,24 +40,37 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
+.continue/
+  agents/
+    new-config.yaml
 app/
   actions/
     consumeItem.ts
     createPrinted.ts
     updateProcess.ts
+  dashboad/
+    components/
+      SummaryCard.tsx
+    constants.ts
+    data.ts
+    page.tsx
+    types.ts
+    utils.ts
   item/
     [id]/
       page.tsx
   print/
     page.tsx
+  globals.css
   layout.tsx
-  page.tsx
 lib/
   supabase.ts
 .gitignore
 next.config.js
 package.json
+postcss.config.js
 README.md
+tailwind.config.js
 tsconfig.json
 tsconfig.node.json
 </directory_structure>
@@ -65,25 +78,251 @@ tsconfig.node.json
 <files>
 This section contains the contents of the repository's files.
 
-<file path="app/layout.tsx">
-import type { Metadata } from "next"
+<file path="app/dashboad/components/SummaryCard.tsx">
+// app/dashboard/components/SummaryCard.tsx
+import React from 'react';
 
-export const metadata: Metadata = {
-  title: "SN-923",
-  description: "在庫管理アプリケーション",
+interface SummaryCardProps {
+  title: string;
+  value: number | string;
+  valueColor?: string;
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: SummaryCardProps) {
   return (
-    <html lang="ja">
-      <body>{children}</body>
-    </html>
-  )
+    <div className="bg-white p-6 rounded-xl shadow-lg flex items-center">
+      <div>
+        <p className="text-lg text-gray-500">{title}</p>
+        <p className={`text-5xl font-extrabold ${valueColor}`}>{value}</p>
+      </div>
+    </div>
+  );
 }
+</file>
+
+<file path="app/dashboad/constants.ts">
+import { Process } from './types';
+
+export const PROCESSES: { key: Process; name: string }[] = [
+  { key: 'UNPRINTED', name: '未プリント' },
+  { key: 'PRINTED', name: 'プリント済み' },
+  { key: 'SURFACE_TREATMENT', name: '表面処理' },
+  { key: 'CUTTING', name: '切削' },
+  { key: 'PAINTING', name: '塗装' },
+  { key: 'READY', name: '準備完了' },
+];
+</file>
+
+<file path="app/dashboad/data.ts">
+// app/dashboad/data.ts
+import { Part, PartItem } from './types';
+
+export const parts: Part[] = [
+  { id: 1, part_number: 'PART-A' },
+  { id: 2, part_number: 'PART-B' }
+];
+
+export const partItems: PartItem[] = [
+  { id: 101, part_id: 1, storage_case: 'Case-01', current_process: 'PRINTED', completed_at: null },
+  { id: 102, part_id: 2, storage_case: 'Case-02', current_process: 'READY', completed_at: new Date() }
+];
+</file>
+
+<file path="app/dashboad/page.tsx">
+import Link from 'next/link';
+import { PROCESSES } from './constants';
+import { aggregateProgress } from './utils';
+import { SummaryCard } from './components/SummaryCard';
+// data.ts から直接インポートするように一時的に変更
+import { parts, partItems } from './data'; 
+
+/**
+ * ダッシュボードページ
+ * サービス層実装前の暫定構成として、直接データを参照します。
+ */
+export default function DashboardPage() {
+  // 1. 本来はサービス層で行う集計・計算をここで行う
+  const totalInventory = partItems.length;
+  const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const completedToday = partItems.filter(item => 
+    item.completed_at && new Date(item.completed_at) >= today
+  ).length;
+
+  // 2. マトリックス表示用にデータを集計（引数にデータを渡す）
+  const progressData = aggregateProgress(parts, partItems);
+
+  return (
+    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
+          工程進捗ダッシュボード
+        </h1>
+        <Link href="/print">
+          <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block text-lg">
+            3Dプリント登録
+          </span>
+        </Link>
+      </header>
+
+      {/* サマリーカード */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <SummaryCard title="総在庫数" value={totalInventory} />
+        <SummaryCard title="仕掛品数 (工程進行中)" value={inProgress} valueColor="text-orange-500" />
+        <SummaryCard title="本日完了数" value={completedToday} valueColor="text-green-500" />
+      </div>
+
+      {/* 工程進捗マトリックス */}
+      <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-4 text-lg font-semibold text-gray-700 sticky left-0 bg-gray-100 z-10 w-64 min-w-[250px]">
+                部品番号 / 保管ケース
+              </th>
+              {PROCESSES.map(proc => (
+                <th key={proc.key} className="p-4 text-lg font-semibold text-center text-gray-700 whitespace-nowrap min-w-[120px]">
+                  {proc.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {progressData.map(data => (
+              <tr key={data.part_number} className="hover:bg-gray-50">
+                <td className="p-4 sticky left-0 bg-white hover:bg-gray-50 z-10 border-r">
+                  <div className="font-bold text-lg text-gray-900">{data.part_number}</div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    {data.storage_cases.join(', ')}
+                  </div>
+                </td>
+                {PROCESSES.map(proc => {
+                  const count = data.counts[proc.key];
+                  const part = parts.find(p => p.part_number === data.part_number);
+                  const linkHref = part ? `/item/${part.id}?process=${proc.key}` : '#';
+
+                  return (
+                    <td key={proc.key} className="p-4 text-center">
+                      <Link href={linkHref}>
+                        <div 
+                          className={`
+                            text-2xl font-bold rounded-lg w-20 h-14 flex items-center justify-center mx-auto cursor-pointer
+                            transition-all duration-200 transform hover:scale-110 hover:shadow-lg
+                            ${count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-400'}
+                          `}
+                        >
+                          {count}
+                        </div>
+                      </Link>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/dashboad/types.ts">
+export type Process = 
+  | 'UNPRINTED'
+  | 'PRINTED'
+  | 'SURFACE_TREATMENT'
+  | 'CUTTING'
+  | 'PAINTING'
+  | 'READY';
+
+export interface Part {
+  id: number;
+  part_number: string;
+}
+
+export interface PartItem {
+  id: number;
+  part_id: number;
+  storage_case: string;
+  current_process: Process;
+  completed_at: Date | null;
+}
+
+export interface ProgressData {
+  part_number: string;
+  storage_cases: string[];
+  counts: Record<Process, number>;
+}
+</file>
+
+<file path="app/dashboad/utils.ts">
+import { Part, PartItem, ProgressData, Process } from './types';
+
+export const aggregateProgress = (parts: Part[], partItems: PartItem[]): ProgressData[] => {
+  const progressMap = new Map<string, { storage_cases: Set<string>; counts: Record<Process, number> }>();
+
+  parts.forEach(part => {
+    progressMap.set(part.part_number, {
+      storage_cases: new Set(),
+      counts: {
+        UNPRINTED: 0, PRINTED: 0, SURFACE_TREATMENT: 0,
+        CUTTING: 0, PAINTING: 0, READY: 0,
+      },
+    });
+  });
+
+  partItems.forEach(item => {
+    const part = parts.find(p => p.id === item.part_id);
+    if (part) {
+      const currentData = progressMap.get(part.part_number);
+      if (currentData) {
+        currentData.counts[item.current_process]++;
+        currentData.storage_cases.add(item.storage_case);
+      }
+    }
+  });
+
+  return Array.from(progressMap.entries()).map(([part_number, data]) => ({
+    part_number,
+    storage_cases: Array.from(data.storage_cases).sort(),
+    counts: data.counts,
+  }));
+};
+</file>
+
+<file path=".continue/agents/new-config.yaml">
+# This is an example configuration file
+# To learn more, see the full config.yaml reference: https://docs.continue.dev/reference
+
+name: Example Config
+version: 1.0.0
+schema: v1
+
+# Define which models can be used
+# https://docs.continue.dev/customization/models
+models:
+  - name: my gpt-5
+    provider: openai
+    model: gpt-5
+    apiKey: YOUR_OPENAI_API_KEY_HERE
+  - uses: ollama/qwen2.5-coder-7b
+  - uses: anthropic/claude-4-sonnet
+    with:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+# MCP Servers that Continue can access
+# https://docs.continue.dev/customization/mcp-tools
+mcpServers:
+  - uses: anthropic/memory-mcp
+</file>
+
+<file path="app/globals.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 </file>
 
 <file path=".gitignore">
@@ -141,34 +380,31 @@ const nextConfig = {
 module.exports = nextConfig
 </file>
 
-<file path="package.json">
-{
-  "name": "sn-923",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+<file path="postcss.config.js">
+module.exports = {
+  plugins: {
+    '@tailwindcss/postcss': {},
   },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "next": "^14.0.0",
-    "@supabase/supabase-js": "^2.38.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.3.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@types/node": "^20.0.0"
-  }
 }
 </file>
 
 <file path="README.md">
 # SN-923
+</file>
+
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
 </file>
 
 <file path="tsconfig.json">
@@ -440,43 +676,24 @@ export default async function PrintPage() {
 }
 </file>
 
-<file path="app/page.tsx">
-// SupabaseクライアントとNext.jsのLinkコンポーネントをインポート
-import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
+<file path="app/layout.tsx">
+import './globals.css'
+import type { Metadata } from "next"
 
-// 在庫一覧ページのメインコンポーネント
-export default async function Home() {
-  // Supabaseから'in_progress'ステータスの部品アイテムのデータを取得
-  const { data } = await supabase
-    .from('part_items') // 'part_items'テーブルを選択
-    .select(`
-      id,
-      current_process,
-      parts ( part_number )
-    `) // 必要なカラム（id, 現在の工程, 関連するpartsテーブルの部品番号）を選択
-    .eq('status', 'in_progress') as any // 'status'が'in_progress'のレコードに絞り込む
+export const metadata: Metadata = {
+  title: "SN-923",
+  description: "在庫管理アプリケーション",
+}
 
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <main>
-      <h1>在庫一覧</h1>
-
-      {/* 3Dプリント登録ページへのリンク */}
-      <Link href="/print">▶ 3Dプリント登録</Link>
-
-      {/* 在庫アイテムのリストを表示 */}
-      <ul>
-        {data?.map((item: any) => (
-          <li key={item.id}>
-            {/* 部品番号と現在の工程を表示 */}
-            {(item?.parts as any)?.[0]?.part_number || item?.parts?.part_number} | {item.current_process}
-            {' '}
-            {/* 詳細ページへのリンク */}
-            <Link href={`/item/${item.id}`}>詳細</Link>
-          </li>
-        ))}
-      </ul>
-    </main>
+    <html lang="ja">
+      <body>{children}</body>
+    </html>
   )
 }
 </file>
@@ -496,6 +713,36 @@ export const supabase = createClient(
   supabaseKey, // PoCなのでOK
   { auth: { persistSession: false } } // サーバーサイドでのみ使用するため、セッションの永続化は無効にする
 )
+</file>
+
+<file path="package.json">
+{
+  "name": "sn-923",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0",
+    "@tailwindcss/postcss": "^4.1.18",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.3.0"
+  }
+}
 </file>
 
 </files>
