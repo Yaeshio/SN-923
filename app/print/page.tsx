@@ -2,14 +2,18 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { parts } from '../data'; // 既存のテストデータを使用
 import { PROCESSES } from '../constants'; // 工程定義を使用
+import { createPrinted } from '../actions/createPrinted';
 
 export default function PrintRegistrationPage() {
+  const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedPartId, setSelectedPartId] = useState<number>(parts[0]?.id || 0);
   const [quantity, setQuantity] = useState(1);
-  const [targetProcess, setTargetProcess] = useState('UNPRINTED');
+  const [targetProcess, setTargetProcess] = useState('PRINTED');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ファイル選択時の処理
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,10 +26,26 @@ export default function PrintRegistrationPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`登録シミュレーション:\n部品ID: ${selectedPartId}\n数量: ${quantity}\n状態: ${targetProcess}\nファイル: ${selectedFile?.name}`);
-    // ここで将来的にサーバーアクション（createPrintedなど）を呼び出します
+    setIsSubmitting(true);
+
+    try {
+      // サーバーアクションを呼び出してモックデータを更新
+      await createPrinted(
+        selectedPartId,
+        quantity,
+        selectedFile?.name || `JOB-${Date.now()}`
+      );
+
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      alert('エラーが発生しました');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -110,9 +130,11 @@ export default function PrintRegistrationPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-colors text-lg"
+            disabled={isSubmitting}
+            className={`w-full text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors text-lg ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
           >
-            プリントジョブを登録
+            {isSubmitting ? '登録中...' : 'プリントジョブを登録'}
           </button>
         </form>
       </div>

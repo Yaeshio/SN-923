@@ -1,63 +1,84 @@
-// Supabaseクライアントとサーバーアクションをインポート
-import { supabase } from '@/lib/supabase'
+// mockStoreとサーバーアクションをインポート
+import { mockStore } from '@/lib/mockStore'
 import { updateProcess } from '@/app/actions/updateProcess'
 import { consumeItem } from '@/app/actions/consumeItem'
-
-// 利用可能な工程のリスト
-const PROCESS = [
-  'printed', // 印刷済み
-  'surface', // 表面処理
-  'machining', // 機械加工
-  'painting', // 塗装
-  'ready' // 準備完了
-]
+import { PROCESSES } from '@/app/constants'
+import Link from 'next/link'
 
 // アイテム詳細ページのコンポーネント
-export default async function ItemPage({ params }: any) {
-  // URLのパラメータからアイテムIDを使用して、Supabaseから特定の部品アイテムのデータを取得
-  const { data } = await supabase
-    .from('part_items')
-    .select(`
-      id,
-      current_process,
-      parts ( part_number )
-    `)
-    .eq('id', params.id) // IDでフィルタリング
-    .single() as any // 単一のレコードを取得
+export default async function ItemPage({ params }: { params: { id: string } }) {
+  // 文字列IDを数値に変換
+  const id = parseInt(params.id, 10);
+
+  // mockStoreから特定の部品アイテムのデータを取得
+  const data = await mockStore.getPartItem(id);
+
+  if (!data) {
+    return (
+      <div className="p-8">
+        <p>アイテムが見つかりませんでした (ID: {id})</p>
+        <Link href="/" className="text-blue-600 underline">ダッシュボードに戻る</Link>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {/* 部品番号を表示 */}
-      <h1>{(data?.parts as any)?.[0]?.part_number || data?.parts?.part_number}</h1>
-      {/* 現在の工程を表示 */}
-      <p>現在工程: {data?.current_process}</p>
+    <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10">
+      <Link href="/" className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">
+        ← ダッシュボードに戻る
+      </Link>
 
-      {/* 工程更新フォーム */}
-      <form action={async (formData) => {
-        'use server'
-        // updateProcessサーバーアクションを呼び出して、工程を更新
-        await updateProcess(
-          data.id,
-          formData.get('next') as string
-        )
-      }}>
-        {/* 次の工程を選択するドロップダウン */}
-        <select name="next">
-          {PROCESS.map(p => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
-        <button>工程更新</button>
-      </form>
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">
+        部品番号: {data.parts.part_number}
+      </h1>
 
-      {/* 組み込み完了フォーム */}
-      <form action={async () => {
-        'use server'
-        // consumeItemサーバーアクションを呼び出して、アイテムを消費済みにする
-        await consumeItem(data.id)
-      }}>
-        <button>組み込み完了</button>
-      </form>
+      <div className="bg-blue-50 p-4 rounded-lg mb-8 border border-blue-100">
+        <p className="text-lg">
+          <span className="font-semibold text-gray-600">現在工程:</span>{' '}
+          <span className="text-blue-700 font-bold">{data.current_process}</span>
+        </p>
+        <p className="text-sm text-gray-500 mt-1">保管ケース: {data.storage_case}</p>
+      </div>
+
+      <div className="space-y-8">
+        {/* 工程更新フォーム */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-gray-700">工程を更新する</h2>
+          <form action={async (formData) => {
+            'use server'
+            const next = formData.get('next') as string;
+            await updateProcess(id, next);
+          }} className="flex gap-4">
+            <select
+              name="next"
+              defaultValue={data.current_process}
+              className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              {PROCESSES.map(proc => (
+                <option key={proc.key} value={proc.key}>{proc.name}</option>
+              ))}
+            </select>
+            <button className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+              工程更新
+            </button>
+          </form>
+        </section>
+
+        <hr className="border-gray-100" />
+
+        {/* 組み込み完了フォーム */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-gray-700">このアイテムを完了にする</h2>
+          <form action={async () => {
+            'use server'
+            await consumeItem(id);
+          }}>
+            <button className="w-full bg-green-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-green-700 transition-colors shadow-md text-lg">
+              組み込み完了（在庫から除外）
+            </button>
+          </form>
+        </section>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,8 @@
-'use server' // このファイルがサーバーサイドで実行されることを示す
+'use server'
 
-import { supabase } from '@/lib/supabase'
+import { mockStore } from '@/lib/mockStore'
+import { Process } from '@/app/types'
+import { revalidatePath } from 'next/cache'
 
 /**
  * 部品アイテムの工程を更新するサーバーアクション
@@ -8,18 +10,23 @@ import { supabase } from '@/lib/supabase'
  * @param nextProcess - 次の工程名
  */
 export async function updateProcess(
-  itemId: string,
+  itemId: string | number,
   nextProcess: string
 ) {
-  // 'part_items'テーブルの現在の工程を更新
-  await supabase
-    .from('part_items')
-    .update({ current_process: nextProcess }) // 'current_process'カラムを新しい工程名で更新
-    .eq('id', itemId) // 指定されたIDのアイテムを対象とする
+  // 文字列IDを数値に変換（mockStoreの仕様に合わせる）
+  const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
 
-  // 'part_process_logs'テーブルに新しい工程ログを挿入
-  await supabase.from('part_process_logs').insert({
-    part_item_id: itemId, // 部品アイテムのID
-    process: nextProcess // 新しい工程名
-  })
+  // メモリ上のデータを更新
+  await mockStore.updatePartItem(id, {
+    current_process: nextProcess as Process,
+    // READYに移行した場合は完了日時を設定
+    completed_at: nextProcess === 'READY' ? new Date() : null
+  });
+
+  // 工程ログはモック版では省略、または必要なら追加
+  console.log(`Updated item ${id} to process ${nextProcess}`);
+
+  // キャッシュを更新してUIに反映
+  revalidatePath('/');
+  revalidatePath(`/item/${id}`);
 }

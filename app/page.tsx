@@ -2,25 +2,27 @@ import Link from 'next/link';
 import { PROCESSES } from './constants';
 import { aggregateProgress } from './utils';
 import { SummaryCard } from './components/SummaryCard';
-// data.ts から直接インポートするように一時的に変更
-import { parts, partItems } from './data'; 
+import { mockStore } from '@/lib/mockStore';
 
 /**
  * ダッシュボードページ
- * サービス層実装前の暫定構成として、直接データを参照します。
+ * 完全モックモードとして、mockStoreからデータを取得します。
  */
-export default function DashboardPage() {
-  // 1. 本来はサービス層で行う集計・計算をここで行う
+export default async function DashboardPage() {
+  // mockStoreから最新データを取得
+  const parts = await mockStore.getParts();
+  const partItems = await mockStore.getPartItems();
+
   const totalInventory = partItems.length;
   const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const completedToday = partItems.filter(item => 
+  const completedToday = partItems.filter(item =>
     item.completed_at && new Date(item.completed_at) >= today
   ).length;
 
-  // 2. マトリックス表示用にデータを集計（引数にデータを渡す）
+  // 2. マトリックス表示用にデータを集計
   const progressData = aggregateProgress(parts, partItems);
 
   return (
@@ -75,7 +77,7 @@ export default function DashboardPage() {
                   return (
                     <td key={proc.key} className="p-4 text-center">
                       <Link href={linkHref}>
-                        <div 
+                        <div
                           className={`
                             text-2xl font-bold rounded-lg w-20 h-14 flex items-center justify-center mx-auto cursor-pointer
                             transition-all duration-200 transform hover:scale-110 hover:shadow-lg
