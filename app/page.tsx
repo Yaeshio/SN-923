@@ -1,99 +1,67 @@
 import Link from 'next/link';
-import { PROCESSES } from './constants';
-import { aggregateProgress } from './utils';
-import { SummaryCard } from './components/SummaryCard';
 import { mockStore } from '@/lib/mockStore';
 
 /**
- * ダッシュボードページ
- * 完全モックモードとして、mockStoreからデータを取得します。
+ * プロジェクト一覧ダッシュボード
  */
-export default async function DashboardPage() {
-  // mockStoreから最新データを取得
-  const parts = await mockStore.getParts();
-  const partItems = await mockStore.getPartItems();
-
-  const totalInventory = partItems.length;
-  const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const completedToday = partItems.filter(item =>
-    item.completed_at && new Date(item.completed_at) >= today
-  ).length;
-
-  // 2. マトリックス表示用にデータを集計
-  const progressData = aggregateProgress(parts, partItems);
+export default async function ProjectsDashboardPage() {
+  const projects = await mockStore.getProjects();
 
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
-          工程進捗ダッシュボード
+      <header className="mb-12 text-center">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+          BOM進捗管理システム
         </h1>
-        <Link href="/print">
-          <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block text-lg">
-            3Dプリント登録
-          </span>
-        </Link>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          プロジェクトを選択して、部品の製造工程と進捗状況をリアルタイムで確認できます。
+        </p>
       </header>
 
-      {/* サマリーカード */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <SummaryCard title="総在庫数" value={totalInventory} />
-        <SummaryCard title="仕掛品数 (工程進行中)" value={inProgress} valueColor="text-orange-500" />
-        <SummaryCard title="本日完了数" value={completedToday} valueColor="text-green-500" />
-      </div>
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        {projects.map((project) => (
+          <Link key={project.id} href={`/project/${project.id}`}>
+            <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer flex flex-col h-full transform hover:-translate-y-1">
+              <div className="p-8 flex-grow">
+                <div className="flex justify-between items-start mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                    {project.name}
+                  </h2>
+                  <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    進行中
+                  </span>
+                </div>
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  {project.description}
+                </p>
 
-      {/* 工程進捗マトリックス */}
-      <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-4 text-lg font-semibold text-gray-700 sticky left-0 bg-gray-100 z-10 w-64 min-w-[250px]">
-                部品番号 / 保管ケース
-              </th>
-              {PROCESSES.map(proc => (
-                <th key={proc.key} className="p-4 text-lg font-semibold text-center text-gray-700 whitespace-nowrap min-w-[120px]">
-                  {proc.name}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {progressData.map(data => (
-              <tr key={data.part_number} className="hover:bg-gray-50">
-                <td className="p-4 sticky left-0 bg-white hover:bg-gray-50 z-10 border-r">
-                  <div className="font-bold text-lg text-gray-900">{data.part_number}</div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    {data.storage_cases.join(', ')}
+                {/* 簡易進捗表示（ダミー） */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium text-gray-700">全体進捗</span>
+                    <span className="font-bold text-blue-600">65%</span>
                   </div>
-                </td>
-                {PROCESSES.map(proc => {
-                  const count = data.counts[proc.key];
-                  const part = parts.find(p => p.part_number === data.part_number);
-                  const linkHref = part ? `/item/${part.id}?process=${proc.key}` : '#';
+                  <div className="w-full bg-gray-100 rounded-full h-3">
+                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full w-[65%] shadow-sm"></div>
+                  </div>
+                </div>
+              </div>
 
-                  return (
-                    <td key={proc.key} className="p-4 text-center">
-                      <Link href={linkHref}>
-                        <div
-                          className={`
-                            text-2xl font-bold rounded-lg w-20 h-14 flex items-center justify-center mx-auto cursor-pointer
-                            transition-all duration-200 transform hover:scale-110 hover:shadow-lg
-                            ${count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-400'}
-                          `}
-                        >
-                          {count}
-                        </div>
-                      </Link>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center group-hover:bg-blue-50 transition-colors">
+                <div className="text-sm">
+                  <span className="text-gray-500">納期: </span>
+                  <span className="font-semibold text-gray-800">{project.deadline}</span>
+                </div>
+                <span className="text-blue-600 font-bold flex items-center group-hover:translate-x-1 transition-transform">
+                  詳細を見る
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

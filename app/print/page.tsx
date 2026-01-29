@@ -1,16 +1,25 @@
-'use client'; // インタラクティブな操作のためClient Componentを使用
+'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { parts } from '../data'; // 既存のテストデータを使用
+import { useRouter, useSearchParams } from 'next/navigation';
+import { parts as allParts } from '../data'; // 既存のテストデータを使用
 import { PROCESSES } from '../constants'; // 工程定義を使用
 import { createPrinted } from '../actions/createPrinted';
 
 export default function PrintRegistrationPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const projectIdStr = searchParams.get('project_id');
+  const projectId = projectIdStr ? parseInt(projectIdStr) : null;
+
+  // プロジェクトIDがあればフィルタリング
+  const filteredParts = projectId
+    ? allParts.filter(p => p.project_id === projectId)
+    : allParts;
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedPartId, setSelectedPartId] = useState<number>(parts[0]?.id || 0);
+  const [selectedPartId, setSelectedPartId] = useState<number>(filteredParts[0]?.id || 0);
   const [quantity, setQuantity] = useState(1);
   const [targetProcess, setTargetProcess] = useState('PRINTED');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,7 +30,7 @@ export default function PrintRegistrationPage() {
     if (file) {
       setSelectedFile(file);
       // ファイル名に部品番号が含まれていれば自動選択する簡易ロジック
-      const matchedPart = parts.find(p => file.name.includes(p.part_number));
+      const matchedPart = filteredParts.find(p => file.name.includes(p.part_number));
       if (matchedPart) setSelectedPartId(matchedPart.id);
     }
   };
@@ -38,7 +47,8 @@ export default function PrintRegistrationPage() {
         selectedFile?.name || `JOB-${Date.now()}`
       );
 
-      router.push('/');
+      const redirectPath = projectId ? `/project/${projectId}` : '/';
+      router.push(redirectPath);
       router.refresh();
     } catch (error) {
       alert('エラーが発生しました');
@@ -48,12 +58,14 @@ export default function PrintRegistrationPage() {
     }
   };
 
+  const backHref = projectId ? `/project/${projectId}` : '/';
+
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-8 font-sans">
       <div className="max-w-2xl mx-auto">
         <header className="mb-8">
-          <Link href="/" className="text-blue-600 hover:underline mb-2 inline-block">
-            ← ダッシュボードに戻る
+          <Link href={backHref} className="text-blue-600 hover:underline mb-2 inline-block">
+            ← {projectId ? 'プロジェクト別進捗に戻る' : 'ダッシュボードに戻る'}
           </Link>
           <h1 className="text-3xl font-bold text-gray-800">3Dプリント登録</h1>
         </header>
@@ -89,7 +101,7 @@ export default function PrintRegistrationPage() {
                 onChange={(e) => setSelectedPartId(Number(e.target.value))}
                 className="w-full border-gray-300 rounded-md shadow-sm p-2 border"
               >
-                {parts.map(p => (
+                {filteredParts.map(p => (
                   <option key={p.id} value={p.id}>{p.part_number}</option>
                 ))}
               </select>

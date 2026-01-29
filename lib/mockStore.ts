@@ -1,10 +1,11 @@
-import { Part, PartItem, Process } from '@/app/types';
-import { parts as initialParts, partItems as initialPartItems } from '@/app/data';
+import { Part, PartItem, Process, Project } from '@/app/types';
+import { parts as initialParts, partItems as initialPartItems, projects as initialProjects } from '@/app/data';
 
 // サーバーサイドでのメモリストア（シングルトン）
 // Next.jsのHMR（Hot Module Replacement）でリセットされないように global を使用
 declare global {
     var __mock_store: {
+        projects: Project[];
         parts: Part[];
         partItems: PartItem[];
     } | undefined;
@@ -12,6 +13,7 @@ declare global {
 
 if (!global.__mock_store) {
     global.__mock_store = {
+        projects: [...initialProjects],
         parts: [...initialParts],
         partItems: [...initialPartItems],
     };
@@ -20,11 +22,27 @@ if (!global.__mock_store) {
 const store = global.__mock_store!;
 
 export const mockStore = {
-    getParts: async (): Promise<Part[]> => {
+    getProjects: async (): Promise<Project[]> => {
+        return store.projects;
+    },
+
+    getProject: async (id: number): Promise<Project | null> => {
+        return store.projects.find(p => p.id === id) || null;
+    },
+
+    getParts: async (projectId?: number): Promise<Part[]> => {
+        if (projectId) {
+            return store.parts.filter(p => p.project_id === projectId);
+        }
         return store.parts;
     },
 
-    getPartItems: async (): Promise<PartItem[]> => {
+    getPartItems: async (projectId?: number): Promise<PartItem[]> => {
+        if (projectId) {
+            const projectParts = store.parts.filter(p => p.project_id === projectId);
+            const partIds = projectParts.map(p => p.id);
+            return store.partItems.filter(i => partIds.includes(i.part_id));
+        }
         return store.partItems;
     },
 
@@ -53,6 +71,7 @@ export const mockStore = {
     // サーバーアクション内では動作しませんが、クライアントコンポーネント用として用意
     saveToLocalStorage: () => {
         if (typeof window !== 'undefined') {
+            localStorage.setItem('mock_projects', JSON.stringify(store.projects));
             localStorage.setItem('mock_parts', JSON.stringify(store.parts));
             localStorage.setItem('mock_partItems', JSON.stringify(store.partItems));
         }
@@ -60,8 +79,10 @@ export const mockStore = {
 
     loadFromLocalStorage: () => {
         if (typeof window !== 'undefined') {
+            const savedProjects = localStorage.getItem('mock_projects');
             const savedParts = localStorage.getItem('mock_parts');
             const savedItems = localStorage.getItem('mock_partItems');
+            if (savedProjects) store.projects = JSON.parse(savedProjects);
             if (savedParts) store.parts = JSON.parse(savedParts);
             if (savedItems) store.partItems = JSON.parse(savedItems);
         }

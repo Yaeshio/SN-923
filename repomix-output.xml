@@ -55,7 +55,7 @@ app/page.tsx
 app/print/page.tsx
 app/types.ts
 app/utils.ts
-lib/supabase.ts
+lib/mockStore.ts
 next.config.js
 package.json
 postcss.config.js
@@ -254,6 +254,78 @@ export const aggregateProgress = (parts: Part[], partItems: PartItem[]): Progres
 };
 </file>
 
+<file path="lib/mockStore.ts">
+import { Part, PartItem, Process } from '@/app/types';
+import { parts as initialParts, partItems as initialPartItems } from '@/app/data';
+
+// サーバーサイドでのメモリストア（シングルトン）
+// Next.jsのHMR（Hot Module Replacement）でリセットされないように global を使用
+declare global {
+    var __mock_store: {
+        parts: Part[];
+        partItems: PartItem[];
+    } | undefined;
+}
+
+if (!global.__mock_store) {
+    global.__mock_store = {
+        parts: [...initialParts],
+        partItems: [...initialPartItems],
+    };
+}
+
+const store = global.__mock_store!;
+
+export const mockStore = {
+    getParts: async (): Promise<Part[]> => {
+        return store.parts;
+    },
+
+    getPartItems: async (): Promise<PartItem[]> => {
+        return store.partItems;
+    },
+
+    getPartItem: async (id: number): Promise<(PartItem & { parts: Part }) | null> => {
+        const item = store.partItems.find((i) => i.id === id);
+        if (!item) return null;
+        const part = store.parts.find((p) => p.id === item.part_id);
+        return { ...item, parts: part! };
+    },
+
+    updatePartItem: async (id: number, updates: Partial<PartItem>): Promise<void> => {
+        const index = store.partItems.findIndex((i) => i.id === id);
+        if (index !== -1) {
+            store.partItems[index] = { ...store.partItems[index], ...updates };
+        }
+    },
+
+    addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
+        const newId = Math.max(0, ...store.partItems.map((i) => i.id)) + 1;
+        const newItem = { ...item, id: newId };
+        store.partItems.push(newItem);
+        return newItem;
+    },
+
+    // localStorage への保存・読み込み（ブラウザ側で呼び出す場合を想定）
+    // サーバーアクション内では動作しませんが、クライアントコンポーネント用として用意
+    saveToLocalStorage: () => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mock_parts', JSON.stringify(store.parts));
+            localStorage.setItem('mock_partItems', JSON.stringify(store.partItems));
+        }
+    },
+
+    loadFromLocalStorage: () => {
+        if (typeof window !== 'undefined') {
+            const savedParts = localStorage.getItem('mock_parts');
+            const savedItems = localStorage.getItem('mock_partItems');
+            if (savedParts) store.parts = JSON.parse(savedParts);
+            if (savedItems) store.partItems = JSON.parse(savedItems);
+        }
+    }
+};
+</file>
+
 <file path="next.config.js">
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -352,167 +424,8 @@ module.exports = {
 }
 </file>
 
-<file path="app/actions/consumeItem.ts">
-'use server' // このファイルがサーバーサイドで実行されることを示す
-
-import { supabase } from '@/lib/supabase'
-
-/**
- * 部品アイテムを消費済みにするサーバーアクション
- * @param itemId - 消費する部品アイテムのID
- */
-export async function consumeItem(itemId: string) {
-  await supabase
-    .from('part_items') // 'part_items'テーブルを選択
-    .update({
-      status: 'consumed', // ステータスを'consumed'（消費済み）に更新
-      current_process: 'assembled', // 現在の工程を'assembled'（組み立て済み）に更新
-      storage_case_id: null // 保管ケースIDをnullに設定
-    })
-    .eq('id', itemId) // 指定されたIDのアイテムを対象とする
-}
-</file>
-
-<file path="app/actions/createPrinted.ts">
-'use server' // このファイルがサーバーサイドで実行されることを示す
-
-import { supabase } from '@/lib/supabase'
-
-/**
- * 3Dプリントされた新しい部品アイテムを作成するサーバーアクション
- * @param partId - 部品のID
- * @param qty - 数量
- * @param storageCaseId - 保管ケースのID
- */
-export async function createPrinted(
-  partId: string,
-  qty: number,
-  storageCaseId: string
-) {
-  // 指定された数量だけループを実行
-  for (let i = 0; i < qty; i++) {
-    // 'part_items'テーブルに新しいレコードを挿入
-    const { data, error } = await supabase
-      .from('part_items')
-      .insert({
-        part_id: partId, // 部品ID
-        current_process: 'printed', // 現在の工程を'printed'に設定
-        storage_case_id: storageCaseId // 保管ケースID
-      })
-      .select() // 挿入したレコードをSELECT
-      .single() // 単一のレコードとして取得
-
-    // 挿入が成功した場合
-    if (data) {
-      // 'part_process_logs'テーブルに工程ログを挿入
-      await supabase.from('part_process_logs').insert({
-        part_item_id: data.id, // 新しく作成された部品アイテムのID
-        process: 'printed' // 工程名
-      })
-    }
-
-    // エラーが発生した場合は、エラーをスロー
-    if (error) throw error
-  }
-}
-</file>
-
-<file path="app/actions/updateProcess.ts">
-'use server' // このファイルがサーバーサイドで実行されることを示す
-
-import { supabase } from '@/lib/supabase'
-
-/**
- * 部品アイテムの工程を更新するサーバーアクション
- * @param itemId - 更新する部品アイテムのID
- * @param nextProcess - 次の工程名
- */
-export async function updateProcess(
-  itemId: string,
-  nextProcess: string
-) {
-  // 'part_items'テーブルの現在の工程を更新
-  await supabase
-    .from('part_items')
-    .update({ current_process: nextProcess }) // 'current_process'カラムを新しい工程名で更新
-    .eq('id', itemId) // 指定されたIDのアイテムを対象とする
-
-  // 'part_process_logs'テーブルに新しい工程ログを挿入
-  await supabase.from('part_process_logs').insert({
-    part_item_id: itemId, // 部品アイテムのID
-    process: nextProcess // 新しい工程名
-  })
-}
-</file>
-
 <file path="app/globals.css">
 @import "tailwindcss";
-</file>
-
-<file path="app/item/[id]/page.tsx">
-// Supabaseクライアントとサーバーアクションをインポート
-import { supabase } from '@/lib/supabase'
-import { updateProcess } from '@/app/actions/updateProcess'
-import { consumeItem } from '@/app/actions/consumeItem'
-
-// 利用可能な工程のリスト
-const PROCESS = [
-  'printed', // 印刷済み
-  'surface', // 表面処理
-  'machining', // 機械加工
-  'painting', // 塗装
-  'ready' // 準備完了
-]
-
-// アイテム詳細ページのコンポーネント
-export default async function ItemPage({ params }: any) {
-  // URLのパラメータからアイテムIDを使用して、Supabaseから特定の部品アイテムのデータを取得
-  const { data } = await supabase
-    .from('part_items')
-    .select(`
-      id,
-      current_process,
-      parts ( part_number )
-    `)
-    .eq('id', params.id) // IDでフィルタリング
-    .single() as any // 単一のレコードを取得
-
-  return (
-    <div>
-      {/* 部品番号を表示 */}
-      <h1>{(data?.parts as any)?.[0]?.part_number || data?.parts?.part_number}</h1>
-      {/* 現在の工程を表示 */}
-      <p>現在工程: {data?.current_process}</p>
-
-      {/* 工程更新フォーム */}
-      <form action={async (formData) => {
-        'use server'
-        // updateProcessサーバーアクションを呼び出して、工程を更新
-        await updateProcess(
-          data.id,
-          formData.get('next') as string
-        )
-      }}>
-        {/* 次の工程を選択するドロップダウン */}
-        <select name="next">
-          {PROCESS.map(p => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
-        <button>工程更新</button>
-      </form>
-
-      {/* 組み込み完了フォーム */}
-      <form action={async () => {
-        'use server'
-        // consumeItemサーバーアクションを呼び出して、アイテムを消費済みにする
-        await consumeItem(data.id)
-      }}>
-        <button>組み込み完了</button>
-      </form>
-    </div>
-  )
-}
 </file>
 
 <file path="app/layout.tsx">
@@ -537,21 +450,187 @@ export default function RootLayout({
 }
 </file>
 
-<file path="lib/supabase.ts">
-// Supabaseクライアントをインポート
-import { createClient } from '@supabase/supabase-js'
+<file path="app/actions/consumeItem.ts">
+'use server'
 
-// SupabaseのURLとサービスロールキーを環境変数から取得
-// 環境変数が設定されていない場合は、プレースホルダーの値を使用
-const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key'
+import { mockStore } from '@/lib/mockStore'
+import { revalidatePath } from 'next/cache'
 
-// Supabaseクライアントを作成
-export const supabase = createClient(
-  supabaseUrl,
-  supabaseKey, // PoCなのでOK
-  { auth: { persistSession: false } } // サーバーサイドでのみ使用するため、セッションの永続化は無効にする
-)
+/**
+ * 部品アイテムを消費済みにするサーバーアクション
+ * @param itemId - 消費する部品アイテムのID
+ */
+export async function consumeItem(itemId: string | number) {
+  const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+  await mockStore.updatePartItem(id, {
+    current_process: 'READY', // 本来のロジックに合わせてREADYにするか、または別のステータス
+    completed_at: new Date(),
+    storage_case: 'CONSUMED' // 便宜上の表記
+  });
+
+  console.log(`Consumed item ${id}`);
+
+  revalidatePath('/');
+  revalidatePath(`/item/${id}`);
+}
+</file>
+
+<file path="app/actions/createPrinted.ts">
+'use server'
+
+import { mockStore } from '@/lib/mockStore'
+import { revalidatePath } from 'next/cache'
+
+/**
+ * 3Dプリントされた新しい部品アイテムを作成するサーバーアクション
+ * @param partId - 部品のID
+ * @param qty - 数量
+ * @param storageCaseLabel - 保管ケースのラベル（mock版では文字列）
+ */
+export async function createPrinted(
+  partId: string | number,
+  qty: number,
+  storageCaseLabel: string
+) {
+  const pId = typeof partId === 'string' ? parseInt(partId, 10) : partId;
+
+  // 指定された数量だけループを実行
+  for (let i = 0; i < qty; i++) {
+    await mockStore.addPartItem({
+      part_id: pId,
+      current_process: 'PRINTED',
+      storage_case: storageCaseLabel,
+      completed_at: null
+    });
+  }
+
+  console.log(`Created ${qty} items for part ${pId}`);
+
+  revalidatePath('/');
+}
+</file>
+
+<file path="app/actions/updateProcess.ts">
+'use server'
+
+import { mockStore } from '@/lib/mockStore'
+import { Process } from '@/app/types'
+import { revalidatePath } from 'next/cache'
+
+/**
+ * 部品アイテムの工程を更新するサーバーアクション
+ * @param itemId - 更新する部品アイテムのID
+ * @param nextProcess - 次の工程名
+ */
+export async function updateProcess(
+  itemId: string | number,
+  nextProcess: string
+) {
+  // 文字列IDを数値に変換（mockStoreの仕様に合わせる）
+  const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+  // メモリ上のデータを更新
+  await mockStore.updatePartItem(id, {
+    current_process: nextProcess as Process,
+    // READYに移行した場合は完了日時を設定
+    completed_at: nextProcess === 'READY' ? new Date() : null
+  });
+
+  // 工程ログはモック版では省略、または必要なら追加
+  console.log(`Updated item ${id} to process ${nextProcess}`);
+
+  // キャッシュを更新してUIに反映
+  revalidatePath('/');
+  revalidatePath(`/item/${id}`);
+}
+</file>
+
+<file path="app/item/[id]/page.tsx">
+// mockStoreとサーバーアクションをインポート
+import { mockStore } from '@/lib/mockStore'
+import { updateProcess } from '@/app/actions/updateProcess'
+import { consumeItem } from '@/app/actions/consumeItem'
+import { PROCESSES } from '@/app/constants'
+import Link from 'next/link'
+
+// アイテム詳細ページのコンポーネント
+export default async function ItemPage({ params }: { params: { id: string } }) {
+  // 文字列IDを数値に変換
+  const id = parseInt(params.id, 10);
+
+  // mockStoreから特定の部品アイテムのデータを取得
+  const data = await mockStore.getPartItem(id);
+
+  if (!data) {
+    return (
+      <div className="p-8">
+        <p>アイテムが見つかりませんでした (ID: {id})</p>
+        <Link href="/" className="text-blue-600 underline">ダッシュボードに戻る</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10">
+      <Link href="/" className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">
+        ← ダッシュボードに戻る
+      </Link>
+
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">
+        部品番号: {data.parts.part_number}
+      </h1>
+
+      <div className="bg-blue-50 p-4 rounded-lg mb-8 border border-blue-100">
+        <p className="text-lg">
+          <span className="font-semibold text-gray-600">現在工程:</span>{' '}
+          <span className="text-blue-700 font-bold">{data.current_process}</span>
+        </p>
+        <p className="text-sm text-gray-500 mt-1">保管ケース: {data.storage_case}</p>
+      </div>
+
+      <div className="space-y-8">
+        {/* 工程更新フォーム */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-gray-700">工程を更新する</h2>
+          <form action={async (formData) => {
+            'use server'
+            const next = formData.get('next') as string;
+            await updateProcess(id, next);
+          }} className="flex gap-4">
+            <select
+              name="next"
+              defaultValue={data.current_process}
+              className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              {PROCESSES.map(proc => (
+                <option key={proc.key} value={proc.key}>{proc.name}</option>
+              ))}
+            </select>
+            <button className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+              工程更新
+            </button>
+          </form>
+        </section>
+
+        <hr className="border-gray-100" />
+
+        {/* 組み込み完了フォーム */}
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-gray-700">このアイテムを完了にする</h2>
+          <form action={async () => {
+            'use server'
+            await consumeItem(id);
+          }}>
+            <button className="w-full bg-green-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-green-700 transition-colors shadow-md text-lg">
+              組み込み完了（在庫から除外）
+            </button>
+          </form>
+        </section>
+      </div>
+    </div>
+  )
+}
 </file>
 
 <file path="package.json">
@@ -566,7 +645,6 @@ export const supabase = createClient(
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.38.0",
     "@tailwindcss/postcss": "^4.1.18",
     "next": "^14.0.0",
     "react": "^18.2.0",
@@ -589,14 +667,18 @@ export const supabase = createClient(
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { parts } from '../data'; // 既存のテストデータを使用
 import { PROCESSES } from '../constants'; // 工程定義を使用
+import { createPrinted } from '../actions/createPrinted';
 
 export default function PrintRegistrationPage() {
+  const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedPartId, setSelectedPartId] = useState<number>(parts[0]?.id || 0);
   const [quantity, setQuantity] = useState(1);
-  const [targetProcess, setTargetProcess] = useState('UNPRINTED');
+  const [targetProcess, setTargetProcess] = useState('PRINTED');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ファイル選択時の処理
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -609,10 +691,26 @@ export default function PrintRegistrationPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`登録シミュレーション:\n部品ID: ${selectedPartId}\n数量: ${quantity}\n状態: ${targetProcess}\nファイル: ${selectedFile?.name}`);
-    // ここで将来的にサーバーアクション（createPrintedなど）を呼び出します
+    setIsSubmitting(true);
+
+    try {
+      // サーバーアクションを呼び出してモックデータを更新
+      await createPrinted(
+        selectedPartId,
+        quantity,
+        selectedFile?.name || `JOB-${Date.now()}`
+      );
+
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      alert('エラーが発生しました');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -697,9 +795,11 @@ export default function PrintRegistrationPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-colors text-lg"
+            disabled={isSubmitting}
+            className={`w-full text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors text-lg ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
           >
-            プリントジョブを登録
+            {isSubmitting ? '登録中...' : 'プリントジョブを登録'}
           </button>
         </form>
       </div>
@@ -713,25 +813,27 @@ import Link from 'next/link';
 import { PROCESSES } from './constants';
 import { aggregateProgress } from './utils';
 import { SummaryCard } from './components/SummaryCard';
-// data.ts から直接インポートするように一時的に変更
-import { parts, partItems } from './data'; 
+import { mockStore } from '@/lib/mockStore';
 
 /**
  * ダッシュボードページ
- * サービス層実装前の暫定構成として、直接データを参照します。
+ * 完全モックモードとして、mockStoreからデータを取得します。
  */
-export default function DashboardPage() {
-  // 1. 本来はサービス層で行う集計・計算をここで行う
+export default async function DashboardPage() {
+  // mockStoreから最新データを取得
+  const parts = await mockStore.getParts();
+  const partItems = await mockStore.getPartItems();
+
   const totalInventory = partItems.length;
   const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const completedToday = partItems.filter(item => 
+  const completedToday = partItems.filter(item =>
     item.completed_at && new Date(item.completed_at) >= today
   ).length;
 
-  // 2. マトリックス表示用にデータを集計（引数にデータを渡す）
+  // 2. マトリックス表示用にデータを集計
   const progressData = aggregateProgress(parts, partItems);
 
   return (
@@ -786,7 +888,7 @@ export default function DashboardPage() {
                   return (
                     <td key={proc.key} className="p-4 text-center">
                       <Link href={linkHref}>
-                        <div 
+                        <div
                           className={`
                             text-2xl font-bold rounded-lg w-20 h-14 flex items-center justify-center mx-auto cursor-pointer
                             transition-all duration-200 transform hover:scale-110 hover:shadow-lg

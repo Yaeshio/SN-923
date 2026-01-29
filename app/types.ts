@@ -1,4 +1,4 @@
-export type Process = 
+export type Process =
   | 'UNPRINTED'
   | 'PRINTED'
   | 'SURFACE_TREATMENT'
@@ -6,9 +6,17 @@ export type Process =
   | 'PAINTING'
   | 'READY';
 
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  deadline: string;
+}
+
 export interface Part {
   id: number;
   part_number: string;
+  project_id: number;
 }
 
 export interface PartItem {

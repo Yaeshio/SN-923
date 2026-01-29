@@ -24,8 +24,8 @@ export default async function ItemPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10">
-      <Link href="/" className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">
-        ← ダッシュボードに戻る
+      <Link href={`/project/${data.parts.project_id}`} className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">
+        ← プロジェクト別進捗に戻る
       </Link>
 
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
