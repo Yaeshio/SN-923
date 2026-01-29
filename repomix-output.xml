@@ -53,6 +53,7 @@ app/item/[id]/page.tsx
 app/layout.tsx
 app/page.tsx
 app/print/page.tsx
+app/project/[id]/page.tsx
 app/types.ts
 app/utils.ts
 lib/mockStore.ts
@@ -175,47 +176,136 @@ export const PROCESSES: { key: Process; name: string }[] = [
 ];
 </file>
 
-<file path="app/data.ts">
-// app/dashboad/data.ts
-import { Part, PartItem } from './types';
+<file path="app/project/[id]/page.tsx">
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { PROCESSES } from '@/app/constants';
+import { aggregateProgress } from '@/app/utils';
+import { SummaryCard } from '@/app/components/SummaryCard';
+import { mockStore } from '@/lib/mockStore';
 
-export const parts: Part[] = [
-  { id: 1, part_number: 'PART-A' },
-  { id: 2, part_number: 'PART-B' }
-];
-
-export const partItems: PartItem[] = [
-  { id: 101, part_id: 1, storage_case: 'Case-01', current_process: 'PRINTED', completed_at: null },
-  { id: 102, part_id: 2, storage_case: 'Case-02', current_process: 'READY', completed_at: new Date() }
-];
-</file>
-
-<file path="app/types.ts">
-export type Process = 
-  | 'UNPRINTED'
-  | 'PRINTED'
-  | 'SURFACE_TREATMENT'
-  | 'CUTTING'
-  | 'PAINTING'
-  | 'READY';
-
-export interface Part {
-  id: number;
-  part_number: string;
+interface PageProps {
+    params: {
+        id: string;
+    };
 }
 
-export interface PartItem {
-  id: number;
-  part_id: number;
-  storage_case: string;
-  current_process: Process;
-  completed_at: Date | null;
-}
+/**
+ * プロジェクト別進捗ページ
+ */
+export default async function ProjectDetailPage({ params }: PageProps) {
+    const projectId = parseInt(params.id);
+    if (isNaN(projectId)) {
+        notFound();
+    }
 
-export interface ProgressData {
-  part_number: string;
-  storage_cases: string[];
-  counts: Record<Process, number>;
+    const project = await mockStore.getProject(projectId);
+    if (!project) {
+        notFound();
+    }
+
+    // mockStoreからプロジェクトに属するデータを取得
+    const parts = await mockStore.getParts(projectId);
+    const partItems = await mockStore.getPartItems(projectId);
+
+    const totalInventory = partItems.length;
+    const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const completedToday = partItems.filter(item =>
+        item.completed_at && new Date(item.completed_at) >= today
+    ).length;
+
+    // 2. マトリックス表示用にデータを集計
+    const progressData = aggregateProgress(parts, partItems);
+
+    return (
+        <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+                <div>
+                    <Link href="/" className="text-blue-600 hover:text-blue-800 mb-2 inline-block">
+                        ← プロジェクト一覧へ戻る
+                    </Link>
+                    <h1 className="text-3xl font-bold text-gray-800">
+                        {project.name} - 進捗状況
+                    </h1>
+                    <p className="text-gray-600 mt-1">{project.description}</p>
+                </div>
+                <Link href={`/print?project_id=${projectId}`}>
+                    <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block text-lg">
+                        3Dプリント登録
+                    </span>
+                </Link>
+            </header>
+
+            {/* サマリーカード */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <SummaryCard title="総在庫数" value={totalInventory} />
+                <SummaryCard title="仕掛品数 (工程進行中)" value={inProgress} valueColor="text-orange-500" />
+                <SummaryCard title="本日完了数" value={completedToday} valueColor="text-green-500" />
+            </div>
+
+            {/* 工程進捗マトリックス */}
+            <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-100">
+                        <tr>
+                            <th className="p-4 text-lg font-semibold text-gray-700 sticky left-0 bg-gray-100 z-10 w-64 min-w-[250px]">
+                                部品番号 / 保管ケース
+                            </th>
+                            {PROCESSES.map(proc => (
+                                <th key={proc.key} className="p-4 text-lg font-semibold text-center text-gray-700 whitespace-nowrap min-w-[120px]">
+                                    {proc.name}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                        {progressData.length === 0 ? (
+                            <tr>
+                                <td colSpan={PROCESSES.length + 1} className="p-8 text-center text-gray-500">
+                                    このプロジェクトに登録されている部品はありません。
+                                </td>
+                            </tr>
+                        ) : (
+                            progressData.map(data => (
+                                <tr key={data.part_number} className="hover:bg-gray-50">
+                                    <td className="p-4 sticky left-0 bg-white hover:bg-gray-50 z-10 border-r">
+                                        <div className="font-bold text-lg text-gray-900">{data.part_number}</div>
+                                        <div className="text-sm text-gray-500 mt-1">
+                                            {data.storage_cases.join(', ')}
+                                        </div>
+                                    </td>
+                                    {PROCESSES.map(proc => {
+                                        const count = data.counts[proc.key];
+                                        const part = parts.find(p => p.part_number === data.part_number);
+                                        const linkHref = part ? `/item/${part.id}?process=${proc.key}` : '#';
+
+                                        return (
+                                            <td key={proc.key} className="p-4 text-center">
+                                                <Link href={linkHref}>
+                                                    <div
+                                                        className={`
+                              text-2xl font-bold rounded-lg w-20 h-14 flex items-center justify-center mx-auto cursor-pointer
+                              transition-all duration-200 transform hover:scale-110 hover:shadow-lg
+                              ${count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-400'}
+                            `}
+                                                    >
+                                                        {count}
+                                                    </div>
+                                                </Link>
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
 }
 </file>
 
@@ -251,78 +341,6 @@ export const aggregateProgress = (parts: Part[], partItems: PartItem[]): Progres
     storage_cases: Array.from(data.storage_cases).sort(),
     counts: data.counts,
   }));
-};
-</file>
-
-<file path="lib/mockStore.ts">
-import { Part, PartItem, Process } from '@/app/types';
-import { parts as initialParts, partItems as initialPartItems } from '@/app/data';
-
-// サーバーサイドでのメモリストア（シングルトン）
-// Next.jsのHMR（Hot Module Replacement）でリセットされないように global を使用
-declare global {
-    var __mock_store: {
-        parts: Part[];
-        partItems: PartItem[];
-    } | undefined;
-}
-
-if (!global.__mock_store) {
-    global.__mock_store = {
-        parts: [...initialParts],
-        partItems: [...initialPartItems],
-    };
-}
-
-const store = global.__mock_store!;
-
-export const mockStore = {
-    getParts: async (): Promise<Part[]> => {
-        return store.parts;
-    },
-
-    getPartItems: async (): Promise<PartItem[]> => {
-        return store.partItems;
-    },
-
-    getPartItem: async (id: number): Promise<(PartItem & { parts: Part }) | null> => {
-        const item = store.partItems.find((i) => i.id === id);
-        if (!item) return null;
-        const part = store.parts.find((p) => p.id === item.part_id);
-        return { ...item, parts: part! };
-    },
-
-    updatePartItem: async (id: number, updates: Partial<PartItem>): Promise<void> => {
-        const index = store.partItems.findIndex((i) => i.id === id);
-        if (index !== -1) {
-            store.partItems[index] = { ...store.partItems[index], ...updates };
-        }
-    },
-
-    addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
-        const newId = Math.max(0, ...store.partItems.map((i) => i.id)) + 1;
-        const newItem = { ...item, id: newId };
-        store.partItems.push(newItem);
-        return newItem;
-    },
-
-    // localStorage への保存・読み込み（ブラウザ側で呼び出す場合を想定）
-    // サーバーアクション内では動作しませんが、クライアントコンポーネント用として用意
-    saveToLocalStorage: () => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('mock_parts', JSON.stringify(store.parts));
-            localStorage.setItem('mock_partItems', JSON.stringify(store.partItems));
-        }
-    },
-
-    loadFromLocalStorage: () => {
-        if (typeof window !== 'undefined') {
-            const savedParts = localStorage.getItem('mock_parts');
-            const savedItems = localStorage.getItem('mock_partItems');
-            if (savedParts) store.parts = JSON.parse(savedParts);
-            if (savedItems) store.partItems = JSON.parse(savedItems);
-        }
-    }
 };
 </file>
 
@@ -424,6 +442,28 @@ module.exports = {
 }
 </file>
 
+<file path="app/data.ts">
+// app/data.ts
+import { Part, PartItem, Project } from './types';
+
+export const projects: Project[] = [
+  { id: 1, name: '次世代ドローン開発', description: '高解像度カメラ搭載の新型ドローン開発プロジェクト', deadline: '2026-06-30' },
+  { id: 2, name: '搬送ロボット製作', description: '倉庫内自動配送を行う自律走行ロボットの試作', deadline: '2026-04-15' }
+];
+
+export const parts: Part[] = [
+  { id: 1, part_number: 'PART-A', project_id: 1 },
+  { id: 2, part_number: 'PART-B', project_id: 1 },
+  { id: 3, part_number: 'PART-C', project_id: 2 }
+];
+
+export const partItems: PartItem[] = [
+  { id: 101, part_id: 1, storage_case: 'Case-01', current_process: 'PRINTED', completed_at: null },
+  { id: 102, part_id: 2, storage_case: 'Case-02', current_process: 'READY', completed_at: new Date() },
+  { id: 103, part_id: 3, storage_case: 'Case-03', current_process: 'UNPRINTED', completed_at: null }
+];
+</file>
+
 <file path="app/globals.css">
 @import "tailwindcss";
 </file>
@@ -448,6 +488,136 @@ export default function RootLayout({
     </html>
   )
 }
+</file>
+
+<file path="app/types.ts">
+export type Process =
+  | 'UNPRINTED'
+  | 'PRINTED'
+  | 'SURFACE_TREATMENT'
+  | 'CUTTING'
+  | 'PAINTING'
+  | 'READY';
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  deadline: string;
+}
+
+export interface Part {
+  id: number;
+  part_number: string;
+  project_id: number;
+}
+
+export interface PartItem {
+  id: number;
+  part_id: number;
+  storage_case: string;
+  current_process: Process;
+  completed_at: Date | null;
+}
+
+export interface ProgressData {
+  part_number: string;
+  storage_cases: string[];
+  counts: Record<Process, number>;
+}
+</file>
+
+<file path="lib/mockStore.ts">
+import { Part, PartItem, Process, Project } from '@/app/types';
+import { parts as initialParts, partItems as initialPartItems, projects as initialProjects } from '@/app/data';
+
+// サーバーサイドでのメモリストア（シングルトン）
+// Next.jsのHMR（Hot Module Replacement）でリセットされないように global を使用
+declare global {
+    var __mock_store: {
+        projects: Project[];
+        parts: Part[];
+        partItems: PartItem[];
+    } | undefined;
+}
+
+if (!global.__mock_store) {
+    global.__mock_store = {
+        projects: [...initialProjects],
+        parts: [...initialParts],
+        partItems: [...initialPartItems],
+    };
+}
+
+const store = global.__mock_store!;
+
+export const mockStore = {
+    getProjects: async (): Promise<Project[]> => {
+        return store.projects;
+    },
+
+    getProject: async (id: number): Promise<Project | null> => {
+        return store.projects.find(p => p.id === id) || null;
+    },
+
+    getParts: async (projectId?: number): Promise<Part[]> => {
+        if (projectId) {
+            return store.parts.filter(p => p.project_id === projectId);
+        }
+        return store.parts;
+    },
+
+    getPartItems: async (projectId?: number): Promise<PartItem[]> => {
+        if (projectId) {
+            const projectParts = store.parts.filter(p => p.project_id === projectId);
+            const partIds = projectParts.map(p => p.id);
+            return store.partItems.filter(i => partIds.includes(i.part_id));
+        }
+        return store.partItems;
+    },
+
+    getPartItem: async (id: number): Promise<(PartItem & { parts: Part }) | null> => {
+        const item = store.partItems.find((i) => i.id === id);
+        if (!item) return null;
+        const part = store.parts.find((p) => p.id === item.part_id);
+        return { ...item, parts: part! };
+    },
+
+    updatePartItem: async (id: number, updates: Partial<PartItem>): Promise<void> => {
+        const index = store.partItems.findIndex((i) => i.id === id);
+        if (index !== -1) {
+            store.partItems[index] = { ...store.partItems[index], ...updates };
+        }
+    },
+
+    addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
+        const newId = Math.max(0, ...store.partItems.map((i) => i.id)) + 1;
+        const newItem = { ...item, id: newId };
+        store.partItems.push(newItem);
+        return newItem;
+    },
+
+    // localStorage への保存・読み込み（ブラウザ側で呼び出す場合を想定）
+    // サーバーアクション内では動作しませんが、クライアントコンポーネント用として用意
+    saveToLocalStorage: () => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('mock_projects', JSON.stringify(store.projects));
+            localStorage.setItem('mock_parts', JSON.stringify(store.parts));
+            localStorage.setItem('mock_partItems', JSON.stringify(store.partItems));
+        }
+    },
+
+    loadFromLocalStorage: () => {
+        if (typeof window !== 'undefined') {
+            const savedProjects = localStorage.getItem('mock_projects');
+            const savedParts = localStorage.getItem('mock_parts');
+            const savedItems = localStorage.getItem('mock_partItems');
+            if (savedProjects) store.projects = JSON.parse(savedProjects);
+            if (savedParts) store.parts = JSON.parse(savedParts);
+            if (savedItems) store.partItems = JSON.parse(savedItems);
+        }
+    }
+};
 </file>
 
 <file path="app/actions/consumeItem.ts">
@@ -546,6 +716,35 @@ export async function updateProcess(
 }
 </file>
 
+<file path="package.json">
+{
+  "name": "sn-923",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.3.0"
+  }
+}
+</file>
+
 <file path="app/item/[id]/page.tsx">
 // mockStoreとサーバーアクションをインポート
 import { mockStore } from '@/lib/mockStore'
@@ -573,8 +772,8 @@ export default async function ItemPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10">
-      <Link href="/" className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">
-        ← ダッシュボードに戻る
+      <Link href={`/project/${data.parts.project_id}`} className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">
+        ← プロジェクト別進捗に戻る
       </Link>
 
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
@@ -633,49 +832,29 @@ export default async function ItemPage({ params }: { params: { id: string } }) {
 }
 </file>
 
-<file path="package.json">
-{
-  "name": "sn-923",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@tailwindcss/postcss": "^4.1.18",
-    "next": "^14.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "autoprefixer": "^10.4.23",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18",
-    "typescript": "^5.3.0"
-  }
-}
-</file>
-
 <file path="app/print/page.tsx">
-'use client'; // インタラクティブな操作のためClient Componentを使用
+'use client';
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { parts } from '../data'; // 既存のテストデータを使用
+import { useRouter, useSearchParams } from 'next/navigation';
+import { parts as allParts } from '../data'; // 既存のテストデータを使用
 import { PROCESSES } from '../constants'; // 工程定義を使用
 import { createPrinted } from '../actions/createPrinted';
 
 export default function PrintRegistrationPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const projectIdStr = searchParams.get('project_id');
+  const projectId = projectIdStr ? parseInt(projectIdStr) : null;
+
+  // プロジェクトIDがあればフィルタリング
+  const filteredParts = projectId
+    ? allParts.filter(p => p.project_id === projectId)
+    : allParts;
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedPartId, setSelectedPartId] = useState<number>(parts[0]?.id || 0);
+  const [selectedPartId, setSelectedPartId] = useState<number>(filteredParts[0]?.id || 0);
   const [quantity, setQuantity] = useState(1);
   const [targetProcess, setTargetProcess] = useState('PRINTED');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -686,7 +865,7 @@ export default function PrintRegistrationPage() {
     if (file) {
       setSelectedFile(file);
       // ファイル名に部品番号が含まれていれば自動選択する簡易ロジック
-      const matchedPart = parts.find(p => file.name.includes(p.part_number));
+      const matchedPart = filteredParts.find(p => file.name.includes(p.part_number));
       if (matchedPart) setSelectedPartId(matchedPart.id);
     }
   };
@@ -703,7 +882,8 @@ export default function PrintRegistrationPage() {
         selectedFile?.name || `JOB-${Date.now()}`
       );
 
-      router.push('/');
+      const redirectPath = projectId ? `/project/${projectId}` : '/';
+      router.push(redirectPath);
       router.refresh();
     } catch (error) {
       alert('エラーが発生しました');
@@ -713,12 +893,14 @@ export default function PrintRegistrationPage() {
     }
   };
 
+  const backHref = projectId ? `/project/${projectId}` : '/';
+
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-8 font-sans">
       <div className="max-w-2xl mx-auto">
         <header className="mb-8">
-          <Link href="/" className="text-blue-600 hover:underline mb-2 inline-block">
-            ← ダッシュボードに戻る
+          <Link href={backHref} className="text-blue-600 hover:underline mb-2 inline-block">
+            ← {projectId ? 'プロジェクト別進捗に戻る' : 'ダッシュボードに戻る'}
           </Link>
           <h1 className="text-3xl font-bold text-gray-800">3Dプリント登録</h1>
         </header>
@@ -754,7 +936,7 @@ export default function PrintRegistrationPage() {
                 onChange={(e) => setSelectedPartId(Number(e.target.value))}
                 className="w-full border-gray-300 rounded-md shadow-sm p-2 border"
               >
-                {parts.map(p => (
+                {filteredParts.map(p => (
                   <option key={p.id} value={p.id}>{p.part_number}</option>
                 ))}
               </select>
@@ -810,101 +992,69 @@ export default function PrintRegistrationPage() {
 
 <file path="app/page.tsx">
 import Link from 'next/link';
-import { PROCESSES } from './constants';
-import { aggregateProgress } from './utils';
-import { SummaryCard } from './components/SummaryCard';
 import { mockStore } from '@/lib/mockStore';
 
 /**
- * ダッシュボードページ
- * 完全モックモードとして、mockStoreからデータを取得します。
+ * プロジェクト一覧ダッシュボード
  */
-export default async function DashboardPage() {
-  // mockStoreから最新データを取得
-  const parts = await mockStore.getParts();
-  const partItems = await mockStore.getPartItems();
-
-  const totalInventory = partItems.length;
-  const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const completedToday = partItems.filter(item =>
-    item.completed_at && new Date(item.completed_at) >= today
-  ).length;
-
-  // 2. マトリックス表示用にデータを集計
-  const progressData = aggregateProgress(parts, partItems);
+export default async function ProjectsDashboardPage() {
+  const projects = await mockStore.getProjects();
 
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">
-          工程進捗ダッシュボード
+      <header className="mb-12 text-center">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+          BOM進捗管理システム
         </h1>
-        <Link href="/print">
-          <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block text-lg">
-            3Dプリント登録
-          </span>
-        </Link>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          プロジェクトを選択して、部品の製造工程と進捗状況をリアルタイムで確認できます。
+        </p>
       </header>
 
-      {/* サマリーカード */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <SummaryCard title="総在庫数" value={totalInventory} />
-        <SummaryCard title="仕掛品数 (工程進行中)" value={inProgress} valueColor="text-orange-500" />
-        <SummaryCard title="本日完了数" value={completedToday} valueColor="text-green-500" />
-      </div>
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        {projects.map((project) => (
+          <Link key={project.id} href={`/project/${project.id}`}>
+            <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer flex flex-col h-full transform hover:-translate-y-1">
+              <div className="p-8 flex-grow">
+                <div className="flex justify-between items-start mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                    {project.name}
+                  </h2>
+                  <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    進行中
+                  </span>
+                </div>
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  {project.description}
+                </p>
 
-      {/* 工程進捗マトリックス */}
-      <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-4 text-lg font-semibold text-gray-700 sticky left-0 bg-gray-100 z-10 w-64 min-w-[250px]">
-                部品番号 / 保管ケース
-              </th>
-              {PROCESSES.map(proc => (
-                <th key={proc.key} className="p-4 text-lg font-semibold text-center text-gray-700 whitespace-nowrap min-w-[120px]">
-                  {proc.name}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {progressData.map(data => (
-              <tr key={data.part_number} className="hover:bg-gray-50">
-                <td className="p-4 sticky left-0 bg-white hover:bg-gray-50 z-10 border-r">
-                  <div className="font-bold text-lg text-gray-900">{data.part_number}</div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    {data.storage_cases.join(', ')}
+                {/* 簡易進捗表示（ダミー） */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium text-gray-700">全体進捗</span>
+                    <span className="font-bold text-blue-600">65%</span>
                   </div>
-                </td>
-                {PROCESSES.map(proc => {
-                  const count = data.counts[proc.key];
-                  const part = parts.find(p => p.part_number === data.part_number);
-                  const linkHref = part ? `/item/${part.id}?process=${proc.key}` : '#';
+                  <div className="w-full bg-gray-100 rounded-full h-3">
+                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full w-[65%] shadow-sm"></div>
+                  </div>
+                </div>
+              </div>
 
-                  return (
-                    <td key={proc.key} className="p-4 text-center">
-                      <Link href={linkHref}>
-                        <div
-                          className={`
-                            text-2xl font-bold rounded-lg w-20 h-14 flex items-center justify-center mx-auto cursor-pointer
-                            transition-all duration-200 transform hover:scale-110 hover:shadow-lg
-                            ${count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-400'}
-                          `}
-                        >
-                          {count}
-                        </div>
-                      </Link>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center group-hover:bg-blue-50 transition-colors">
+                <div className="text-sm">
+                  <span className="text-gray-500">納期: </span>
+                  <span className="font-semibold text-gray-800">{project.deadline}</span>
+                </div>
+                <span className="text-blue-600 font-bold flex items-center group-hover:translate-x-1 transition-transform">
+                  詳細を見る
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );

@@ -83,45 +83,40 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {progressData.length === 0 ? (
-                            <tr>
-                                <td colSpan={PROCESSES.length + 1} className="p-8 text-center text-gray-500">
-                                    このプロジェクトに登録されている部品はありません。
-                                </td>
-                            </tr>
-                        ) : (
-                            progressData.map(data => (
-                                <tr key={data.part_number} className="hover:bg-gray-50">
-                                    <td className="p-4 sticky left-0 bg-white hover:bg-gray-50 z-10 border-r">
-                                        <div className="font-bold text-lg text-gray-900">{data.part_number}</div>
-                                        <div className="text-sm text-gray-500 mt-1">
-                                            {data.storage_cases.join(', ')}
-                                        </div>
-                                    </td>
-                                    {PROCESSES.map(proc => {
-                                        const count = data.counts[proc.key];
-                                        const part = parts.find(p => p.part_number === data.part_number);
-                                        const linkHref = part ? `/item/${part.id}?process=${proc.key}` : '#';
+                        {progressData.map(data => {
+                            const processInfo = PROCESSES.find(p => p.key === data.current_process);
 
-                                        return (
-                                            <td key={proc.key} className="p-4 text-center">
-                                                <Link href={linkHref}>
-                                                    <div
-                                                        className={`
-                              text-2xl font-bold rounded-lg w-20 h-14 flex items-center justify-center mx-auto cursor-pointer
-                              transition-all duration-200 transform hover:scale-110 hover:shadow-lg
-                              ${count > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-400'}
-                            `}
-                                                    >
-                                                        {count}
-                                                    </div>
-                                                </Link>
-                                            </td>
-                                        );
-                                    })}
+                            return (
+                                <tr key={data.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="p-4">
+                                        <div className="font-bold text-gray-900">{data.part_number}</div>
+                                        <div className="text-xs text-gray-400">数量: {data.count}</div>
+                                    </td>
+
+                                    <td className="p-4">
+                                        {/* 工程をバッジ形式で表示。色は工程に応じて変更可能 */}
+                                        <span className={`
+            px-4 py-2 rounded-full font-bold text-sm
+            ${data.current_process === 'READY' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}
+          `}>
+                                            {processInfo?.name || data.current_process}
+                                        </span>
+                                    </td>
+
+                                    <td className="p-4 text-sm text-gray-600">
+                                        {data.storage_cases.join(', ') || '-'}
+                                    </td>
+
+                                    <td className="p-4 text-right">
+                                        <Link href={`/item/${data.id}`}>
+                                            <button className="text-blue-600 hover:text-blue-800 font-semibold text-sm">
+                                                詳細・工程変更 →
+                                            </button>
+                                        </Link>
+                                    </td>
                                 </tr>
-                            ))
-                        )}
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

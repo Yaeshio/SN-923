@@ -1,32 +1,28 @@
+// app/utils.ts
 import { Part, PartItem, ProgressData, Process } from './types';
+import { PROCESSES } from './constants';
 
-export const aggregateProgress = (parts: Part[], partItems: PartItem[]): ProgressData[] => {
-  const progressMap = new Map<string, { storage_cases: Set<string>; counts: Record<Process, number> }>();
+export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] => {
+  return parts.map(part => {
+    const items = partItems.filter(item => item.part_id === part.id);
 
-  parts.forEach(part => {
-    progressMap.set(part.part_number, {
-      storage_cases: new Set(),
-      counts: {
-        UNPRINTED: 0, PRINTED: 0, SURFACE_TREATMENT: 0,
-        CUTTING: 0, PAINTING: 0, READY: 0,
-      },
-    });
+    // この部品の中で最も「進んでいない」工程を現在の工程とする
+    // (全て完了していれば READY となる)
+    const processOrder = PROCESSES.map(p => p.key);
+    const currentProcess = items.length > 0
+      ? items.reduce((earliest, item) => {
+        return processOrder.indexOf(item.current_process) < processOrder.indexOf(earliest)
+          ? item.current_process
+          : earliest;
+      }, 'READY' as Process)
+      : 'UNPRINTED';
+
+    return {
+      id: part.id,
+      part_number: part.part_number,
+      current_process: currentProcess,
+      storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
+      count: items.length
+    };
   });
-
-  partItems.forEach(item => {
-    const part = parts.find(p => p.id === item.part_id);
-    if (part) {
-      const currentData = progressMap.get(part.part_number);
-      if (currentData) {
-        currentData.counts[item.current_process]++;
-        currentData.storage_cases.add(item.storage_case);
-      }
-    }
-  });
-
-  return Array.from(progressMap.entries()).map(([part_number, data]) => ({
-    part_number,
-    storage_cases: Array.from(data.storage_cases).sort(),
-    counts: data.counts,
-  }));
 };
