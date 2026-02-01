@@ -7,7 +7,11 @@ import { parts as allParts } from '../data'; // 既存のテストデータを�
 import { PROCESSES } from '../constants'; // 工程定義を使用
 import { createPrinted } from '../actions/createPrinted';
 
-export default function PrintRegistrationPage() {
+import { Suspense } from 'react';
+
+// ... imports remain the same
+
+function PrintRegistrationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectIdStr = searchParams.get('project_id');
@@ -151,5 +155,13 @@ export default function PrintRegistrationPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function PrintRegistrationPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <PrintRegistrationContent />
+    </Suspense>
   );
 }

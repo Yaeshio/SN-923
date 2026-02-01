@@ -6,15 +6,16 @@ import { mockStore } from '@/lib/mockStore';
 import ProjectClientContent from './ProjectClientContent';
 
 interface PageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 /**
  * プロジェクト別進捗ページ（サーバー側）
  */
-export default async function ProjectDetailPage({ params }: PageProps) {
+export default async function ProjectDetailPage(props: PageProps) {
+    const params = await props.params;
     const projectId = parseInt(params.id);
     if (isNaN(projectId)) {
         notFound();

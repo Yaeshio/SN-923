@@ -6,7 +6,8 @@ import { PROCESSES } from '@/app/constants'
 import Link from 'next/link'
 
 // アイテム詳細ページのコンポーネント
-export default async function ItemPage({ params }: { params: { id: string } }) {
+export default async function ItemPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   // 文字列IDを数値に変換
   const id = parseInt(params.id, 10);
 

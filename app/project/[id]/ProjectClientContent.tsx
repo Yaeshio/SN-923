@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { PROCESSES } from '@/app/constants';
 import { CartModal } from '@/app/components/CartModal';
 import { updateProcess } from '@/app/actions/updateProcess';
+import { PreviewModal } from '@/app/components/PreviewModal'; // 新設したコンポーネント
 
 export default function ProjectClientContent({ progressData, projectId }: { progressData: any[], projectId: number }) {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isUpdating, setIsUpdating] = useState<number | null>(null);
+
+    // プレビュー表示用のステートを追加
+    const [previewPartNumber, setPreviewPartNumber] = useState<string | null>(null);
 
     // チェックボックス選択制御
     const toggleSelection = (id: number) => {
@@ -40,7 +43,6 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="bg-gray-100 border-b border-gray-200">
-                                {/* 部品情報列（固定） */}
                                 <th className="sticky left-0 z-30 bg-gray-100 p-4 border-r border-gray-200 min-w-[240px] text-left">
                                     <div className="flex items-center gap-3">
                                         <input
@@ -55,7 +57,6 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                                         <span className="text-sm font-bold text-gray-600 uppercase">部品番号 / 数量</span>
                                     </div>
                                 </th>
-                                {/* 工程列 */}
                                 {PROCESSES.map(proc => (
                                     <th key={proc.key} className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-center border-r border-gray-200 min-w-[160px]">
                                         {proc.name}
@@ -66,7 +67,6 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                         <tbody className="divide-y divide-gray-200">
                             {progressData.map(data => (
                                 <tr key={data.id} className="hover:bg-gray-50 transition-colors group">
-                                    {/* 左端固定列 */}
                                     <td className="sticky left-0 z-20 bg-white group-hover:bg-gray-50 p-4 border-r border-gray-200 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                                         <div className="flex items-start gap-3">
                                             <input
@@ -76,7 +76,13 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                                                 className="w-5 h-5 mt-1 rounded border-gray-300 text-blue-600 cursor-pointer"
                                             />
                                             <div>
-                                                <div className="font-black text-gray-900 leading-none">{data.part_number}</div>
+                                                {/* 部品名をクリックするとプレビューが開くように変更 */}
+                                                <button
+                                                    onClick={() => setPreviewPartNumber(data.part_number)}
+                                                    className="font-black text-blue-600 hover:text-blue-800 hover:underline leading-none text-left transition-colors"
+                                                >
+                                                    {data.part_number}
+                                                </button>
                                                 <div className="text-xs text-gray-400 mt-2 font-bold uppercase">保管: {data.storage_cases.join(', ') || '-'}</div>
                                                 <div className="mt-1 inline-block bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold text-gray-500">
                                                     QTY: {data.count}
@@ -85,7 +91,6 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                                         </div>
                                     </td>
 
-                                    {/* 工程マトリックスセル */}
                                     {PROCESSES.map(proc => {
                                         const isCurrent = data.current_process === proc.key;
                                         return (
@@ -110,7 +115,6 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                                                                 <span className="text-lg font-bold group-hover/card:translate-x-1 transition-transform">→</span>
                                                             )}
                                                         </div>
-                                                        {/* ホバー時に次の工程名を表示 */}
                                                         {proc.key !== 'READY' && (
                                                             <div className="absolute -bottom-10 left-0 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/card:opacity-100 transition-opacity z-50 whitespace-nowrap">
                                                                 クリックで次へ進む
@@ -128,7 +132,7 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                 </div>
             </div>
 
-            {/* フローティングバー（変更なし） */}
+            {/* フローティングバー */}
             {selectedIds.length > 0 && (
                 <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-8 bg-gray-900 text-white px-8 py-4 rounded-2xl z-50 shadow-2xl animate-in fade-in slide-in-from-bottom-4">
                     <div className="flex flex-col">
@@ -145,11 +149,19 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                 </div>
             )}
 
+            {/* カートモーダル */}
             <CartModal
                 isOpen={isCartOpen}
                 onClose={() => setIsCartOpen(false)}
                 items={cartItems}
                 onDownload={() => alert("Zipダウンロードを開始します")}
+            />
+
+            {/* 追加：プレビューモーダル */}
+            <PreviewModal
+                isOpen={!!previewPartNumber}
+                onClose={() => setPreviewPartNumber(null)}
+                partNumber={previewPartNumber || ''}
             />
         </>
     );
