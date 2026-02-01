@@ -45,6 +45,7 @@ The content is organized as follows:
 app/actions/consumeItem.ts
 app/actions/createPrinted.ts
 app/actions/updateProcess.ts
+app/components/CartModal.tsx
 app/components/SummaryCard.tsx
 app/constants.ts
 app/data.ts
@@ -54,6 +55,7 @@ app/layout.tsx
 app/page.tsx
 app/print/page.tsx
 app/project/[id]/page.tsx
+app/project/[id]/ProjectClientContent.tsx
 app/types.ts
 app/utils.ts
 lib/mockStore.ts
@@ -141,6 +143,93 @@ next-env.d.ts
 Thumbs.db
 </file>
 
+<file path="app/components/CartModal.tsx">
+'use client';
+
+import React from 'react';
+
+interface CartItem {
+    id: number;
+    part_number: string;
+    count: number;
+}
+
+interface CartModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    items: CartItem[];
+    onDownload: () => void;
+}
+
+export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-800">プリント用カート</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="p-6 max-h-[60vh] overflow-y-auto">
+                    {items.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8">カートに部品が入っていません。</p>
+                    ) : (
+                        <table className="w-full">
+                            <thead className="text-xs text-gray-400 uppercase border-b">
+                                <tr>
+                                    <th className="text-left pb-2">部品番号</th>
+                                    <th className="text-right pb-2">ダウンロード数量</th>
+                                    <th className="text-right pb-2">ファイル名</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {items.map((item) => (
+                                    <tr key={item.id}>
+                                        <td className="py-4 font-semibold text-gray-800">{item.part_number}</td>
+                                        <td className="py-4 text-right">
+                                            <input
+                                                type="number"
+                                                defaultValue={item.count}
+                                                className="w-16 border rounded p-1 text-right"
+                                            />
+                                        </td>
+                                        <td className="py-4 text-right text-sm text-gray-500 font-mono">
+                                            {item.part_number}.stl
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+
+                <div className="p-6 bg-gray-50 flex gap-4">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 px-6 py-3 rounded-xl border border-gray-300 font-bold text-gray-600 hover:bg-white transition-colors"
+                    >
+                        戻る
+                    </button>
+                    <button
+                        onClick={onDownload}
+                        disabled={items.length === 0}
+                        className="flex-1 px-6 py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors shadow-lg disabled:bg-gray-300"
+                    >
+                        Zipで一括ダウンロード
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
 <file path="app/components/SummaryCard.tsx">
 // app/dashboard/components/SummaryCard.tsx
 import React from 'react';
@@ -174,6 +263,126 @@ export const PROCESSES: { key: Process; name: string }[] = [
   { key: 'PAINTING', name: '塗装' },
   { key: 'READY', name: '準備完了' },
 ];
+</file>
+
+<file path="app/project/[id]/ProjectClientContent.tsx">
+'use client';
+
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { PROCESSES } from '@/app/constants';
+import { CartModal } from '@/app/components/CartModal';
+
+export default function ProjectClientContent({ progressData, projectId, projectName }: any) {
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+
+    const toggleSelection = (id: number) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const cartItems = progressData
+        .filter((d: any) => selectedIds.includes(d.id))
+        .map((d: any) => ({ id: d.id, part_number: d.part_number, count: d.count }));
+
+    const handleDownload = () => {
+        alert(`${selectedIds.length}件のファイルをZipにまとめてダウンロードを開始します（モック）`);
+        setIsCartOpen(false);
+        setSelectedIds([]);
+    };
+
+    return (
+        <>
+            <div className="bg-white rounded-xl shadow-lg overflow-x-auto mb-20">
+                <table className="w-full text-left">
+                    <thead className="bg-gray-100">
+                        <tr>
+                            <th className="p-4 w-12">
+                                <input
+                                    type="checkbox"
+                                    onChange={(e) => {
+                                        if (e.target.checked) setSelectedIds(progressData.map((d: any) => d.id));
+                                        else setSelectedIds([]);
+                                    }}
+                                    className="w-5 h-5 rounded border-gray-300 text-blue-600"
+                                />
+                            </th>
+                            <th className="p-4 text-lg font-semibold text-gray-700">部品番号 / 進捗</th>
+                            <th className="p-4 text-lg font-semibold text-gray-700 text-center">ステータス</th>
+                            <th className="p-4 text-lg font-semibold text-gray-700">保管場所</th>
+                            <th className="p-4 text-right">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                        {progressData.map((data: any) => {
+                            const processInfo = PROCESSES.find(p => p.key === data.current_process);
+                            const isSelected = selectedIds.includes(data.id);
+
+                            return (
+                                <tr key={data.id} className={`${isSelected ? 'bg-blue-50' : ''} hover:bg-gray-50 transition-colors`}>
+                                    <td className="p-4">
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => toggleSelection(data.id)}
+                                            className="w-5 h-5 rounded border-gray-300 text-blue-600 cursor-pointer"
+                                        />
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="font-bold text-gray-900">{data.part_number}</div>
+                                        <div className="text-xs text-gray-400">数量: {data.count}</div>
+                                    </td>
+                                    <td className="p-4 text-center">
+                                        <span className={`px-4 py-1.5 rounded-full font-bold text-xs ${data.current_process === 'READY' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                                            }`}>
+                                            {processInfo?.name || data.current_process}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 text-sm text-gray-600">
+                                        {data.storage_cases.join(', ') || '-'}
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <Link href={`/item/${data.id}`}>
+                                            <button className="text-blue-600 hover:text-blue-800 font-semibold text-sm">詳細</button>
+                                        </Link>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* フローティング・カートボタン */}
+            {selectedIds.length > 0 && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-white border border-blue-200 shadow-2xl px-8 py-4 rounded-2xl z-50 animate-in fade-in slide-in-from-bottom-4">
+                    <div>
+                        <span className="text-2xl font-black text-blue-600">{selectedIds.length}</span>
+                        <span className="ml-2 font-bold text-gray-600">件を選択中</span>
+                    </div>
+                    <button
+                        onClick={() => setIsCartOpen(true)}
+                        className="bg-blue-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        カートに追加して確認
+                    </button>
+                </div>
+            )}
+
+            <CartModal
+                isOpen={isCartOpen}
+                onClose={() => setIsCartOpen(false)}
+                items={cartItems}
+                onDownload={handleDownload}
+            />
+        </>
+    );
+}
 </file>
 
 <file path="next.config.js">
@@ -319,134 +528,6 @@ export default function RootLayout({
       <body>{children}</body>
     </html>
   )
-}
-</file>
-
-<file path="app/project/[id]/page.tsx">
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { PROCESSES } from '@/app/constants';
-import { aggregateProgress } from '@/app/utils';
-import { SummaryCard } from '@/app/components/SummaryCard';
-import { mockStore } from '@/lib/mockStore';
-
-interface PageProps {
-    params: {
-        id: string;
-    };
-}
-
-/**
- * プロジェクト別進捗ページ
- */
-export default async function ProjectDetailPage({ params }: PageProps) {
-    const projectId = parseInt(params.id);
-    if (isNaN(projectId)) {
-        notFound();
-    }
-
-    const project = await mockStore.getProject(projectId);
-    if (!project) {
-        notFound();
-    }
-
-    // mockStoreからプロジェクトに属するデータを取得
-    const parts = await mockStore.getParts(projectId);
-    const partItems = await mockStore.getPartItems(projectId);
-
-    const totalInventory = partItems.length;
-    const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const completedToday = partItems.filter(item =>
-        item.completed_at && new Date(item.completed_at) >= today
-    ).length;
-
-    // 2. マトリックス表示用にデータを集計
-    const progressData = aggregateProgress(parts, partItems);
-
-    return (
-        <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
-            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-                <div>
-                    <Link href="/" className="text-blue-600 hover:text-blue-800 mb-2 inline-block">
-                        ← プロジェクト一覧へ戻る
-                    </Link>
-                    <h1 className="text-3xl font-bold text-gray-800">
-                        {project.name} - 進捗状況
-                    </h1>
-                    <p className="text-gray-600 mt-1">{project.description}</p>
-                </div>
-                <Link href={`/print?project_id=${projectId}`}>
-                    <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block text-lg">
-                        3Dプリント登録
-                    </span>
-                </Link>
-            </header>
-
-            {/* サマリーカード */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <SummaryCard title="総在庫数" value={totalInventory} />
-                <SummaryCard title="仕掛品数 (工程進行中)" value={inProgress} valueColor="text-orange-500" />
-                <SummaryCard title="本日完了数" value={completedToday} valueColor="text-green-500" />
-            </div>
-
-            {/* 工程進捗マトリックス */}
-            <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
-                <table className="w-full text-left">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="p-4 text-lg font-semibold text-gray-700 sticky left-0 bg-gray-100 z-10 w-64 min-w-[250px]">
-                                部品番号 / 保管ケース
-                            </th>
-                            {PROCESSES.map(proc => (
-                                <th key={proc.key} className="p-4 text-lg font-semibold text-center text-gray-700 whitespace-nowrap min-w-[120px]">
-                                    {proc.name}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                        {progressData.map(data => {
-                            const processInfo = PROCESSES.find(p => p.key === data.current_process);
-
-                            return (
-                                <tr key={data.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="p-4">
-                                        <div className="font-bold text-gray-900">{data.part_number}</div>
-                                        <div className="text-xs text-gray-400">数量: {data.count}</div>
-                                    </td>
-
-                                    <td className="p-4">
-                                        {/* 工程をバッジ形式で表示。色は工程に応じて変更可能 */}
-                                        <span className={`
-            px-4 py-2 rounded-full font-bold text-sm
-            ${data.current_process === 'READY' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}
-          `}>
-                                            {processInfo?.name || data.current_process}
-                                        </span>
-                                    </td>
-
-                                    <td className="p-4 text-sm text-gray-600">
-                                        {data.storage_cases.join(', ') || '-'}
-                                    </td>
-
-                                    <td className="p-4 text-right">
-                                        <Link href={`/item/${data.id}`}>
-                                            <button className="text-blue-600 hover:text-blue-800 font-semibold text-sm">
-                                                詳細・工程変更 →
-                                            </button>
-                                        </Link>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
 }
 </file>
 
@@ -704,6 +785,88 @@ export async function updateProcess(
   // キャッシュを更新してUIに反映
   revalidatePath('/');
   revalidatePath(`/item/${id}`);
+}
+</file>
+
+<file path="app/project/[id]/page.tsx">
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { aggregateProgress } from '@/app/utils';
+import { SummaryCard } from '@/app/components/SummaryCard';
+import { mockStore } from '@/lib/mockStore';
+import ProjectClientContent from './ProjectClientContent';
+
+interface PageProps {
+    params: {
+        id: string;
+    };
+}
+
+/**
+ * プロジェクト別進捗ページ（サーバー側）
+ */
+export default async function ProjectDetailPage({ params }: PageProps) {
+    const projectId = parseInt(params.id);
+    if (isNaN(projectId)) {
+        notFound();
+    }
+
+    const project = await mockStore.getProject(projectId);
+    if (!project) {
+        notFound();
+    }
+
+    // データの取得
+    const parts = await mockStore.getParts(projectId);
+    const partItems = await mockStore.getPartItems(projectId);
+
+    const totalInventory = partItems.length;
+    const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const completedToday = partItems.filter(item =>
+        item.completed_at && new Date(item.completed_at) >= today
+    ).length;
+
+    // 表示データの集計
+    const progressData = aggregateProgress(parts, partItems);
+
+    return (
+        <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <Link href="/" className="text-blue-600 hover:text-blue-800 mb-2 inline-block font-medium">
+                        ← プロジェクト一覧へ戻る
+                    </Link>
+                    <h1 className="text-3xl font-bold text-gray-800">
+                        {project.name}
+                    </h1>
+                    <p className="text-gray-600 mt-1">{project.description}</p>
+                </div>
+                <div className="flex gap-3">
+                    <Link href={`/print?project_id=${projectId}`}>
+                        <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block">
+                            3Dプリント登録
+                        </span>
+                    </Link>
+                </div>
+            </header>
+
+            {/* サマリーカード */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <SummaryCard title="総在庫数" value={totalInventory} />
+                <SummaryCard title="仕掛品数" value={inProgress} valueColor="text-orange-500" />
+                <SummaryCard title="本日完了数" value={completedToday} valueColor="text-green-500" />
+            </div>
+
+            {/* インタラクティブな一覧・カート機能 (クライアントコンポーネント) */}
+            <ProjectClientContent
+                progressData={progressData}
+                projectId={projectId}
+            />
+        </div>
+    );
 }
 </file>
 

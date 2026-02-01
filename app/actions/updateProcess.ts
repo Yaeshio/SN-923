@@ -11,7 +11,8 @@ import { revalidatePath } from 'next/cache'
  */
 export async function updateProcess(
   itemId: string | number,
-  nextProcess: string
+  nextProcess: string,
+  projectId?: number
 ) {
   // 文字列IDを数値に変換（mockStoreの仕様に合わせる）
   const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
@@ -29,4 +30,7 @@ export async function updateProcess(
   // キャッシュを更新してUIに反映
   revalidatePath('/');
   revalidatePath(`/item/${id}`);
+  if (projectId) {
+    revalidatePath(`/project/${projectId}`);
+  }
 }
