@@ -4,7 +4,8 @@ export type Process =
   | 'SURFACE_TREATMENT'
   | 'CUTTING'
   | 'PAINTING'
-  | 'READY';
+  | 'READY'
+  | 'DEFECTIVE';
 
 export interface Project {
   id: number;

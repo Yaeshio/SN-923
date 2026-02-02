@@ -44,6 +44,7 @@ The content is organized as follows:
 .gitignore
 app/actions/consumeItem.ts
 app/actions/createPrinted.ts
+app/actions/reportDefect.ts
 app/actions/updateProcess.ts
 app/components/CartModal.tsx
 app/components/ModelViewer.tsx
@@ -61,10 +62,10 @@ app/project/[id]/ProjectClientContent.tsx
 app/types.ts
 app/utils.ts
 lib/mockStore.ts
-models/PART-A.stl
 next.config.js
 package.json
 postcss.config.js
+public/models/PART-A.stl
 README.md
 tailwind.config.js
 tsconfig.json
@@ -73,6 +74,10 @@ tsconfig.node.json
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="app/actions/reportDefect.ts">
+
+</file>
 
 <file path=".continue/agents/new-config.yaml">
 # This is an example configuration file
@@ -233,53 +238,6 @@ export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps
 }
 </file>
 
-<file path="app/components/ModelViewer.tsx">
-'use client';
-
-import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, Stage } from '@react-three/drei';
-import { useState, useEffect, Suspense } from 'react';
-import { STLLoader } from 'three-stdlib';
-
-function STLModel({ url }: { url: string }) {
-    // URLが空の場合のガード
-    if (!url) return null;
-
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const geom = useLoader(STLLoader, url);
-    return (
-        <mesh geometry={geom}>
-            <meshStandardMaterial color="#3b82f6" />
-        </mesh>
-    );
-}
-
-export function ModelViewer({ url }: { url: string }) {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) {
-        return <div className="w-full h-[400px] bg-gray-900 rounded-lg" />;
-    }
-
-    return (
-        <div className="w-full h-[400px] bg-gray-900 rounded-lg">
-            <Canvas shadows camera={{ position: [0, 0, 20], fov: 50 }}>
-                <Suspense fallback={null}>
-                    <Stage environment="city" intensity={0.5}>
-                        <STLModel url={url} />
-                    </Stage>
-                </Suspense>
-                <OrbitControls autoRotate />
-            </Canvas>
-        </div>
-    );
-}
-</file>
-
 <file path="app/components/PreviewModal.tsx">
 'use client';
 
@@ -403,6 +361,59 @@ module.exports = {
 }
 </file>
 
+<file path="app/components/ModelViewer.tsx">
+'use client';
+
+import { Canvas, useLoader } from '@react-three/fiber';
+import { OrbitControls, Stage } from '@react-three/drei';
+import { useState, useEffect, Suspense } from 'react';
+import { STLLoader } from 'three-stdlib';
+
+function STLModel({ url }: { url: string }) {
+    if (!url) return null;
+
+    const geom = useLoader(STLLoader, url);
+
+    return (
+        /* rotation: [x, y, z] 
+           Math.PI / 2 は 90度です。
+           CADのZ上をThree.jsのY上に合わせるため、X軸を軸にマイナス90度回転させます。
+        */
+        <mesh
+            geometry={geom}
+            rotation={[-Math.PI / 2, 0, 0]}
+        >
+            <meshStandardMaterial color="#3b82f6" />
+        </mesh>
+    );
+}
+
+export function ModelViewer({ url }: { url: string }) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <div className="w-full h-[400px] bg-gray-900 rounded-lg" />;
+    }
+
+    return (
+        <div className="w-full h-[400px] bg-gray-900 rounded-lg">
+            <Canvas shadows camera={{ position: [0, 0, 20], fov: 50 }}>
+                <Suspense fallback={null}>
+                    <Stage environment="city" intensity={0.5}>
+                        <STLModel url={url} />
+                    </Stage>
+                </Suspense>
+                <OrbitControls autoRotate />
+            </Canvas>
+        </div>
+    );
+}
+</file>
+
 <file path="app/data.ts">
 // app/data.ts
 import { Part, PartItem, Project } from './types';
@@ -458,7 +469,8 @@ export type Process =
   | 'SURFACE_TREATMENT'
   | 'CUTTING'
   | 'PAINTING'
-  | 'READY';
+  | 'READY'
+  | 'DEFECTIVE';
 
 export interface Project {
   id: number;
@@ -1056,6 +1068,7 @@ import { updateProcess } from '@/app/actions/updateProcess'
 import { consumeItem } from '@/app/actions/consumeItem'
 import { PROCESSES } from '@/app/constants'
 import Link from 'next/link'
+import { reportDefect } from '@/app/actions/reportDefect'
 
 // アイテム詳細ページのコンポーネント
 export default async function ItemPage(props: { params: Promise<{ id: string }> }) {
@@ -1119,6 +1132,7 @@ export default async function ItemPage(props: { params: Promise<{ id: string }> 
 
         <hr className="border-gray-100" />
 
+
         {/* 組み込み完了フォーム */}
         <section>
           <h2 className="text-xl font-semibold mb-4 text-gray-700">このアイテムを完了にする</h2>
@@ -1128,6 +1142,28 @@ export default async function ItemPage(props: { params: Promise<{ id: string }> 
           }}>
             <button className="w-full bg-green-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-green-700 transition-colors shadow-md text-lg">
               組み込み完了（在庫から除外）
+            </button>
+          </form>
+        </section>
+        // コンポーネント内の適切な場所に追加
+        <section className="mt-12 p-6 border-2 border-red-100 rounded-xl bg-red-50">
+          <h2 className="text-xl font-bold mb-4 text-red-700">不良品・再製作の報告</h2>
+          <p className="text-sm text-red-600 mb-4">
+            この個体に問題がある場合は、不良として登録し、再製作ジョブを自動生成します。
+          </p>
+          <form action={async (formData) => {
+            'use server'
+            const reason = formData.get('reason') as string;
+            await reportDefect(id, reason);
+          }}>
+            <input
+              name="reason"
+              placeholder="不良理由（例：積層剥離、寸法不足）"
+              className="w-full p-2 mb-4 border border-red-200 rounded"
+              required
+            />
+            <button className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition-colors">
+              不良として確定し、再製作を依頼
             </button>
           </form>
         </section>

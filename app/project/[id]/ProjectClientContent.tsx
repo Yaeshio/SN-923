@@ -12,7 +12,11 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
     const [isUpdating, setIsUpdating] = useState<number | null>(null);
 
     // プレビュー表示用のステートを追加
-    const [previewPartNumber, setPreviewPartNumber] = useState<string | null>(null);
+    const [previewItem, setPreviewItem] = useState<{
+        id: number;
+        part_number: string;
+        current_process: string;
+    } | null>(null);
 
     // チェックボックス選択制御
     const toggleSelection = (id: number) => {
@@ -78,7 +82,11 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                                             <div>
                                                 {/* 部品名をクリックするとプレビューが開くように変更 */}
                                                 <button
-                                                    onClick={() => setPreviewPartNumber(data.part_number)}
+                                                    onClick={() => setPreviewItem({
+                                                        id: data.id,
+                                                        part_number: data.part_number,
+                                                        current_process: data.current_process
+                                                    })}
                                                     className="font-black text-blue-600 hover:text-blue-800 hover:underline leading-none text-left transition-colors"
                                                 >
                                                     {data.part_number}
@@ -159,9 +167,12 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
 
             {/* 追加：プレビューモーダル */}
             <PreviewModal
-                isOpen={!!previewPartNumber}
-                onClose={() => setPreviewPartNumber(null)}
-                partNumber={previewPartNumber || ''}
+                isOpen={!!previewItem}
+                onClose={() => setPreviewItem(null)}
+                partNumber={previewItem?.part_number || ''}
+                itemId={previewItem?.id}
+                currentProcess={previewItem?.current_process}
+                projectId={projectId}
             />
         </>
     );
