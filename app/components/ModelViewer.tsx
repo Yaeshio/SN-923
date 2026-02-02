@@ -6,13 +6,19 @@ import { useState, useEffect, Suspense } from 'react';
 import { STLLoader } from 'three-stdlib';
 
 function STLModel({ url }: { url: string }) {
-    // URLが空の場合のガード
     if (!url) return null;
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const geom = useLoader(STLLoader, url);
+
     return (
-        <mesh geometry={geom}>
+        /* rotation: [x, y, z] 
+           Math.PI / 2 は 90度です。
+           CADのZ上をThree.jsのY上に合わせるため、X軸を軸にマイナス90度回転させます。
+        */
+        <mesh
+            geometry={geom}
+            rotation={[-Math.PI / 2, 0, 0]}
+        >
             <meshStandardMaterial color="#3b82f6" />
         </mesh>
     );
