@@ -1,90 +1,127 @@
-import { Part, PartItem, Process, Project } from '@/app/types';
-import { parts as initialParts, partItems as initialPartItems, projects as initialProjects } from '@/app/data';
+import { Part, PartItem, Project } from '@/app/types';
+import { db } from './firebase';
+import {
+    collection,
+    getDocs,
+    doc,
+    getDoc,
+    updateDoc,
+    setDoc,
+    query,
+    where,
+    Timestamp
+} from 'firebase/firestore';
 
-// サーバーサイドでのメモリストア（シングルトン）
-// Next.jsのHMR（Hot Module Replacement）でリセットされないように global を使用
-declare global {
-    var __mock_store: {
-        projects: Project[];
-        parts: Part[];
-        partItems: PartItem[];
-    } | undefined;
-}
-
-if (!global.__mock_store) {
-    global.__mock_store = {
-        projects: [...initialProjects],
-        parts: [...initialParts],
-        partItems: [...initialPartItems],
-    };
-}
-
-const store = global.__mock_store!;
+// Firestoreのデータコンバーター（Date型の復元など）
+const dateConverter = (data: any): any => {
+    if (!data) return data;
+    const result = { ...data };
+    // completed_atなどのTimestampをDateに戻す
+    Object.keys(result).forEach(key => {
+        if (result[key] instanceof Timestamp) {
+            result[key] = result[key].toDate();
+        }
+    });
+    return result;
+};
 
 export const mockStore = {
     getProjects: async (): Promise<Project[]> => {
-        return store.projects;
+        const snapshot = await getDocs(collection(db, 'projects'));
+        return snapshot.docs.map(doc => ({
+            id: Number(doc.id),
+            ...dateConverter(doc.data())
+        })) as Project[];
     },
 
     getProject: async (id: number): Promise<Project | null> => {
-        return store.projects.find(p => p.id === id) || null;
+        const docRef = doc(db, 'projects', String(id));
+        const span = await getDoc(docRef);
+        if (!span.exists()) return null;
+        return { id: Number(span.id), ...dateConverter(span.data()) } as Project;
     },
 
     getParts: async (projectId?: number): Promise<Part[]> => {
+        let q;
         if (projectId) {
-            return store.parts.filter(p => p.project_id === projectId);
+            q = query(collection(db, 'parts'), where('project_id', '==', projectId));
+        } else {
+            q = collection(db, 'parts');
         }
-        return store.parts;
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({
+            id: Number(doc.id),
+            ...dateConverter(doc.data())
+        })) as Part[];
     },
 
     getPartItems: async (projectId?: number): Promise<PartItem[]> => {
+        // プロジェクトID指定がある場合、まず対象のPartを取得
+        let targetPartIds: number[] | null = null;
         if (projectId) {
-            const projectParts = store.parts.filter(p => p.project_id === projectId);
-            const partIds = projectParts.map(p => p.id);
-            return store.partItems.filter(i => partIds.includes(i.part_id));
+            const parts = await mockStore.getParts(projectId);
+            targetPartIds = parts.map(p => p.id);
+            if (targetPartIds.length === 0) return [];
         }
-        return store.partItems;
+
+        // Firestoreの 'in' 句は最大10個までなので、ここでは全件取得してJSでフィルタリングする方式を採用
+        // (プロトタイプのため簡易実装)
+        const snapshot = await getDocs(collection(db, 'partItems'));
+        const items = snapshot.docs.map(doc => ({
+            id: Number(doc.id),
+            ...dateConverter(doc.data())
+        })) as PartItem[];
+
+        if (targetPartIds) {
+            return items.filter(item => targetPartIds!.includes(item.part_id));
+        }
+        return items;
     },
 
     getPartItem: async (id: number): Promise<(PartItem & { parts: Part }) | null> => {
-        const item = store.partItems.find((i) => i.id === id);
-        if (!item) return null;
-        const part = store.parts.find((p) => p.id === item.part_id);
-        return { ...item, parts: part! };
+        const itemRef = doc(db, 'partItems', String(id));
+        const itemSnap = await getDoc(itemRef);
+
+        if (!itemSnap.exists()) return null;
+        const itemData = { id: Number(itemSnap.id), ...dateConverter(itemSnap.data()) } as PartItem;
+
+        // 関連するPartを取得
+        const partRef = doc(db, 'parts', String(itemData.part_id));
+        const partSnap = await getDoc(partRef);
+
+        if (!partSnap.exists()) {
+            throw new Error(`Part not found for item ${id}`);
+        }
+        const partData = { id: Number(partSnap.id), ...dateConverter(partSnap.data()) } as Part;
+
+        return { ...itemData, parts: partData };
     },
 
     updatePartItem: async (id: number, updates: Partial<PartItem>): Promise<void> => {
-        const index = store.partItems.findIndex((i) => i.id === id);
-        if (index !== -1) {
-            store.partItems[index] = { ...store.partItems[index], ...updates };
-        }
+        const docRef = doc(db, 'partItems', String(id));
+        await updateDoc(docRef, updates);
     },
 
     addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
-        const newId = Math.max(0, ...store.partItems.map((i) => i.id)) + 1;
+        // IDの自動採番（Max + 1）
+        // トランザクションを使うのが安全だが、ここでは簡易的に全件取得で最大値を計算
+        const snapshot = await getDocs(collection(db, 'partItems'));
+        const ids = snapshot.docs.map(d => Number(d.id));
+        const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
+
         const newItem = { ...item, id: newId };
-        store.partItems.push(newItem);
+        const docRef = doc(db, 'partItems', String(newId));
+        await setDoc(docRef, newItem);
+
         return newItem;
     },
 
-    // localStorage への保存・読み込み（ブラウザ側で呼び出す場合を想定）
-    // サーバーアクション内では動作しませんが、クライアントコンポーネント用として用意
+    // 互換性のためのダミーメソッド（Firestore化により不要だがエラー防止のため残す）
     saveToLocalStorage: () => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('mock_projects', JSON.stringify(store.projects));
-            localStorage.setItem('mock_parts', JSON.stringify(store.parts));
-            localStorage.setItem('mock_partItems', JSON.stringify(store.partItems));
-        }
+        console.warn('saveToLocalStorage is deprecated in Firestore mode');
     },
 
     loadFromLocalStorage: () => {
-        if (typeof window !== 'undefined') {
-            const savedProjects = localStorage.getItem('mock_projects');
-            const savedParts = localStorage.getItem('mock_parts');
-            const savedItems = localStorage.getItem('mock_partItems');
-            if (savedProjects) store.projects = JSON.parse(savedProjects);
-            if (savedParts) store.parts = JSON.parse(savedParts);
-            if (savedItems) store.partItems = JSON.parse(savedItems);
-        }
+        console.warn('loadFromLocalStorage is deprecated in Firestore mode');
     }
 };

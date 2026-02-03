@@ -41,6 +41,7 @@ The content is organized as follows:
 
 <directory_structure>
 .continue/agents/new-config.yaml
+.firebaserc
 .gitignore
 app/actions/consumeItem.ts
 app/actions/createPrinted.ts
@@ -61,12 +62,22 @@ app/project/[id]/page.tsx
 app/project/[id]/ProjectClientContent.tsx
 app/types.ts
 app/utils.ts
+firebase-data/auth_export/accounts.json
+firebase-data/auth_export/config.json
+firebase-data/firebase-export-metadata.json
+firebase-data/firestore_export/firestore_export.overall_export_metadata
+firebase-data/storage_export/buckets.json
+firebase.json
+firestore.indexes.json
+firestore.rules
+lib/firebase.ts
 lib/mockStore.ts
 next.config.js
 package.json
 postcss.config.js
 public/models/PART-A.stl
 README.md
+scripts/seed-emulator.ts
 tailwind.config.js
 tsconfig.json
 tsconfig.node.json
@@ -75,8 +86,234 @@ tsconfig.node.json
 <files>
 This section contains the contents of the repository's files.
 
-<file path="app/actions/reportDefect.ts">
+<file path=".firebaserc">
+{}
+</file>
 
+<file path="firebase-data/auth_export/accounts.json">
+{"kind":"identitytoolkit#DownloadAccountResponse","users":[]}
+</file>
+
+<file path="firebase-data/auth_export/config.json">
+{"signIn":{"allowDuplicateEmails":false},"emailPrivacyConfig":{"enableImprovedEmailPrivacy":false}}
+</file>
+
+<file path="firebase-data/firebase-export-metadata.json">
+{
+  "version": "15.5.1",
+  "firestore": {
+    "version": "1.20.2",
+    "path": "firestore_export",
+    "metadata_file": "firestore_export/firestore_export.overall_export_metadata"
+  },
+  "database": {
+    "version": "4.11.2",
+    "path": "database_export"
+  },
+  "auth": {
+    "version": "15.5.1",
+    "path": "auth_export"
+  },
+  "storage": {
+    "version": "15.5.1",
+    "path": "storage_export"
+  }
+}
+</file>
+
+<file path="firebase-data/storage_export/buckets.json">
+{
+  "buckets": [
+    {
+      "id": "demo-no-project.appspot.com"
+    }
+  ]
+}
+</file>
+
+<file path="firebase.json">
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "database": {
+      "port": 9000
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
+  }
+}
+</file>
+
+<file path="firestore.indexes.json">
+{
+  // Example (Standard Edition):
+  //
+  // "indexes": [
+  //   {
+  //     "collectionGroup": "widgets",
+  //     "queryScope": "COLLECTION",
+  //     "fields": [
+  //       { "fieldPath": "foo", "arrayConfig": "CONTAINS" },
+  //       { "fieldPath": "bar", "mode": "DESCENDING" }
+  //     ]
+  //   },
+  //
+  //  "fieldOverrides": [
+  //    {
+  //      "collectionGroup": "widgets",
+  //      "fieldPath": "baz",
+  //      "indexes": [
+  //        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+  //      ]
+  //    },
+  //   ]
+  // ]
+  //
+  // Example (Enterprise Edition):
+  //
+  // "indexes": [
+  //   {
+  //     "collectionGroup": "reviews",
+  //     "queryScope": "COLLECTION_GROUP",
+  //     "apiScope": "MONGODB_COMPATIBLE_API",
+  //     "density": "DENSE",
+  //     "multikey": false,
+  //     "fields": [
+  //       { "fieldPath": "baz", "mode": "ASCENDING" }
+  //     ]
+  //   },
+  //   {
+  //     "collectionGroup": "items",
+  //     "queryScope": "COLLECTION_GROUP",
+  //     "apiScope": "MONGODB_COMPATIBLE_API",
+  //     "density": "SPARSE_ANY",
+  //     "multikey": true,
+  //     "fields": [
+  //       { "fieldPath": "baz", "mode": "ASCENDING" }
+  //     ]
+  //   },
+  // ]
+  "indexes": [],
+  "fieldOverrides": []
+}
+</file>
+
+<file path="firestore.rules">
+rules_version='2'
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // This rule allows anyone with your database reference to view, edit,
+      // and delete all data in your database. It is useful for getting
+      // started, but it is configured to expire after 30 days because it
+      // leaves your app open to attackers. At that time, all client
+      // requests to your database will be denied.
+      //
+      // Make sure to write security rules for your app before that time, or
+      // else all client requests to your database will be denied until you
+      // update your rules.
+      allow read, write: if request.time < timestamp.date(2026, 3, 5);
+    }
+  }
+}
+</file>
+
+<file path="lib/firebase.ts">
+// lib/firebase.ts のイメージ
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+
+const firebaseConfig = {
+    projectId: "demo-bom3d-sn923", // Emulatorでは 'demo-' プレフィックスを付けるのが推奨されます
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// ローカル開発時のみエミュレータに接続
+if (process.env.NODE_ENV === 'development') {
+    const g = global as any;
+    if (!g._firebase_emulators_connected) {
+        connectFirestoreEmulator(db, 'localhost', 8080);
+        connectAuthEmulator(auth, "http://localhost:9099");
+        g._firebase_emulators_connected = true;
+        console.log("Connected to Firebase Emulators");
+    }
+}
+
+export { db, auth };
+</file>
+
+<file path="scripts/seed-emulator.ts">
+import { db } from '../lib/firebase';
+import { projects, parts, partItems } from '../app/data';
+import { collection, doc, setDoc } from 'firebase/firestore';
+
+// @ts-ignore
+process.env.NODE_ENV = 'development';
+
+async function seed() {
+    console.log('Seeding Firestore Emulator...');
+    console.log('Connecting to Firestore (ensure Emulator is running on localhost:8080)...');
+
+    // Projects
+    console.log('Seeding Projects...');
+    for (const project of projects) {
+        const projectRef = doc(db, 'projects', String(project.id));
+        await setDoc(projectRef, {
+            ...project,
+            // Ensure dates are compatible if strings
+        });
+    }
+
+    // Parts
+    console.log('Seeding Parts...');
+    for (const part of parts) {
+        const partRef = doc(db, 'parts', String(part.id));
+        await setDoc(partRef, part);
+    }
+
+    // PartItems
+    console.log('Seeding PartItems...');
+    for (const item of partItems) {
+        const itemRef = doc(db, 'partItems', String(item.id));
+        await setDoc(itemRef, {
+            ...item,
+            // Convert Date object to Timestamp or keep as Date (Client SDK handles Date -> Timestamp conversion)
+            completed_at: item.completed_at ? item.completed_at : null
+        });
+    }
+
+    console.log('Seeding completed!');
+    process.exit(0);
+}
+
+seed().catch((error) => {
+    console.error('Seeding failed:', error);
+    process.exit(1);
+});
 </file>
 
 <file path=".continue/agents/new-config.yaml">
@@ -149,6 +386,49 @@ next-env.d.ts
 
 # OS
 Thumbs.db
+</file>
+
+<file path="app/actions/reportDefect.ts">
+'use server'
+
+import { mockStore } from '@/lib/mockStore'
+import { revalidatePath } from 'next/cache'
+
+/**
+ * 不良を報告し、再製作ジョブを生成するサーバーアクション
+ * @param itemId - 不良が発生したアイテムのID
+ * @param reason - 不良の理由
+ */
+export async function reportDefect(itemId: number | string, reason: string) {
+    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+    const item = await mockStore.getPartItem(id);
+    if (!item) {
+        console.error(`Item ${id} not found`);
+        return;
+    }
+
+    // 1. 現状のアイテムを「不良(DEFECTIVE)」にする
+    await mockStore.updatePartItem(id, {
+        current_process: 'DEFECTIVE'
+    });
+
+    // 2. 新しいジョブ（再製作）を生成する
+    // 元のアイテムの情報を引き継ぎつつ、工程を「未プリント」に戻す
+    await mockStore.addPartItem({
+        part_id: item.part_id,
+        storage_case: `${item.storage_case} (RE)`, // 再製作であることを示す
+        current_process: 'UNPRINTED',
+        completed_at: null
+    });
+
+    console.log(`Reported defect for item ${id}: ${reason}`);
+
+    // キャッシュを更新
+    revalidatePath('/');
+    revalidatePath(`/item/${id}`);
+    revalidatePath(`/project/${item.parts.project_id}`);
+}
 </file>
 
 <file path="app/components/CartModal.tsx">
@@ -231,45 +511,6 @@ export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps
                     >
                         Zipで一括ダウンロード
                     </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="app/components/PreviewModal.tsx">
-'use client';
-
-import { Suspense } from 'react';
-import { ModelViewer } from './ModelViewer';
-
-interface PreviewModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    partNumber: string;
-}
-
-export function PreviewModal({ isOpen, onClose, partNumber }: PreviewModalProps) {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[110] p-4">
-            <div className="bg-white rounded-2xl w-full max-w-3xl overflow-hidden">
-                <div className="p-4 border-b flex justify-between items-center">
-                    <h3 className="text-xl font-bold">{partNumber} の3Dプレビュー</h3>
-                    <button onClick={onClose} className="text-gray-500 hover:text-black text-2xl">&times;</button>
-                </div>
-                <div className="p-6">
-                    {/* パスは構成に合わせて変更してください */}
-                    {isOpen && partNumber && (
-                        <Suspense fallback={<div className="flex justify-center items-center h-[400px] bg-gray-100 rounded-lg text-gray-500">Loading 3D Model...</div>}>
-                            <ModelViewer url={`/models/${partNumber}.stl`} />
-                        </Suspense>
-                    )}
-                    <p className="mt-4 text-sm text-gray-500 text-center">
-                        ドラッグで回転、ホイールでズームできます
-                    </p>
                 </div>
             </div>
         </div>
@@ -414,6 +655,146 @@ export function ModelViewer({ url }: { url: string }) {
 }
 </file>
 
+<file path="app/components/PreviewModal.tsx">
+'use client'
+
+import { useState, useTransition } from 'react'
+import { ModelViewer } from './ModelViewer'
+import { PROCESSES } from '@/app/constants'
+import { updateProcess } from '@/app/actions/updateProcess'
+import { reportDefect } from '@/app/actions/reportDefect'
+
+interface PreviewModalProps {
+    isOpen: boolean
+    onClose: () => void
+    partNumber: string
+    itemId?: number
+    currentProcess?: string
+    projectId?: number
+}
+
+export function PreviewModal({
+    isOpen,
+    onClose,
+    partNumber,
+    itemId,
+    currentProcess,
+    projectId
+}: PreviewModalProps) {
+    const [isPending, startTransition] = useTransition()
+    const [defectReason, setDefectReason] = useState('')
+
+    if (!isOpen) return null
+
+    // 現在の工程より「前」の工程を抽出（差し戻し用）
+    const currentIndex = PROCESSES.findIndex(p => p.key === currentProcess)
+    const previousProcesses = PROCESSES.slice(0, currentIndex)
+
+    const handleUpdateStatus = (statusKey: string) => {
+        if (!itemId || !projectId) return
+        startTransition(async () => {
+            await updateProcess(itemId, statusKey, projectId)
+            onClose()
+        })
+    }
+
+    const handleReportDefect = () => {
+        if (!itemId || !defectReason) return
+        startTransition(async () => {
+            await reportDefect(itemId, defectReason)
+            setDefectReason('')
+            onClose()
+        })
+    }
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+            <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+
+                {/* ヘッダー */}
+                <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+                    <div>
+                        <h3 className="text-2xl font-black text-gray-900">{partNumber}</h3>
+                        <p className="text-sm text-gray-500 font-bold">ITEM ID: {itemId} / CURRENT: {currentProcess}</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors text-2xl font-bold"
+                    >
+                        &times;
+                    </button>
+                </div>
+
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                    {/* 左側：3Dプレビュー */}
+                    <div className="flex-[2] bg-gray-100 relative min-h-[300px]">
+                        <ModelViewer url={`/models/${partNumber}.stl`} />
+                        <div className="absolute bottom-4 left-4 bg-white/80 px-3 py-1 rounded text-xs font-bold text-gray-500">
+                            3D PREVIEW MODE
+                        </div>
+                    </div>
+
+                    {/* 右側：操作パネル */}
+                    <div className="flex-1 border-l bg-white p-6 overflow-y-auto space-y-8">
+
+                        {/* 1. 工程の差し戻し */}
+                        <section>
+                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">工程を差し戻す (手戻り)</h4>
+                            <div className="grid grid-cols-1 gap-2">
+                                {previousProcesses.length > 0 ? (
+                                    previousProcesses.map((proc) => (
+                                        <button
+                                            key={proc.key}
+                                            onClick={() => handleUpdateStatus(proc.key)}
+                                            disabled={isPending}
+                                            className="text-left px-4 py-3 border-2 border-orange-100 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all group"
+                                        >
+                                            <span className="text-xs font-bold text-orange-400 block uppercase">{proc.key}へ戻す</span>
+                                            <span className="font-bold text-gray-700 group-hover:text-orange-700">{proc.name}</span>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">差し戻せる前の工程はありません</p>
+                                )}
+                            </div>
+                        </section>
+
+                        <hr className="border-gray-100" />
+
+                        {/* 2. 不良報告 */}
+                        <section className="p-5 border-2 border-red-100 rounded-2xl bg-red-50/30">
+                            <h4 className="text-lg font-black text-red-700 mb-2">不良を報告する</h4>
+                            <p className="text-xs text-red-600 mb-4 leading-relaxed font-medium">
+                                個体に欠陥がある場合、不良として確定させます。実行すると自動的に再製作ジョブが生成されます。
+                            </p>
+                            <div className="space-y-3">
+                                <textarea
+                                    value={defectReason}
+                                    onChange={(e) => setDefectReason(e.target.value)}
+                                    placeholder="不良の理由を入力してください..."
+                                    className="w-full p-3 border-2 border-red-100 rounded-xl text-sm focus:border-red-500 outline-none resize-none h-24 font-medium"
+                                />
+                                <button
+                                    onClick={handleReportDefect}
+                                    disabled={isPending || !defectReason}
+                                    className={`w-full py-4 rounded-xl font-black transition-all shadow-md ${isPending || !defectReason
+                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                            : 'bg-red-600 text-white hover:bg-red-700 active:scale-95'
+                                        }`}
+                                >
+                                    {isPending ? '処理中...' : '不良確定 & 再製作依頼'}
+                                </button>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+</file>
+
 <file path="app/data.ts">
 // app/data.ts
 import { Part, PartItem, Project } from './types';
@@ -462,44 +843,6 @@ export default function RootLayout({
 }
 </file>
 
-<file path="app/types.ts">
-export type Process =
-  | 'UNPRINTED'
-  | 'PRINTED'
-  | 'SURFACE_TREATMENT'
-  | 'CUTTING'
-  | 'PAINTING'
-  | 'READY'
-  | 'DEFECTIVE';
-
-export interface Project {
-  id: number;
-  name: string;
-  description: string;
-  deadline: string;
-}
-
-export interface Part {
-  id: number;
-  part_number: string;
-  project_id: number;
-}
-
-export interface PartItem {
-  id: number;
-  part_id: number;
-  storage_case: string;
-  current_process: Process;
-  completed_at: Date | null;
-}
-
-export interface ProgressData {
-  part_number: string;
-  storage_cases: string[];
-  counts: Record<Process, number>;
-}
-</file>
-
 <file path="app/utils.ts">
 // app/utils.ts
 import { Part, PartItem, ProgressData, Process } from './types';
@@ -532,94 +875,131 @@ export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] =
 </file>
 
 <file path="lib/mockStore.ts">
-import { Part, PartItem, Process, Project } from '@/app/types';
-import { parts as initialParts, partItems as initialPartItems, projects as initialProjects } from '@/app/data';
+import { Part, PartItem, Project } from '@/app/types';
+import { db } from './firebase';
+import {
+    collection,
+    getDocs,
+    doc,
+    getDoc,
+    updateDoc,
+    setDoc,
+    query,
+    where,
+    Timestamp
+} from 'firebase/firestore';
 
-// サーバーサイドでのメモリストア（シングルトン）
-// Next.jsのHMR（Hot Module Replacement）でリセットされないように global を使用
-declare global {
-    var __mock_store: {
-        projects: Project[];
-        parts: Part[];
-        partItems: PartItem[];
-    } | undefined;
-}
-
-if (!global.__mock_store) {
-    global.__mock_store = {
-        projects: [...initialProjects],
-        parts: [...initialParts],
-        partItems: [...initialPartItems],
-    };
-}
-
-const store = global.__mock_store!;
+// Firestoreのデータコンバーター（Date型の復元など）
+const dateConverter = (data: any): any => {
+    if (!data) return data;
+    const result = { ...data };
+    // completed_atなどのTimestampをDateに戻す
+    Object.keys(result).forEach(key => {
+        if (result[key] instanceof Timestamp) {
+            result[key] = result[key].toDate();
+        }
+    });
+    return result;
+};
 
 export const mockStore = {
     getProjects: async (): Promise<Project[]> => {
-        return store.projects;
+        const snapshot = await getDocs(collection(db, 'projects'));
+        return snapshot.docs.map(doc => ({
+            id: Number(doc.id),
+            ...dateConverter(doc.data())
+        })) as Project[];
     },
 
     getProject: async (id: number): Promise<Project | null> => {
-        return store.projects.find(p => p.id === id) || null;
+        const docRef = doc(db, 'projects', String(id));
+        const span = await getDoc(docRef);
+        if (!span.exists()) return null;
+        return { id: Number(span.id), ...dateConverter(span.data()) } as Project;
     },
 
     getParts: async (projectId?: number): Promise<Part[]> => {
+        let q;
         if (projectId) {
-            return store.parts.filter(p => p.project_id === projectId);
+            q = query(collection(db, 'parts'), where('project_id', '==', projectId));
+        } else {
+            q = collection(db, 'parts');
         }
-        return store.parts;
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({
+            id: Number(doc.id),
+            ...dateConverter(doc.data())
+        })) as Part[];
     },
 
     getPartItems: async (projectId?: number): Promise<PartItem[]> => {
+        // プロジェクトID指定がある場合、まず対象のPartを取得
+        let targetPartIds: number[] | null = null;
         if (projectId) {
-            const projectParts = store.parts.filter(p => p.project_id === projectId);
-            const partIds = projectParts.map(p => p.id);
-            return store.partItems.filter(i => partIds.includes(i.part_id));
+            const parts = await mockStore.getParts(projectId);
+            targetPartIds = parts.map(p => p.id);
+            if (targetPartIds.length === 0) return [];
         }
-        return store.partItems;
+
+        // Firestoreの 'in' 句は最大10個までなので、ここでは全件取得してJSでフィルタリングする方式を採用
+        // (プロトタイプのため簡易実装)
+        const snapshot = await getDocs(collection(db, 'partItems'));
+        const items = snapshot.docs.map(doc => ({
+            id: Number(doc.id),
+            ...dateConverter(doc.data())
+        })) as PartItem[];
+
+        if (targetPartIds) {
+            return items.filter(item => targetPartIds!.includes(item.part_id));
+        }
+        return items;
     },
 
     getPartItem: async (id: number): Promise<(PartItem & { parts: Part }) | null> => {
-        const item = store.partItems.find((i) => i.id === id);
-        if (!item) return null;
-        const part = store.parts.find((p) => p.id === item.part_id);
-        return { ...item, parts: part! };
+        const itemRef = doc(db, 'partItems', String(id));
+        const itemSnap = await getDoc(itemRef);
+
+        if (!itemSnap.exists()) return null;
+        const itemData = { id: Number(itemSnap.id), ...dateConverter(itemSnap.data()) } as PartItem;
+
+        // 関連するPartを取得
+        const partRef = doc(db, 'parts', String(itemData.part_id));
+        const partSnap = await getDoc(partRef);
+
+        if (!partSnap.exists()) {
+            throw new Error(`Part not found for item ${id}`);
+        }
+        const partData = { id: Number(partSnap.id), ...dateConverter(partSnap.data()) } as Part;
+
+        return { ...itemData, parts: partData };
     },
 
     updatePartItem: async (id: number, updates: Partial<PartItem>): Promise<void> => {
-        const index = store.partItems.findIndex((i) => i.id === id);
-        if (index !== -1) {
-            store.partItems[index] = { ...store.partItems[index], ...updates };
-        }
+        const docRef = doc(db, 'partItems', String(id));
+        await updateDoc(docRef, updates);
     },
 
     addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
-        const newId = Math.max(0, ...store.partItems.map((i) => i.id)) + 1;
+        // IDの自動採番（Max + 1）
+        // トランザクションを使うのが安全だが、ここでは簡易的に全件取得で最大値を計算
+        const snapshot = await getDocs(collection(db, 'partItems'));
+        const ids = snapshot.docs.map(d => Number(d.id));
+        const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
+
         const newItem = { ...item, id: newId };
-        store.partItems.push(newItem);
+        const docRef = doc(db, 'partItems', String(newId));
+        await setDoc(docRef, newItem);
+
         return newItem;
     },
 
-    // localStorage への保存・読み込み（ブラウザ側で呼び出す場合を想定）
-    // サーバーアクション内では動作しませんが、クライアントコンポーネント用として用意
+    // 互換性のためのダミーメソッド（Firestore化により不要だがエラー防止のため残す）
     saveToLocalStorage: () => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('mock_projects', JSON.stringify(store.projects));
-            localStorage.setItem('mock_parts', JSON.stringify(store.parts));
-            localStorage.setItem('mock_partItems', JSON.stringify(store.partItems));
-        }
+        console.warn('saveToLocalStorage is deprecated in Firestore mode');
     },
 
     loadFromLocalStorage: () => {
-        if (typeof window !== 'undefined') {
-            const savedProjects = localStorage.getItem('mock_projects');
-            const savedParts = localStorage.getItem('mock_parts');
-            const savedItems = localStorage.getItem('mock_partItems');
-            if (savedProjects) store.projects = JSON.parse(savedProjects);
-            if (savedParts) store.parts = JSON.parse(savedParts);
-            if (savedItems) store.partItems = JSON.parse(savedItems);
-        }
+        console.warn('loadFromLocalStorage is deprecated in Firestore mode');
     }
 };
 </file>
@@ -735,174 +1115,41 @@ export async function createPrinted(
 }
 </file>
 
-<file path="app/project/[id]/ProjectClientContent.tsx">
-'use client';
+<file path="app/types.ts">
+export type Process =
+  | 'UNPRINTED'
+  | 'PRINTED'
+  | 'SURFACE_TREATMENT'
+  | 'CUTTING'
+  | 'PAINTING'
+  | 'READY'
+  | 'DEFECTIVE';
 
-import React, { useState } from 'react';
-import { PROCESSES } from '@/app/constants';
-import { CartModal } from '@/app/components/CartModal';
-import { updateProcess } from '@/app/actions/updateProcess';
-import { PreviewModal } from '@/app/components/PreviewModal'; // 新設したコンポーネント
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  deadline: string;
+}
 
-export default function ProjectClientContent({ progressData, projectId }: { progressData: any[], projectId: number }) {
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isUpdating, setIsUpdating] = useState<number | null>(null);
+export interface Part {
+  id: number;
+  part_number: string;
+  project_id: number;
+}
 
-    // プレビュー表示用のステートを追加
-    const [previewPartNumber, setPreviewPartNumber] = useState<string | null>(null);
+export interface PartItem {
+  id: number;
+  part_id: number;
+  storage_case: string;
+  current_process: Process;
+  completed_at: Date | null;
+}
 
-    // チェックボックス選択制御
-    const toggleSelection = (id: number) => {
-        setSelectedIds(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        );
-    };
-
-    // 工程を一つ進めるクイック操作
-    const handleQuickForward = async (itemId: number, currentProcKey: string) => {
-        const currentIndex = PROCESSES.findIndex(p => p.key === currentProcKey);
-        if (currentIndex < PROCESSES.length - 1) {
-            setIsUpdating(itemId);
-            const nextProcess = PROCESSES[currentIndex + 1].key;
-            await updateProcess(itemId, nextProcess, projectId);
-            setIsUpdating(null);
-        }
-    };
-
-    const cartItems = progressData
-        .filter(d => selectedIds.includes(d.id))
-        .map(d => ({ id: d.id, part_number: d.part_number, count: d.count }));
-
-    return (
-        <>
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mb-24">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="bg-gray-100 border-b border-gray-200">
-                                <th className="sticky left-0 z-30 bg-gray-100 p-4 border-r border-gray-200 min-w-[240px] text-left">
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.length === progressData.length && progressData.length > 0}
-                                            onChange={(e) => {
-                                                if (e.target.checked) setSelectedIds(progressData.map(d => d.id));
-                                                else setSelectedIds([]);
-                                            }}
-                                            className="w-5 h-5 rounded border-gray-300 text-blue-600"
-                                        />
-                                        <span className="text-sm font-bold text-gray-600 uppercase">部品番号 / 数量</span>
-                                    </div>
-                                </th>
-                                {PROCESSES.map(proc => (
-                                    <th key={proc.key} className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-center border-r border-gray-200 min-w-[160px]">
-                                        {proc.name}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {progressData.map(data => (
-                                <tr key={data.id} className="hover:bg-gray-50 transition-colors group">
-                                    <td className="sticky left-0 z-20 bg-white group-hover:bg-gray-50 p-4 border-r border-gray-200 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                                        <div className="flex items-start gap-3">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.includes(data.id)}
-                                                onChange={() => toggleSelection(data.id)}
-                                                className="w-5 h-5 mt-1 rounded border-gray-300 text-blue-600 cursor-pointer"
-                                            />
-                                            <div>
-                                                {/* 部品名をクリックするとプレビューが開くように変更 */}
-                                                <button
-                                                    onClick={() => setPreviewPartNumber(data.part_number)}
-                                                    className="font-black text-blue-600 hover:text-blue-800 hover:underline leading-none text-left transition-colors"
-                                                >
-                                                    {data.part_number}
-                                                </button>
-                                                <div className="text-xs text-gray-400 mt-2 font-bold uppercase">保管: {data.storage_cases.join(', ') || '-'}</div>
-                                                <div className="mt-1 inline-block bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold text-gray-500">
-                                                    QTY: {data.count}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-
-                                    {PROCESSES.map(proc => {
-                                        const isCurrent = data.current_process === proc.key;
-                                        return (
-                                            <td key={proc.key} className={`p-2 border-r border-gray-100 align-middle ${isCurrent ? 'bg-blue-50/30' : ''}`}>
-                                                {isCurrent && (
-                                                    <div
-                                                        onClick={() => handleQuickForward(data.id, proc.key)}
-                                                        className={`
-                                                            relative group/card cursor-pointer p-3 rounded-xl shadow-md border-b-4 transition-all duration-200 transform hover:-translate-y-1 active:scale-95
-                                                            ${proc.key === 'READY'
-                                                                ? 'bg-green-600 border-green-800 text-white'
-                                                                : 'bg-white border-blue-600 text-blue-900'}
-                                                            ${isUpdating === data.id ? 'opacity-50 animate-pulse' : ''}
-                                                        `}
-                                                    >
-                                                        <div className="text-[10px] font-black uppercase opacity-60 mb-1">
-                                                            {isUpdating === data.id ? 'Updating...' : 'Current Status'}
-                                                        </div>
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="font-bold text-sm">加工中</span>
-                                                            {proc.key !== 'READY' && (
-                                                                <span className="text-lg font-bold group-hover/card:translate-x-1 transition-transform">→</span>
-                                                            )}
-                                                        </div>
-                                                        {proc.key !== 'READY' && (
-                                                            <div className="absolute -bottom-10 left-0 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/card:opacity-100 transition-opacity z-50 whitespace-nowrap">
-                                                                クリックで次へ進む
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* フローティングバー */}
-            {selectedIds.length > 0 && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-8 bg-gray-900 text-white px-8 py-4 rounded-2xl z-50 shadow-2xl animate-in fade-in slide-in-from-bottom-4">
-                    <div className="flex flex-col">
-                        <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Selected</span>
-                        <span className="text-xl font-black text-blue-400">{selectedIds.length} <span className="text-sm">Items</span></span>
-                    </div>
-                    <div className="h-10 w-[1px] bg-gray-700"></div>
-                    <button
-                        onClick={() => setIsCartOpen(true)}
-                        className="bg-blue-500 text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-400 transition-colors flex items-center gap-2"
-                    >
-                        カートに追加 (STL)
-                    </button>
-                </div>
-            )}
-
-            {/* カートモーダル */}
-            <CartModal
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                items={cartItems}
-                onDownload={() => alert("Zipダウンロードを開始します")}
-            />
-
-            {/* 追加：プレビューモーダル */}
-            <PreviewModal
-                isOpen={!!previewPartNumber}
-                onClose={() => setPreviewPartNumber(null)}
-                partNumber={previewPartNumber || ''}
-            />
-        </>
-    );
+export interface ProgressData {
+  part_number: string;
+  storage_cases: string[];
+  counts: Record<Process, number>;
 }
 </file>
 
@@ -1028,6 +1275,188 @@ export default async function ProjectDetailPage(props: PageProps) {
 }
 </file>
 
+<file path="app/project/[id]/ProjectClientContent.tsx">
+'use client';
+
+import React, { useState } from 'react';
+import { PROCESSES } from '@/app/constants';
+import { CartModal } from '@/app/components/CartModal';
+import { updateProcess } from '@/app/actions/updateProcess';
+import { PreviewModal } from '@/app/components/PreviewModal'; // 新設したコンポーネント
+
+export default function ProjectClientContent({ progressData, projectId }: { progressData: any[], projectId: number }) {
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isUpdating, setIsUpdating] = useState<number | null>(null);
+
+    // プレビュー表示用のステートを追加
+    const [previewItem, setPreviewItem] = useState<{
+        id: number;
+        part_number: string;
+        current_process: string;
+    } | null>(null);
+
+    // チェックボックス選択制御
+    const toggleSelection = (id: number) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    // 工程を一つ進めるクイック操作
+    const handleQuickForward = async (itemId: number, currentProcKey: string) => {
+        const currentIndex = PROCESSES.findIndex(p => p.key === currentProcKey);
+        if (currentIndex < PROCESSES.length - 1) {
+            setIsUpdating(itemId);
+            const nextProcess = PROCESSES[currentIndex + 1].key;
+            await updateProcess(itemId, nextProcess, projectId);
+            setIsUpdating(null);
+        }
+    };
+
+    const cartItems = progressData
+        .filter(d => selectedIds.includes(d.id))
+        .map(d => ({ id: d.id, part_number: d.part_number, count: d.count }));
+
+    return (
+        <>
+            <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mb-24">
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="bg-gray-100 border-b border-gray-200">
+                                <th className="sticky left-0 z-30 bg-gray-100 p-4 border-r border-gray-200 min-w-[240px] text-left">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.length === progressData.length && progressData.length > 0}
+                                            onChange={(e) => {
+                                                if (e.target.checked) setSelectedIds(progressData.map(d => d.id));
+                                                else setSelectedIds([]);
+                                            }}
+                                            className="w-5 h-5 rounded border-gray-300 text-blue-600"
+                                        />
+                                        <span className="text-sm font-bold text-gray-600 uppercase">部品番号 / 数量</span>
+                                    </div>
+                                </th>
+                                {PROCESSES.map(proc => (
+                                    <th key={proc.key} className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-center border-r border-gray-200 min-w-[160px]">
+                                        {proc.name}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {progressData.map(data => (
+                                <tr key={data.id} className="hover:bg-gray-50 transition-colors group">
+                                    <td className="sticky left-0 z-20 bg-white group-hover:bg-gray-50 p-4 border-r border-gray-200 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                                        <div className="flex items-start gap-3">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(data.id)}
+                                                onChange={() => toggleSelection(data.id)}
+                                                className="w-5 h-5 mt-1 rounded border-gray-300 text-blue-600 cursor-pointer"
+                                            />
+                                            <div>
+                                                {/* 部品名をクリックするとプレビューが開くように変更 */}
+                                                <button
+                                                    onClick={() => setPreviewItem({
+                                                        id: data.id,
+                                                        part_number: data.part_number,
+                                                        current_process: data.current_process
+                                                    })}
+                                                    className="font-black text-blue-600 hover:text-blue-800 hover:underline leading-none text-left transition-colors"
+                                                >
+                                                    {data.part_number}
+                                                </button>
+                                                <div className="text-xs text-gray-400 mt-2 font-bold uppercase">保管: {data.storage_cases.join(', ') || '-'}</div>
+                                                <div className="mt-1 inline-block bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold text-gray-500">
+                                                    QTY: {data.count}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    {PROCESSES.map(proc => {
+                                        const isCurrent = data.current_process === proc.key;
+                                        return (
+                                            <td key={proc.key} className={`p-2 border-r border-gray-100 align-middle ${isCurrent ? 'bg-blue-50/30' : ''}`}>
+                                                {isCurrent && (
+                                                    <div
+                                                        onClick={() => handleQuickForward(data.id, proc.key)}
+                                                        className={`
+                                                            relative group/card cursor-pointer p-3 rounded-xl shadow-md border-b-4 transition-all duration-200 transform hover:-translate-y-1 active:scale-95
+                                                            ${proc.key === 'READY'
+                                                                ? 'bg-green-600 border-green-800 text-white'
+                                                                : 'bg-white border-blue-600 text-blue-900'}
+                                                            ${isUpdating === data.id ? 'opacity-50 animate-pulse' : ''}
+                                                        `}
+                                                    >
+                                                        <div className="text-[10px] font-black uppercase opacity-60 mb-1">
+                                                            {isUpdating === data.id ? 'Updating...' : 'Current Status'}
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-bold text-sm">加工中</span>
+                                                            {proc.key !== 'READY' && (
+                                                                <span className="text-lg font-bold group-hover/card:translate-x-1 transition-transform">→</span>
+                                                            )}
+                                                        </div>
+                                                        {proc.key !== 'READY' && (
+                                                            <div className="absolute -bottom-10 left-0 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/card:opacity-100 transition-opacity z-50 whitespace-nowrap">
+                                                                クリックで次へ進む
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* フローティングバー */}
+            {selectedIds.length > 0 && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-8 bg-gray-900 text-white px-8 py-4 rounded-2xl z-50 shadow-2xl animate-in fade-in slide-in-from-bottom-4">
+                    <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Selected</span>
+                        <span className="text-xl font-black text-blue-400">{selectedIds.length} <span className="text-sm">Items</span></span>
+                    </div>
+                    <div className="h-10 w-[1px] bg-gray-700"></div>
+                    <button
+                        onClick={() => setIsCartOpen(true)}
+                        className="bg-blue-500 text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-400 transition-colors flex items-center gap-2"
+                    >
+                        カートに追加 (STL)
+                    </button>
+                </div>
+            )}
+
+            {/* カートモーダル */}
+            <CartModal
+                isOpen={isCartOpen}
+                onClose={() => setIsCartOpen(false)}
+                items={cartItems}
+                onDownload={() => alert("Zipダウンロードを開始します")}
+            />
+
+            {/* 追加：プレビューモーダル */}
+            <PreviewModal
+                isOpen={!!previewItem}
+                onClose={() => setPreviewItem(null)}
+                partNumber={previewItem?.part_number || ''}
+                itemId={previewItem?.id}
+                currentProcess={previewItem?.current_process}
+                projectId={projectId}
+            />
+        </>
+    );
+}
+</file>
+
 <file path="package.json">
 {
   "name": "sn-923",
@@ -1044,6 +1473,7 @@ export default async function ProjectDetailPage(props: PageProps) {
     "@react-three/fiber": "^9.5.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/three": "^0.182.0",
+    "firebase": "^12.8.0",
     "next": "^16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -1062,108 +1492,94 @@ export default async function ProjectDetailPage(props: PageProps) {
 </file>
 
 <file path="app/item/[id]/page.tsx">
-// mockStoreとサーバーアクションをインポート
 import { mockStore } from '@/lib/mockStore'
 import { updateProcess } from '@/app/actions/updateProcess'
 import { consumeItem } from '@/app/actions/consumeItem'
+import { reportDefect } from '@/app/actions/reportDefect' // アクションをインポート
 import { PROCESSES } from '@/app/constants'
 import Link from 'next/link'
-import { reportDefect } from '@/app/actions/reportDefect'
 
-// アイテム詳細ページのコンポーネント
 export default async function ItemPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
-  // 文字列IDを数値に変換
   const id = parseInt(params.id, 10);
-
-  // mockStoreから特定の部品アイテムのデータを取得
   const data = await mockStore.getPartItem(id);
 
   if (!data) {
-    return (
-      <div className="p-8">
-        <p>アイテムが見つかりませんでした (ID: {id})</p>
-        <Link href="/" className="text-blue-600 underline">ダッシュボードに戻る</Link>
-      </div>
-    );
+    return <div className="p-8">アイテムが見つかりませんでした</div>;
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10">
-      <Link href={`/project/${data.parts.project_id}`} className="text-sm text-gray-500 hover:text-blue-600 mb-4 inline-block">
-        ← プロジェクト別進捗に戻る
+    <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10 border border-gray-100">
+      <Link href={`/project/${data.parts.project_id}`} className="text-sm text-blue-600 hover:underline mb-6 inline-block font-bold">
+        ← プロジェクト進捗に戻る
       </Link>
 
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        部品番号: {data.parts.part_number}
-      </h1>
-
-      <div className="bg-blue-50 p-4 rounded-lg mb-8 border border-blue-100">
-        <p className="text-lg">
-          <span className="font-semibold text-gray-600">現在工程:</span>{' '}
-          <span className="text-blue-700 font-bold">{data.current_process}</span>
-        </p>
-        <p className="text-sm text-gray-500 mt-1">保管ケース: {data.storage_case}</p>
+      <div className="flex justify-between items-start mb-6">
+        <h1 className="text-3xl font-black text-gray-900">{data.parts.part_number}</h1>
+        <span className={`px-3 py-1 rounded-full text-xs font-bold ${data.current_process === 'DEFECTIVE' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+          ID: {id}
+        </span>
       </div>
 
-      <div className="space-y-8">
-        {/* 工程更新フォーム */}
+      {/* ステータス表示 */}
+      <div className={`p-4 rounded-lg mb-8 border ${data.current_process === 'DEFECTIVE' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
+        <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Current Status</p>
+        <p className={`text-2xl font-black ${data.current_process === 'DEFECTIVE' ? 'text-red-700' : 'text-blue-800'}`}>
+          {PROCESSES.find(p => p.key === data.current_process)?.name || data.current_process}
+        </p>
+      </div>
+
+      <div className="space-y-10">
+        {/* 1. 通常の工程更新 */}
         <section>
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">工程を更新する</h2>
+          <h2 className="text-sm font-bold text-gray-400 uppercase mb-3">工程を進める</h2>
           <form action={async (formData) => {
             'use server'
             const next = formData.get('next') as string;
-            await updateProcess(id, next);
-          }} className="flex gap-4">
-            <select
-              name="next"
-              defaultValue={data.current_process}
-              className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            >
-              {PROCESSES.map(proc => (
-                <option key={proc.key} value={proc.key}>{proc.name}</option>
-              ))}
+            await updateProcess(id, next, data.parts.project_id);
+          }} className="flex gap-2">
+            <select name="next" defaultValue={data.current_process} className="flex-1 p-3 border rounded-lg font-bold">
+              {PROCESSES.map(proc => <option key={proc.key} value={proc.key}>{proc.name}</option>)}
             </select>
-            <button className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
-              工程更新
-            </button>
+            <button className="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition-colors">更新</button>
           </form>
         </section>
 
-        <hr className="border-gray-100" />
+        {/* 2. 不良報告セクション（ここが重要） */}
+        {data.current_process !== 'DEFECTIVE' && (
+          <section className="p-6 border-2 border-red-200 rounded-2xl bg-red-50/50">
+            <h2 className="text-lg font-black text-red-700 mb-2 flex items-center gap-2">
+              ⚠️ 不良・再製作の報告
+            </h2>
+            <p className="text-sm text-red-600 mb-4 font-medium">
+              この個体に欠陥がある場合、ここで報告します。この個体は「不良」として記録され、自動的に「未プリント」の新しいジョブが作成されます。
+            </p>
+            <form action={async (formData) => {
+              'use server'
+              const reason = formData.get('reason') as string;
+              await reportDefect(id, reason);
+            }} className="space-y-3">
+              <input
+                name="reason"
+                placeholder="不良理由（例：積層剥離、寸法誤差）"
+                className="w-full p-3 border-2 border-red-100 rounded-xl focus:border-red-500 outline-none bg-white font-medium"
+                required
+              />
+              <button className="w-full bg-red-600 text-white font-black py-4 rounded-xl hover:bg-red-700 transition-all shadow-lg active:scale-[0.98]">
+                不良を確定し、再製作を依頼
+              </button>
+            </form>
+          </section>
+        )}
 
-
-        {/* 組み込み完了フォーム */}
+        {/* 3. 完了処理 */}
         <section>
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">このアイテムを完了にする</h2>
           <form action={async () => {
             'use server'
             await consumeItem(id);
           }}>
-            <button className="w-full bg-green-600 text-white font-bold py-4 px-8 rounded-lg hover:bg-green-700 transition-colors shadow-md text-lg">
-              組み込み完了（在庫から除外）
-            </button>
-          </form>
-        </section>
-        // コンポーネント内の適切な場所に追加
-        <section className="mt-12 p-6 border-2 border-red-100 rounded-xl bg-red-50">
-          <h2 className="text-xl font-bold mb-4 text-red-700">不良品・再製作の報告</h2>
-          <p className="text-sm text-red-600 mb-4">
-            この個体に問題がある場合は、不良として登録し、再製作ジョブを自動生成します。
-          </p>
-          <form action={async (formData) => {
-            'use server'
-            const reason = formData.get('reason') as string;
-            await reportDefect(id, reason);
-          }}>
-            <input
-              name="reason"
-              placeholder="不良理由（例：積層剥離、寸法不足）"
-              className="w-full p-2 mb-4 border border-red-200 rounded"
-              required
-            />
-            <button className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition-colors">
-              不良として確定し、再製作を依頼
+            <button className="w-full border-2 border-green-600 text-green-600 font-black py-4 rounded-xl hover:bg-green-50 transition-colors">
+              組み込み完了（ストックから除外）
             </button>
           </form>
         </section>
