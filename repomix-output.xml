@@ -86,236 +86,6 @@ tsconfig.node.json
 <files>
 This section contains the contents of the repository's files.
 
-<file path=".firebaserc">
-{}
-</file>
-
-<file path="firebase-data/auth_export/accounts.json">
-{"kind":"identitytoolkit#DownloadAccountResponse","users":[]}
-</file>
-
-<file path="firebase-data/auth_export/config.json">
-{"signIn":{"allowDuplicateEmails":false},"emailPrivacyConfig":{"enableImprovedEmailPrivacy":false}}
-</file>
-
-<file path="firebase-data/firebase-export-metadata.json">
-{
-  "version": "15.5.1",
-  "firestore": {
-    "version": "1.20.2",
-    "path": "firestore_export",
-    "metadata_file": "firestore_export/firestore_export.overall_export_metadata"
-  },
-  "database": {
-    "version": "4.11.2",
-    "path": "database_export"
-  },
-  "auth": {
-    "version": "15.5.1",
-    "path": "auth_export"
-  },
-  "storage": {
-    "version": "15.5.1",
-    "path": "storage_export"
-  }
-}
-</file>
-
-<file path="firebase-data/storage_export/buckets.json">
-{
-  "buckets": [
-    {
-      "id": "demo-no-project.appspot.com"
-    }
-  ]
-}
-</file>
-
-<file path="firebase.json">
-{
-  "firestore": {
-    "database": "(default)",
-    "location": "nam5",
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "emulators": {
-    "auth": {
-      "port": 9099
-    },
-    "firestore": {
-      "port": 8080
-    },
-    "database": {
-      "port": 9000
-    },
-    "hosting": {
-      "port": 5000
-    },
-    "storage": {
-      "port": 9199
-    },
-    "ui": {
-      "enabled": true
-    },
-    "singleProjectMode": true
-  }
-}
-</file>
-
-<file path="firestore.indexes.json">
-{
-  // Example (Standard Edition):
-  //
-  // "indexes": [
-  //   {
-  //     "collectionGroup": "widgets",
-  //     "queryScope": "COLLECTION",
-  //     "fields": [
-  //       { "fieldPath": "foo", "arrayConfig": "CONTAINS" },
-  //       { "fieldPath": "bar", "mode": "DESCENDING" }
-  //     ]
-  //   },
-  //
-  //  "fieldOverrides": [
-  //    {
-  //      "collectionGroup": "widgets",
-  //      "fieldPath": "baz",
-  //      "indexes": [
-  //        { "order": "ASCENDING", "queryScope": "COLLECTION" }
-  //      ]
-  //    },
-  //   ]
-  // ]
-  //
-  // Example (Enterprise Edition):
-  //
-  // "indexes": [
-  //   {
-  //     "collectionGroup": "reviews",
-  //     "queryScope": "COLLECTION_GROUP",
-  //     "apiScope": "MONGODB_COMPATIBLE_API",
-  //     "density": "DENSE",
-  //     "multikey": false,
-  //     "fields": [
-  //       { "fieldPath": "baz", "mode": "ASCENDING" }
-  //     ]
-  //   },
-  //   {
-  //     "collectionGroup": "items",
-  //     "queryScope": "COLLECTION_GROUP",
-  //     "apiScope": "MONGODB_COMPATIBLE_API",
-  //     "density": "SPARSE_ANY",
-  //     "multikey": true,
-  //     "fields": [
-  //       { "fieldPath": "baz", "mode": "ASCENDING" }
-  //     ]
-  //   },
-  // ]
-  "indexes": [],
-  "fieldOverrides": []
-}
-</file>
-
-<file path="firestore.rules">
-rules_version='2'
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 3, 5);
-    }
-  }
-}
-</file>
-
-<file path="lib/firebase.ts">
-// lib/firebase.ts のイメージ
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
-
-const firebaseConfig = {
-    projectId: "demo-bom3d-sn923", // Emulatorでは 'demo-' プレフィックスを付けるのが推奨されます
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// ローカル開発時のみエミュレータに接続
-if (process.env.NODE_ENV === 'development') {
-    const g = global as any;
-    if (!g._firebase_emulators_connected) {
-        connectFirestoreEmulator(db, 'localhost', 8080);
-        connectAuthEmulator(auth, "http://localhost:9099");
-        g._firebase_emulators_connected = true;
-        console.log("Connected to Firebase Emulators");
-    }
-}
-
-export { db, auth };
-</file>
-
-<file path="scripts/seed-emulator.ts">
-import { db } from '../lib/firebase';
-import { projects, parts, partItems } from '../app/data';
-import { collection, doc, setDoc } from 'firebase/firestore';
-
-// @ts-ignore
-process.env.NODE_ENV = 'development';
-
-async function seed() {
-    console.log('Seeding Firestore Emulator...');
-    console.log('Connecting to Firestore (ensure Emulator is running on localhost:8080)...');
-
-    // Projects
-    console.log('Seeding Projects...');
-    for (const project of projects) {
-        const projectRef = doc(db, 'projects', String(project.id));
-        await setDoc(projectRef, {
-            ...project,
-            // Ensure dates are compatible if strings
-        });
-    }
-
-    // Parts
-    console.log('Seeding Parts...');
-    for (const part of parts) {
-        const partRef = doc(db, 'parts', String(part.id));
-        await setDoc(partRef, part);
-    }
-
-    // PartItems
-    console.log('Seeding PartItems...');
-    for (const item of partItems) {
-        const itemRef = doc(db, 'partItems', String(item.id));
-        await setDoc(itemRef, {
-            ...item,
-            // Convert Date object to Timestamp or keep as Date (Client SDK handles Date -> Timestamp conversion)
-            completed_at: item.completed_at ? item.completed_at : null
-        });
-    }
-
-    console.log('Seeding completed!');
-    process.exit(0);
-}
-
-seed().catch((error) => {
-    console.error('Seeding failed:', error);
-    process.exit(1);
-});
-</file>
-
 <file path=".continue/agents/new-config.yaml">
 # This is an example configuration file
 # To learn more, see the full config.yaml reference: https://docs.continue.dev/reference
@@ -340,6 +110,10 @@ models:
 # https://docs.continue.dev/customization/mcp-tools
 mcpServers:
   - uses: anthropic/memory-mcp
+</file>
+
+<file path=".firebaserc">
+{}
 </file>
 
 <file path=".gitignore">
@@ -553,6 +327,188 @@ export const PROCESSES: { key: Process; name: string }[] = [
 ];
 </file>
 
+<file path="firebase-data/auth_export/accounts.json">
+{"kind":"identitytoolkit#DownloadAccountResponse","users":[]}
+</file>
+
+<file path="firebase-data/auth_export/config.json">
+{"signIn":{"allowDuplicateEmails":false},"emailPrivacyConfig":{"enableImprovedEmailPrivacy":false}}
+</file>
+
+<file path="firebase-data/firebase-export-metadata.json">
+{
+  "version": "15.5.1",
+  "firestore": {
+    "version": "1.20.2",
+    "path": "firestore_export",
+    "metadata_file": "firestore_export/firestore_export.overall_export_metadata"
+  },
+  "database": {
+    "version": "4.11.2",
+    "path": "database_export"
+  },
+  "auth": {
+    "version": "15.5.1",
+    "path": "auth_export"
+  },
+  "storage": {
+    "version": "15.5.1",
+    "path": "storage_export"
+  }
+}
+</file>
+
+<file path="firebase-data/storage_export/buckets.json">
+{
+  "buckets": [
+    {
+      "id": "demo-no-project.appspot.com"
+    }
+  ]
+}
+</file>
+
+<file path="firebase.json">
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "database": {
+      "port": 9000
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
+  }
+}
+</file>
+
+<file path="firestore.indexes.json">
+{
+  // Example (Standard Edition):
+  //
+  // "indexes": [
+  //   {
+  //     "collectionGroup": "widgets",
+  //     "queryScope": "COLLECTION",
+  //     "fields": [
+  //       { "fieldPath": "foo", "arrayConfig": "CONTAINS" },
+  //       { "fieldPath": "bar", "mode": "DESCENDING" }
+  //     ]
+  //   },
+  //
+  //  "fieldOverrides": [
+  //    {
+  //      "collectionGroup": "widgets",
+  //      "fieldPath": "baz",
+  //      "indexes": [
+  //        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+  //      ]
+  //    },
+  //   ]
+  // ]
+  //
+  // Example (Enterprise Edition):
+  //
+  // "indexes": [
+  //   {
+  //     "collectionGroup": "reviews",
+  //     "queryScope": "COLLECTION_GROUP",
+  //     "apiScope": "MONGODB_COMPATIBLE_API",
+  //     "density": "DENSE",
+  //     "multikey": false,
+  //     "fields": [
+  //       { "fieldPath": "baz", "mode": "ASCENDING" }
+  //     ]
+  //   },
+  //   {
+  //     "collectionGroup": "items",
+  //     "queryScope": "COLLECTION_GROUP",
+  //     "apiScope": "MONGODB_COMPATIBLE_API",
+  //     "density": "SPARSE_ANY",
+  //     "multikey": true,
+  //     "fields": [
+  //       { "fieldPath": "baz", "mode": "ASCENDING" }
+  //     ]
+  //   },
+  // ]
+  "indexes": [],
+  "fieldOverrides": []
+}
+</file>
+
+<file path="firestore.rules">
+rules_version='2'
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // This rule allows anyone with your database reference to view, edit,
+      // and delete all data in your database. It is useful for getting
+      // started, but it is configured to expire after 30 days because it
+      // leaves your app open to attackers. At that time, all client
+      // requests to your database will be denied.
+      //
+      // Make sure to write security rules for your app before that time, or
+      // else all client requests to your database will be denied until you
+      // update your rules.
+      allow read, write: if request.time < timestamp.date(2026, 3, 5);
+    }
+  }
+}
+</file>
+
+<file path="lib/firebase.ts">
+// lib/firebase.ts
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+
+const firebaseConfig = {
+    // エミュレータであっても、初期化にはこれらのフィールド（特にapiKey）が必要です
+    apiKey: "demo-key-for-emulator",
+    authDomain: "demo-bom3d-sn923.firebaseapp.com",
+    projectId: "demo-bom3d-sn923", // 'demo-' プレフィックス
+    storageBucket: "demo-bom3d-sn923.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef123456"
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// ローカル開発時のみエミュレータに接続
+if (process.env.NODE_ENV === 'development') {
+    const g = global as any;
+    if (!g._firebase_emulators_connected) {
+        connectFirestoreEmulator(db, 'localhost', 8080);
+        connectAuthEmulator(auth, "http://localhost:9099");
+        g._firebase_emulators_connected = true;
+        console.log("Connected to Firebase Emulators with demo config");
+    }
+}
+
+export { db, auth };
+</file>
+
 <file path="next.config.js">
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -572,6 +528,56 @@ module.exports = {
 
 <file path="README.md">
 # SN-923
+</file>
+
+<file path="scripts/seed-emulator.ts">
+import { db } from '../lib/firebase';
+import { projects, parts, partItems } from '../app/data';
+import { collection, doc, setDoc } from 'firebase/firestore';
+
+// @ts-ignore
+process.env.NODE_ENV = 'development';
+
+async function seed() {
+    console.log('Seeding Firestore Emulator...');
+    console.log('Connecting to Firestore (ensure Emulator is running on localhost:8080)...');
+
+    // Projects
+    console.log('Seeding Projects...');
+    for (const project of projects) {
+        const projectRef = doc(db, 'projects', String(project.id));
+        await setDoc(projectRef, {
+            ...project,
+            // Ensure dates are compatible if strings
+        });
+    }
+
+    // Parts
+    console.log('Seeding Parts...');
+    for (const part of parts) {
+        const partRef = doc(db, 'parts', String(part.id));
+        await setDoc(partRef, part);
+    }
+
+    // PartItems
+    console.log('Seeding PartItems...');
+    for (const item of partItems) {
+        const itemRef = doc(db, 'partItems', String(item.id));
+        await setDoc(itemRef, {
+            ...item,
+            // Convert Date object to Timestamp or keep as Date (Client SDK handles Date -> Timestamp conversion)
+            completed_at: item.completed_at ? item.completed_at : null
+        });
+    }
+
+    console.log('Seeding completed!');
+    process.exit(0);
+}
+
+seed().catch((error) => {
+    console.error('Seeding failed:', error);
+    process.exit(1);
+});
 </file>
 
 <file path="tailwind.config.js">
@@ -874,136 +880,6 @@ export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] =
 };
 </file>
 
-<file path="lib/mockStore.ts">
-import { Part, PartItem, Project } from '@/app/types';
-import { db } from './firebase';
-import {
-    collection,
-    getDocs,
-    doc,
-    getDoc,
-    updateDoc,
-    setDoc,
-    query,
-    where,
-    Timestamp
-} from 'firebase/firestore';
-
-// Firestoreのデータコンバーター（Date型の復元など）
-const dateConverter = (data: any): any => {
-    if (!data) return data;
-    const result = { ...data };
-    // completed_atなどのTimestampをDateに戻す
-    Object.keys(result).forEach(key => {
-        if (result[key] instanceof Timestamp) {
-            result[key] = result[key].toDate();
-        }
-    });
-    return result;
-};
-
-export const mockStore = {
-    getProjects: async (): Promise<Project[]> => {
-        const snapshot = await getDocs(collection(db, 'projects'));
-        return snapshot.docs.map(doc => ({
-            id: Number(doc.id),
-            ...dateConverter(doc.data())
-        })) as Project[];
-    },
-
-    getProject: async (id: number): Promise<Project | null> => {
-        const docRef = doc(db, 'projects', String(id));
-        const span = await getDoc(docRef);
-        if (!span.exists()) return null;
-        return { id: Number(span.id), ...dateConverter(span.data()) } as Project;
-    },
-
-    getParts: async (projectId?: number): Promise<Part[]> => {
-        let q;
-        if (projectId) {
-            q = query(collection(db, 'parts'), where('project_id', '==', projectId));
-        } else {
-            q = collection(db, 'parts');
-        }
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({
-            id: Number(doc.id),
-            ...dateConverter(doc.data())
-        })) as Part[];
-    },
-
-    getPartItems: async (projectId?: number): Promise<PartItem[]> => {
-        // プロジェクトID指定がある場合、まず対象のPartを取得
-        let targetPartIds: number[] | null = null;
-        if (projectId) {
-            const parts = await mockStore.getParts(projectId);
-            targetPartIds = parts.map(p => p.id);
-            if (targetPartIds.length === 0) return [];
-        }
-
-        // Firestoreの 'in' 句は最大10個までなので、ここでは全件取得してJSでフィルタリングする方式を採用
-        // (プロトタイプのため簡易実装)
-        const snapshot = await getDocs(collection(db, 'partItems'));
-        const items = snapshot.docs.map(doc => ({
-            id: Number(doc.id),
-            ...dateConverter(doc.data())
-        })) as PartItem[];
-
-        if (targetPartIds) {
-            return items.filter(item => targetPartIds!.includes(item.part_id));
-        }
-        return items;
-    },
-
-    getPartItem: async (id: number): Promise<(PartItem & { parts: Part }) | null> => {
-        const itemRef = doc(db, 'partItems', String(id));
-        const itemSnap = await getDoc(itemRef);
-
-        if (!itemSnap.exists()) return null;
-        const itemData = { id: Number(itemSnap.id), ...dateConverter(itemSnap.data()) } as PartItem;
-
-        // 関連するPartを取得
-        const partRef = doc(db, 'parts', String(itemData.part_id));
-        const partSnap = await getDoc(partRef);
-
-        if (!partSnap.exists()) {
-            throw new Error(`Part not found for item ${id}`);
-        }
-        const partData = { id: Number(partSnap.id), ...dateConverter(partSnap.data()) } as Part;
-
-        return { ...itemData, parts: partData };
-    },
-
-    updatePartItem: async (id: number, updates: Partial<PartItem>): Promise<void> => {
-        const docRef = doc(db, 'partItems', String(id));
-        await updateDoc(docRef, updates);
-    },
-
-    addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
-        // IDの自動採番（Max + 1）
-        // トランザクションを使うのが安全だが、ここでは簡易的に全件取得で最大値を計算
-        const snapshot = await getDocs(collection(db, 'partItems'));
-        const ids = snapshot.docs.map(d => Number(d.id));
-        const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
-
-        const newItem = { ...item, id: newId };
-        const docRef = doc(db, 'partItems', String(newId));
-        await setDoc(docRef, newItem);
-
-        return newItem;
-    },
-
-    // 互換性のためのダミーメソッド（Firestore化により不要だがエラー防止のため残す）
-    saveToLocalStorage: () => {
-        console.warn('saveToLocalStorage is deprecated in Firestore mode');
-    },
-
-    loadFromLocalStorage: () => {
-        console.warn('loadFromLocalStorage is deprecated in Firestore mode');
-    }
-};
-</file>
-
 <file path="tsconfig.json">
 {
   "compilerOptions": {
@@ -1151,6 +1027,136 @@ export interface ProgressData {
   storage_cases: string[];
   counts: Record<Process, number>;
 }
+</file>
+
+<file path="lib/mockStore.ts">
+import { Part, PartItem, Project } from '@/app/types';
+import { db } from './firebase';
+import {
+    collection,
+    getDocs,
+    doc,
+    getDoc,
+    updateDoc,
+    setDoc,
+    query,
+    where,
+    Timestamp
+} from 'firebase/firestore';
+
+// Firestoreのデータコンバーター（Date型の復元など）
+const dateConverter = (data: any): any => {
+    if (!data) return data;
+    const result = { ...data };
+    // completed_atなどのTimestampをDateに戻す
+    Object.keys(result).forEach(key => {
+        if (result[key] instanceof Timestamp) {
+            result[key] = result[key].toDate();
+        }
+    });
+    return result;
+};
+
+export const mockStore = {
+    getProjects: async (): Promise<Project[]> => {
+        const snapshot = await getDocs(collection(db, 'projects'));
+        return snapshot.docs.map(doc => ({
+            id: Number(doc.id),
+            ...dateConverter(doc.data())
+        })) as Project[];
+    },
+
+    getProject: async (id: number): Promise<Project | null> => {
+        const docRef = doc(db, 'projects', String(id));
+        const span = await getDoc(docRef);
+        if (!span.exists()) return null;
+        return { id: Number(span.id), ...dateConverter(span.data()) } as Project;
+    },
+
+    getParts: async (projectId?: number): Promise<Part[]> => {
+        let q;
+        if (projectId) {
+            q = query(collection(db, 'parts'), where('project_id', '==', projectId));
+        } else {
+            q = collection(db, 'parts');
+        }
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({
+            id: Number(doc.id),
+            ...dateConverter(doc.data())
+        })) as Part[];
+    },
+
+    getPartItems: async (projectId?: number): Promise<PartItem[]> => {
+        // プロジェクトID指定がある場合、まず対象のPartを取得
+        let targetPartIds: number[] | null = null;
+        if (projectId) {
+            const parts = await mockStore.getParts(projectId);
+            targetPartIds = parts.map(p => p.id);
+            if (targetPartIds.length === 0) return [];
+        }
+
+        // Firestoreの 'in' 句は最大10個までなので、ここでは全件取得してJSでフィルタリングする方式を採用
+        // (プロトタイプのため簡易実装)
+        const snapshot = await getDocs(collection(db, 'partItems'));
+        const items = snapshot.docs.map(doc => ({
+            id: Number(doc.id),
+            ...dateConverter(doc.data())
+        })) as PartItem[];
+
+        if (targetPartIds) {
+            return items.filter(item => targetPartIds!.includes(item.part_id));
+        }
+        return items;
+    },
+
+    getPartItem: async (id: number): Promise<(PartItem & { parts: Part }) | null> => {
+        const itemRef = doc(db, 'partItems', String(id));
+        const itemSnap = await getDoc(itemRef);
+
+        if (!itemSnap.exists()) return null;
+        const itemData = { id: Number(itemSnap.id), ...dateConverter(itemSnap.data()) } as PartItem;
+
+        // 関連するPartを取得
+        const partRef = doc(db, 'parts', String(itemData.part_id));
+        const partSnap = await getDoc(partRef);
+
+        if (!partSnap.exists()) {
+            throw new Error(`Part not found for item ${id}`);
+        }
+        const partData = { id: Number(partSnap.id), ...dateConverter(partSnap.data()) } as Part;
+
+        return { ...itemData, parts: partData };
+    },
+
+    updatePartItem: async (id: number, updates: Partial<PartItem>): Promise<void> => {
+        const docRef = doc(db, 'partItems', String(id));
+        await updateDoc(docRef, updates);
+    },
+
+    addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
+        // IDの自動採番（Max + 1）
+        // トランザクションを使うのが安全だが、ここでは簡易的に全件取得で最大値を計算
+        const snapshot = await getDocs(collection(db, 'partItems'));
+        const ids = snapshot.docs.map(d => Number(d.id));
+        const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
+
+        const newItem = { ...item, id: newId };
+        const docRef = doc(db, 'partItems', String(newId));
+        await setDoc(docRef, newItem);
+
+        return newItem;
+    },
+
+    // 互換性のためのダミーメソッド（Firestore化により不要だがエラー防止のため残す）
+    saveToLocalStorage: () => {
+        console.warn('saveToLocalStorage is deprecated in Firestore mode');
+    },
+
+    loadFromLocalStorage: () => {
+        console.warn('loadFromLocalStorage is deprecated in Firestore mode');
+    }
+};
 </file>
 
 <file path="app/actions/updateProcess.ts">

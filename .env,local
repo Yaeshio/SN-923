@@ -1,0 +1,6 @@
+# Firebase Project ID (Emulator用に 'demo-' を付ける)
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-bom3d-sn923
+
+# 各種エミュレータのポート番号（デフォルト）
+NEXT_PUBLIC_FIREBASE_FIRESTORE_EMULATOR_HOST=localhost:8080
+NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=http://localhost:9099
