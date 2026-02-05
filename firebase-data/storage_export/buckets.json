@@ -2,6 +2,9 @@
   "buckets": [
     {
       "id": "demo-no-project.appspot.com"
+    },
+    {
+      "id": "demo-bom3d-sn923.appspot.com"
     }
   ]
 }

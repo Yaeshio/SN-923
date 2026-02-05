@@ -23,8 +23,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { PROCESSES } from '@/app/constants';
 import { CartModal } from '@/app/components/CartModal';
 import { PreviewModal } from '@/app/components/PreviewModal';
-import { Part, PartItem } from '@/app/types';
+import { Part, PartItem, ProcessStatus } from '@/app/types';
 import { updateItemStatus } from '@/app/actions/updateItemStatus';
+import FileDownloadButton from '@/app/components/common/FileDownloadButton';
 
 // --- Components ---
 
@@ -128,7 +129,14 @@ function SwimlaneRow({ part, items, onPreview }: SwimlaneRowProps) {
             {/* 左端：部品情報（固定列） */}
             <div className="w-48 bg-gray-50 p-4 border-r border-gray-200 flex flex-col justify-center shrink-0">
                 <h3 className="font-bold text-gray-800 text-sm mb-1">{part.part_number}</h3>
-                <p className="text-xs text-gray-500">Total: {items.length} items</p>
+                <p className="text-xs text-gray-500 mb-3">Total: {items.length} items</p>
+
+                <FileDownloadButton
+                    storagePath={`models/${part.part_number}.stl`}
+                    fileName={`${part.part_number}_model.stl`}
+                    label="STLダウンロード"
+                    variant="outline"
+                />
             </div>
 
             {/* 右側：工程セル（横スクロール可能領域） */}
@@ -223,7 +231,7 @@ export default function ProjectClientContent({
             if (item && item.status !== targetStatus) {
                 // 楽観的UI更新
                 setItems(prev => prev.map(i =>
-                    i.id === itemId ? { ...i, status: targetStatus! } : i
+                    i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
                 ));
 
                 // サーバーアクションの呼び出し
