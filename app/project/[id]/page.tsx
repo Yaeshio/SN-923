@@ -73,6 +73,7 @@ export default async function ProjectDetailPage(props: PageProps) {
             {/* インタラクティブな一覧・カート機能 (クライアントコンポーネント) */}
             <ProjectClientContent
                 progressData={progressData}
+                parts={parts}
                 partItems={partItems}
                 projectId={projectId}
             />

@@ -47,6 +47,7 @@ The content is organized as follows:
 app/actions/consumeItem.ts
 app/actions/createPrinted.ts
 app/actions/reportDefect.ts
+app/actions/updateItemStatus.ts
 app/actions/updateProcess.ts
 app/components/CartModal.tsx
 app/components/ModelViewer.tsx
@@ -66,6 +67,8 @@ app/utils.ts
 firebase-data/auth_export/accounts.json
 firebase-data/auth_export/config.json
 firebase-data/firebase-export-metadata.json
+firebase-data/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
+firebase-data/firestore_export/all_namespaces/all_kinds/output-0
 firebase-data/firestore_export/firestore_export.overall_export_metadata
 firebase-data/storage_export/buckets.json
 firebase.json
@@ -168,46 +171,29 @@ next-env.d.ts
 Thumbs.db
 </file>
 
-<file path="app/actions/reportDefect.ts">
+<file path="app/actions/updateItemStatus.ts">
 'use server'
 
 import { mockStore } from '@/lib/mockStore'
 import { revalidatePath } from 'next/cache'
 
 /**
- * 不良を報告し、再製作ジョブを生成するサーバーアクション
- * @param itemId - 不良が発生したアイテムのID
- * @param reason - 不良の理由
+ * 部品アイテムのステータスを更新するサーバーアクション
+ * @param itemId - 部品アイテムのID
+ * @param newStatus - 新しいステータス（工程）
  */
-export async function reportDefect(itemId: number | string, reason: string) {
-    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+export async function updateItemStatus(itemId: string | number, newStatus: string) {
+    try {
+        await mockStore.updatePartItemStatus(itemId, newStatus);
 
-    const item = await mockStore.getPartItem(id);
-    if (!item) {
-        console.error(`Item ${id} not found`);
-        return;
+        // キャッシュを更新してUIに反映
+        revalidatePath('/');
+
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to update item status:', error);
+        return { success: false, error: (error as Error).message };
     }
-
-    // 1. 現状のアイテムを「不良(DEFECTIVE)」にする
-    await mockStore.updatePartItem(id, {
-        current_process: 'DEFECTIVE'
-    });
-
-    // 2. 新しいジョブ（再製作）を生成する
-    // 元のアイテムの情報を引き継ぎつつ、工程を「未プリント」に戻す
-    await mockStore.addPartItem({
-        part_id: item.part_id,
-        storage_case: `${item.storage_case} (RE)`, // 再製作であることを示す
-        current_process: 'UNPRINTED',
-        completed_at: null
-    });
-
-    console.log(`Reported defect for item ${id}: ${reason}`);
-
-    // キャッシュを更新
-    revalidatePath('/');
-    revalidatePath(`/item/${id}`);
-    revalidatePath(`/project/${item.parts.project_id}`);
 }
 </file>
 
@@ -318,19 +304,6 @@ export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: Summ
     </div>
   );
 }
-</file>
-
-<file path="app/constants.ts">
-import { Process } from './types';
-
-export const PROCESSES: { key: Process; name: string }[] = [
-  { key: 'UNPRINTED', name: '未プリント' },
-  { key: 'PRINTED', name: 'プリント済み' },
-  { key: 'SURFACE_TREATMENT', name: '表面処理' },
-  { key: 'CUTTING', name: '切削' },
-  { key: 'PAINTING', name: '塗装' },
-  { key: 'READY', name: '準備完了' },
-];
 </file>
 
 <file path="firebase-data/auth_export/accounts.json">
@@ -502,56 +475,6 @@ module.exports = {
 # SN-923
 </file>
 
-<file path="scripts/seed-emulator.ts">
-import { db } from '../lib/firebase';
-import { projects, parts, partItems } from '../app/data';
-import { collection, doc, setDoc } from 'firebase/firestore';
-
-// @ts-ignore
-process.env.NODE_ENV = 'development';
-
-async function seed() {
-    console.log('Seeding Firestore Emulator...');
-    console.log('Connecting to Firestore (ensure Emulator is running on localhost:8080)...');
-
-    // Projects
-    console.log('Seeding Projects...');
-    for (const project of projects) {
-        const projectRef = doc(db, 'projects', String(project.id));
-        await setDoc(projectRef, {
-            ...project,
-            // Ensure dates are compatible if strings
-        });
-    }
-
-    // Parts
-    console.log('Seeding Parts...');
-    for (const part of parts) {
-        const partRef = doc(db, 'parts', String(part.id));
-        await setDoc(partRef, part);
-    }
-
-    // PartItems
-    console.log('Seeding PartItems...');
-    for (const item of partItems) {
-        const itemRef = doc(db, 'partItems', String(item.id));
-        await setDoc(itemRef, {
-            ...item,
-            // Convert Date object to Timestamp or keep as Date (Client SDK handles Date -> Timestamp conversion)
-            completed_at: item.completed_at ? item.completed_at : null
-        });
-    }
-
-    console.log('Seeding completed!');
-    process.exit(0);
-}
-
-seed().catch((error) => {
-    console.error('Seeding failed:', error);
-    process.exit(1);
-});
-</file>
-
 <file path="tailwind.config.js">
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -585,6 +508,49 @@ module.exports = {
   "projects": {
     "default": "demo-bom3d-sn923"
   }
+}
+</file>
+
+<file path="app/actions/reportDefect.ts">
+'use server'
+
+import { mockStore } from '@/lib/mockStore'
+import { revalidatePath } from 'next/cache'
+
+/**
+ * 不良を報告し、再製作ジョブを生成するサーバーアクション
+ * @param itemId - 不良が発生したアイテムのID
+ * @param reason - 不良の理由
+ */
+export async function reportDefect(itemId: number | string, reason: string) {
+    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+    const item = await mockStore.getPartItem(id);
+    if (!item) {
+        console.error(`Item ${id} not found`);
+        return;
+    }
+
+    // 1. 現状のアイテムを「不良(DEFECTIVE)」にする
+    await mockStore.updatePartItem(id, {
+        status: 'DEFECTIVE'
+    });
+
+    // 2. 新しいジョブ（再製作）を生成する
+    // 元のアイテムの情報を引き継ぎつつ、工程を「未プリント」に戻す
+    await mockStore.addPartItem({
+        part_id: item.part_id,
+        storage_case: `${item.storage_case} (RE)`, // 再製作であることを示す
+        status: 'UNPRINTED',
+        completed_at: null
+    });
+
+    console.log(`Reported defect for item ${id}: ${reason}`);
+
+    // キャッシュを更新
+    revalidatePath('/');
+    revalidatePath(`/item/${id}`);
+    revalidatePath(`/project/${item.parts.project_id}`);
 }
 </file>
 
@@ -641,6 +607,183 @@ export function ModelViewer({ url }: { url: string }) {
 }
 </file>
 
+<file path="app/constants.ts">
+import { ProcessStatus } from './types';
+
+export const PROCESSES: { key: ProcessStatus; name: string }[] = [
+  { key: 'UNPRINTED', name: '未プリント' },
+  { key: 'PRINTED', name: 'プリント済み' },
+  { key: 'SURFACE_TREATMENT', name: '表面処理' },
+  { key: 'CUTTING', name: '切削' },
+  { key: 'PAINTING', name: '塗装' },
+  { key: 'READY', name: '準備完了' },
+];
+</file>
+
+<file path="app/globals.css">
+@import "tailwindcss";
+</file>
+
+<file path="app/layout.tsx">
+import './globals.css'
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "SN-923",
+  description: "在庫管理アプリケーション",
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="ja">
+      <body>{children}</body>
+    </html>
+  )
+}
+</file>
+
+<file path="lib/firebase.ts">
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+
+const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-bom3d-sn923";
+
+const firebaseConfig = {
+    apiKey: "fake-api-key", // Emulator用ダミー
+    authDomain: `${projectId}.firebaseapp.com`,
+    projectId: projectId,
+    storageBucket: `${projectId}.appspot.com`,
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
+
+if (isEmulator) {
+    const g = global as any;
+    if (!g._firebase_emulators_connected) {
+        // 環境変数からポートを取得、なければデフォルト
+        // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
+        connectFirestoreEmulator(db, '127.0.0.1', 8080);
+        connectAuthEmulator(auth, "http://127.0.0.1:9099");
+        g._firebase_emulators_connected = true;
+        console.log(`Connected to Firebase Emulators: ${projectId}`);
+    }
+}
+
+export { db, auth };
+</file>
+
+<file path="scripts/seed-emulator.ts">
+import { db } from '../lib/firebase';
+import { projects, parts, partItems } from '../app/data';
+import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+
+// @ts-ignore
+process.env.NODE_ENV = 'development';
+
+async function seed() {
+    console.log('Seeding Firestore Emulator...');
+    console.log('Connecting to Firestore (ensure Emulator is running on localhost:8080)...');
+
+    // Projects
+    console.log('Seeding Projects...');
+    for (const project of projects) {
+        const projectRef = doc(db, 'projects', String(project.id));
+        await setDoc(projectRef, {
+            ...project,
+            // Ensure dates are compatible if strings
+        });
+    }
+
+    // Parts
+    console.log('Seeding Parts...');
+    for (const part of parts) {
+        const partRef = doc(db, 'parts', String(part.id));
+        await setDoc(partRef, part);
+    }
+
+    // PartItems
+    console.log('Seeding PartItems...');
+    for (const item of partItems) {
+        const itemRef = doc(db, 'partItems', String(item.id));
+        await setDoc(itemRef, {
+            ...item,
+            // Convert Date object to Timestamp or keep as Date
+            completed_at: item.completed_at ? item.completed_at : null,
+            updated_at: serverTimestamp()
+        });
+    }
+
+    console.log('Seeding completed!');
+    process.exit(0);
+}
+
+seed().catch((error) => {
+    console.error('Seeding failed:', error);
+    process.exit(1);
+});
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "useDefineForClassFields": true,
+    "lib": [
+      "es2020",
+      "dom",
+      "dom.iterable"
+    ],
+    "module": "esnext",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    /* Next.js */
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    /* Path mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowJs": true,
+    "strict": false,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+</file>
+
 <file path="app/components/PreviewModal.tsx">
 'use client'
 
@@ -655,7 +798,7 @@ interface PreviewModalProps {
     onClose: () => void
     partNumber: string
     itemId?: number
-    currentProcess?: string
+    status?: string
     projectId?: number
 }
 
@@ -664,7 +807,7 @@ export function PreviewModal({
     onClose,
     partNumber,
     itemId,
-    currentProcess,
+    status,
     projectId
 }: PreviewModalProps) {
     const [isPending, startTransition] = useTransition()
@@ -673,7 +816,7 @@ export function PreviewModal({
     if (!isOpen) return null
 
     // 現在の工程より「前」の工程を抽出（差し戻し用）
-    const currentIndex = PROCESSES.findIndex(p => p.key === currentProcess)
+    const currentIndex = PROCESSES.findIndex(p => p.key === status)
     const previousProcesses = PROCESSES.slice(0, currentIndex)
 
     const handleUpdateStatus = (statusKey: string) => {
@@ -701,7 +844,7 @@ export function PreviewModal({
                 <div className="p-6 border-b flex justify-between items-center bg-gray-50">
                     <div>
                         <h3 className="text-2xl font-black text-gray-900">{partNumber}</h3>
-                        <p className="text-sm text-gray-500 font-bold">ITEM ID: {itemId} / CURRENT: {currentProcess}</p>
+                        <p className="text-sm text-gray-500 font-bold">ITEM ID: {itemId} / CURRENT: {status}</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -764,8 +907,8 @@ export function PreviewModal({
                                     onClick={handleReportDefect}
                                     disabled={isPending || !defectReason}
                                     className={`w-full py-4 rounded-xl font-black transition-all shadow-md ${isPending || !defectReason
-                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            : 'bg-red-600 text-white hover:bg-red-700 active:scale-95'
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-red-600 text-white hover:bg-red-700 active:scale-95'
                                         }`}
                                 >
                                     {isPending ? '処理中...' : '不良確定 & 再製作依頼'}
@@ -797,41 +940,15 @@ export const parts: Part[] = [
 ];
 
 export const partItems: PartItem[] = [
-  { id: 101, part_id: 1, storage_case: 'Case-01', current_process: 'PRINTED', completed_at: null },
-  { id: 102, part_id: 2, storage_case: 'Case-02', current_process: 'READY', completed_at: new Date() },
-  { id: 103, part_id: 3, storage_case: 'Case-03', current_process: 'UNPRINTED', completed_at: null }
+  { id: 101, part_id: 1, storage_case: 'Case-01', status: 'PRINTED', completed_at: null },
+  { id: 102, part_id: 2, storage_case: 'Case-02', status: 'READY', completed_at: new Date() },
+  { id: 103, part_id: 3, storage_case: 'Case-03', status: 'UNPRINTED', completed_at: null }
 ];
-</file>
-
-<file path="app/globals.css">
-@import "tailwindcss";
-</file>
-
-<file path="app/layout.tsx">
-import './globals.css'
-import type { Metadata } from "next"
-
-export const metadata: Metadata = {
-  title: "SN-923",
-  description: "在庫管理アプリケーション",
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="ja">
-      <body>{children}</body>
-    </html>
-  )
-}
 </file>
 
 <file path="app/utils.ts">
 // app/utils.ts
-import { Part, PartItem, ProgressData, Process } from './types';
+import { Part, PartItem, ProgressData, ProcessStatus } from './types';
 import { PROCESSES } from './constants';
 
 export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] => {
@@ -843,108 +960,21 @@ export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] =
     const processOrder = PROCESSES.map(p => p.key);
     const currentProcess = items.length > 0
       ? items.reduce((earliest, item) => {
-        return processOrder.indexOf(item.current_process) < processOrder.indexOf(earliest)
-          ? item.current_process
+        return processOrder.indexOf(item.status) < processOrder.indexOf(earliest)
+          ? item.status
           : earliest;
-      }, 'READY' as Process)
+      }, 'READY' as ProcessStatus)
       : 'UNPRINTED';
 
     return {
       id: part.id,
       part_number: part.part_number,
-      current_process: currentProcess,
+      status: currentProcess, // Rename field
       storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
       count: items.length
     };
   });
 };
-</file>
-
-<file path="lib/firebase.ts">
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
-
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-bom3d-sn923";
-
-const firebaseConfig = {
-    apiKey: "fake-api-key", // Emulator用ダミー
-    authDomain: `${projectId}.firebaseapp.com`,
-    projectId: projectId,
-    storageBucket: `${projectId}.appspot.com`,
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
-
-if (isEmulator) {
-    const g = global as any;
-    if (!g._firebase_emulators_connected) {
-        // 環境変数からポートを取得、なければデフォルト
-        // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
-        connectFirestoreEmulator(db, '127.0.0.1', 8080);
-        connectAuthEmulator(auth, "http://127.0.0.1:9099");
-        g._firebase_emulators_connected = true;
-        console.log(`Connected to Firebase Emulators: ${projectId}`);
-    }
-}
-
-export { db, auth };
-</file>
-
-<file path="tsconfig.json">
-{
-  "compilerOptions": {
-    "target": "es2017",
-    "useDefineForClassFields": true,
-    "lib": [
-      "es2020",
-      "dom",
-      "dom.iterable"
-    ],
-    "module": "esnext",
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    /* Next.js */
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "incremental": true,
-    /* Path mapping */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    },
-    "allowJs": true,
-    "strict": false,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
-}
 </file>
 
 <file path="app/actions/consumeItem.ts">
@@ -961,7 +991,7 @@ export async function consumeItem(itemId: string | number) {
   const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
 
   await mockStore.updatePartItem(id, {
-    current_process: 'READY', // 本来のロジックに合わせてREADYにするか、または別のステータス
+    status: 'READY', // 本来のロジックに合わせてREADYにするか、または別のステータス
     completed_at: new Date(),
     storage_case: 'CONSUMED' // 便宜上の表記
   });
@@ -996,7 +1026,7 @@ export async function createPrinted(
   for (let i = 0; i < qty; i++) {
     await mockStore.addPartItem({
       part_id: pId,
-      current_process: 'PRINTED',
+      status: 'PRINTED',
       storage_case: storageCaseLabel,
       completed_at: null
     });
@@ -1009,7 +1039,7 @@ export async function createPrinted(
 </file>
 
 <file path="app/types.ts">
-export type Process =
+export type ProcessStatus =
   | 'UNPRINTED'
   | 'PRINTED'
   | 'SURFACE_TREATMENT'
@@ -1035,19 +1065,20 @@ export interface PartItem {
   id: number;
   part_id: number;
   storage_case: string;
-  current_process: Process;
+  status: ProcessStatus;
   completed_at: Date | null;
+  updated_at?: any;
 }
 
 export interface ProgressData {
   part_number: string;
   storage_cases: string[];
-  counts: Record<Process, number>;
+  counts: Record<ProcessStatus, number>;
 }
 </file>
 
 <file path="lib/mockStore.ts">
-import { Part, PartItem, Project } from '@/app/types';
+import { Part, PartItem, Project, ProcessStatus } from '@/app/types';
 import { db } from './firebase';
 import {
     collection,
@@ -1058,7 +1089,8 @@ import {
     setDoc,
     query,
     where,
-    Timestamp
+    Timestamp,
+    serverTimestamp
 } from 'firebase/firestore';
 
 // Firestoreのデータコンバーター（Date型の復元など）
@@ -1151,9 +1183,16 @@ export const mockStore = {
         await updateDoc(docRef, updates);
     },
 
+    updatePartItemStatus: async (id: string | number, newStatus: string): Promise<void> => {
+        const docRef = doc(db, 'partItems', String(id));
+        await updateDoc(docRef, {
+            status: newStatus as ProcessStatus,
+            updated_at: serverTimestamp()
+        });
+    },
+
     addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
         // IDの自動採番（Max + 1）
-        // トランザクションを使うのが安全だが、ここでは簡易的に全件取得で最大値を計算
         const snapshot = await getDocs(collection(db, 'partItems'));
         const ids = snapshot.docs.map(d => Number(d.id));
         const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
@@ -1162,10 +1201,10 @@ export const mockStore = {
         const docRef = doc(db, 'partItems', String(newId));
         await setDoc(docRef, newItem);
 
-        return newItem;
+        return newItem as PartItem;
     },
 
-    // 互換性のためのダミーメソッド（Firestore化により不要だがエラー防止のため残す）
+    // 互換性のためのダミーメソッド
     saveToLocalStorage: () => {
         console.warn('saveToLocalStorage is deprecated in Firestore mode');
     },
@@ -1180,7 +1219,7 @@ export const mockStore = {
 'use server'
 
 import { mockStore } from '@/lib/mockStore'
-import { Process } from '@/app/types'
+import { ProcessStatus } from '@/app/types'
 import { revalidatePath } from 'next/cache'
 
 /**
@@ -1198,13 +1237,13 @@ export async function updateProcess(
 
   // メモリ上のデータを更新
   await mockStore.updatePartItem(id, {
-    current_process: nextProcess as Process,
+    status: nextProcess as ProcessStatus,
     // READYに移行した場合は完了日時を設定
     completed_at: nextProcess === 'READY' ? new Date() : null
   });
 
   // 工程ログはモック版では省略、または必要なら追加
-  console.log(`Updated item ${id} to process ${nextProcess}`);
+  console.log(`Updated item ${id} to status ${nextProcess}`);
 
   // キャッシュを更新してUIに反映
   revalidatePath('/');
@@ -1249,7 +1288,7 @@ export default async function ProjectDetailPage(props: PageProps) {
     const partItems = await mockStore.getPartItems(projectId);
 
     const totalInventory = partItems.length;
-    const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
+    const inProgress = partItems.filter(item => item.status !== 'READY').length;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -1291,6 +1330,7 @@ export default async function ProjectDetailPage(props: PageProps) {
             {/* インタラクティブな一覧・カート機能 (クライアントコンポーネント) */}
             <ProjectClientContent
                 progressData={progressData}
+                partItems={partItems}
                 projectId={projectId}
             />
         </div>
@@ -1301,144 +1341,239 @@ export default async function ProjectDetailPage(props: PageProps) {
 <file path="app/project/[id]/ProjectClientContent.tsx">
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useOptimistic, useTransition } from 'react';
+import {
+    DndContext,
+    DragOverlay,
+    closestCorners,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { PROCESSES } from '@/app/constants';
 import { CartModal } from '@/app/components/CartModal';
+import { PreviewModal } from '@/app/components/PreviewModal';
+import { PartItem, ProcessStatus } from '@/app/types';
+import { updateItemStatus } from '@/app/actions/updateItemStatus';
 import { updateProcess } from '@/app/actions/updateProcess';
-import { PreviewModal } from '@/app/components/PreviewModal'; // 新設したコンポーネント
 
-export default function ProjectClientContent({ progressData, projectId }: { progressData: any[], projectId: number }) {
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isUpdating, setIsUpdating] = useState<number | null>(null);
+// --- Components ---
 
-    // プレビュー表示用のステートを追加
-    const [previewItem, setPreviewItem] = useState<{
-        id: number;
-        part_number: string;
-        current_process: string;
-    } | null>(null);
+interface KanbanItemProps {
+    item: PartItem & { part_number: string };
+    isUpdating?: boolean;
+    onPreview: (item: any) => void;
+}
 
-    // チェックボックス選択制御
-    const toggleSelection = (id: number) => {
-        setSelectedIds(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        );
+function KanbanItem({ item, isUpdating, onPreview }: KanbanItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: item.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
     };
 
-    // 工程を一つ進めるクイック操作
-    const handleQuickForward = async (itemId: number, currentProcKey: string) => {
-        const currentIndex = PROCESSES.findIndex(p => p.key === currentProcKey);
-        if (currentIndex < PROCESSES.length - 1) {
-            setIsUpdating(itemId);
-            const nextProcess = PROCESSES[currentIndex + 1].key;
-            await updateProcess(itemId, nextProcess, projectId);
-            setIsUpdating(null);
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className={`
+                bg-white p-4 rounded-xl shadow-sm border-b-4 border-gray-200 mb-3 cursor-grab active:cursor-grabbing
+                hover:border-blue-400 transition-all group
+                ${isUpdating ? 'opacity-50 animate-pulse' : ''}
+            `}
+        >
+            <div className="flex justify-between items-start mb-2">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPreview(item);
+                    }}
+                    className="font-black text-blue-600 hover:text-blue-800 hover:underline leading-none text-left"
+                >
+                    {item.part_number}
+                </button>
+                <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded">
+                    ID: {item.id}
+                </span>
+            </div>
+            <div className="text-xs text-gray-500 font-bold uppercase truncate">
+                CASE: {item.storage_case || '-'}
+            </div>
+            {item.status === 'READY' && (
+                <div className="mt-2 text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block">
+                    READY
+                </div>
+            )}
+        </div>
+    );
+}
+
+function KanbanColumn({ id, title, items, onPreview }: { id: string, title: string, items: any[], onPreview: (item: any) => void }) {
+    const { setNodeRef } = useSortable({ id });
+
+    return (
+        <div className="flex-1 min-w-[300px] bg-gray-50/50 rounded-2xl p-4 flex flex-col border border-gray-100">
+            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6 flex justify-between items-center px-2">
+                {title}
+                <span className="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full">
+                    {items.length}
+                </span>
+            </h3>
+            <div ref={setNodeRef} className="flex-1">
+                <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                    {items.map(item => (
+                        <KanbanItem key={item.id} item={item} onPreview={onPreview} />
+                    ))}
+                </SortableContext>
+                {items.length === 0 && (
+                    <div className="border-2 border-dashed border-gray-200 rounded-xl h-24 flex items-center justify-center text-gray-300 text-xs font-bold uppercase italic">
+                        Empty
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// --- Main Component ---
+
+export default function ProjectClientContent({
+    progressData,
+    partItems: initialItems,
+    projectId
+}: {
+    progressData: any[],
+    partItems: PartItem[],
+    projectId: number
+}) {
+    const [items, setItems] = useState<any[]>(() => {
+        // PartNumberをマッピング
+        return initialItems.map(item => {
+            const partInfo = progressData.find(p => p.id === item.part_id);
+            return {
+                ...item,
+                part_number: partInfo?.part_number || `Part-${item.part_id}`
+            };
+        });
+    });
+
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [activeId, setActiveId] = useState<number | null>(null);
+    const [previewItem, setPreviewItem] = useState<any | null>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as number);
+    };
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveId(null);
+
+        if (!over) return;
+
+        const itemId = active.id as number;
+        const overId = over.id as string;
+
+        // 移動先のカラム（工程名）を特定
+        const newStatus = PROCESSES.find(p => p.key === overId)?.key;
+
+        if (newStatus) {
+            const item = items.find(i => i.id === itemId);
+            if (item && item.status !== newStatus) {
+                // 楽観的UI更新
+                setItems(prev => prev.map(i =>
+                    i.id === itemId ? { ...i, status: newStatus } : i
+                ));
+
+                // サーバーアクションの呼び出し
+                const result = await updateItemStatus(itemId, newStatus);
+                if (!result.success) {
+                    // 失敗した場合は元に戻す
+                    setItems(prev => prev.map(i =>
+                        i.id === itemId ? { ...i, status: item.status } : i
+                    ));
+                    alert(`Failed to update status: ${result.error}`);
+                }
+            }
         }
     };
 
-    const cartItems = progressData
+    const cartItems = items
         .filter(d => selectedIds.includes(d.id))
-        .map(d => ({ id: d.id, part_number: d.part_number, count: d.count }));
+        .map(d => ({ id: d.id, part_number: d.part_number, count: 1 }));
 
     return (
         <>
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mb-24">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="bg-gray-100 border-b border-gray-200">
-                                <th className="sticky left-0 z-30 bg-gray-100 p-4 border-r border-gray-200 min-w-[240px] text-left">
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.length === progressData.length && progressData.length > 0}
-                                            onChange={(e) => {
-                                                if (e.target.checked) setSelectedIds(progressData.map(d => d.id));
-                                                else setSelectedIds([]);
-                                            }}
-                                            className="w-5 h-5 rounded border-gray-300 text-blue-600"
-                                        />
-                                        <span className="text-sm font-bold text-gray-600 uppercase">部品番号 / 数量</span>
-                                    </div>
-                                </th>
-                                {PROCESSES.map(proc => (
-                                    <th key={proc.key} className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-center border-r border-gray-200 min-w-[160px]">
-                                        {proc.name}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {progressData.map(data => (
-                                <tr key={data.id} className="hover:bg-gray-50 transition-colors group">
-                                    <td className="sticky left-0 z-20 bg-white group-hover:bg-gray-50 p-4 border-r border-gray-200 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                                        <div className="flex items-start gap-3">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.includes(data.id)}
-                                                onChange={() => toggleSelection(data.id)}
-                                                className="w-5 h-5 mt-1 rounded border-gray-300 text-blue-600 cursor-pointer"
-                                            />
-                                            <div>
-                                                {/* 部品名をクリックするとプレビューが開くように変更 */}
-                                                <button
-                                                    onClick={() => setPreviewItem({
-                                                        id: data.id,
-                                                        part_number: data.part_number,
-                                                        current_process: data.current_process
-                                                    })}
-                                                    className="font-black text-blue-600 hover:text-blue-800 hover:underline leading-none text-left transition-colors"
-                                                >
-                                                    {data.part_number}
-                                                </button>
-                                                <div className="text-xs text-gray-400 mt-2 font-bold uppercase">保管: {data.storage_cases.join(', ') || '-'}</div>
-                                                <div className="mt-1 inline-block bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold text-gray-500">
-                                                    QTY: {data.count}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
+            <div className="mb-24">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                >
+                    <div className="flex gap-6 overflow-x-auto pb-8 snap-x">
+                        {PROCESSES.map(proc => (
+                            <KanbanColumn
+                                key={proc.key}
+                                id={proc.key}
+                                title={proc.name}
+                                items={items.filter(i => i.status === proc.key)}
+                                onPreview={setPreviewItem}
+                            />
+                        ))}
+                        {/* 不良カラムも表示 */}
+                        <KanbanColumn
+                            id="DEFECTIVE"
+                            title="不良"
+                            items={items.filter(i => i.status === 'DEFECTIVE')}
+                            onPreview={setPreviewItem}
+                        />
+                    </div>
 
-                                    {PROCESSES.map(proc => {
-                                        const isCurrent = data.current_process === proc.key;
-                                        return (
-                                            <td key={proc.key} className={`p-2 border-r border-gray-100 align-middle ${isCurrent ? 'bg-blue-50/30' : ''}`}>
-                                                {isCurrent && (
-                                                    <div
-                                                        onClick={() => handleQuickForward(data.id, proc.key)}
-                                                        className={`
-                                                            relative group/card cursor-pointer p-3 rounded-xl shadow-md border-b-4 transition-all duration-200 transform hover:-translate-y-1 active:scale-95
-                                                            ${proc.key === 'READY'
-                                                                ? 'bg-green-600 border-green-800 text-white'
-                                                                : 'bg-white border-blue-600 text-blue-900'}
-                                                            ${isUpdating === data.id ? 'opacity-50 animate-pulse' : ''}
-                                                        `}
-                                                    >
-                                                        <div className="text-[10px] font-black uppercase opacity-60 mb-1">
-                                                            {isUpdating === data.id ? 'Updating...' : 'Current Status'}
-                                                        </div>
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="font-bold text-sm">加工中</span>
-                                                            {proc.key !== 'READY' && (
-                                                                <span className="text-lg font-bold group-hover/card:translate-x-1 transition-transform">→</span>
-                                                            )}
-                                                        </div>
-                                                        {proc.key !== 'READY' && (
-                                                            <div className="absolute -bottom-10 left-0 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/card:opacity-100 transition-opacity z-50 whitespace-nowrap">
-                                                                クリックで次へ進む
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                    <DragOverlay>
+                        {activeId ? (
+                            <div className="bg-white p-4 rounded-xl shadow-2xl border-2 border-blue-500 opacity-90 scale-105">
+                                <span className="font-black text-blue-600">
+                                    {items.find(i => i.id === activeId)?.part_number}
+                                </span>
+                            </div>
+                        ) : null}
+                    </DragOverlay>
+                </DndContext>
             </div>
 
             {/* フローティングバー */}
@@ -1466,149 +1601,17 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                 onDownload={() => alert("Zipダウンロードを開始します")}
             />
 
-            {/* 追加：プレビューモーダル */}
+            {/* プレビューモーダル */}
             <PreviewModal
                 isOpen={!!previewItem}
                 onClose={() => setPreviewItem(null)}
                 partNumber={previewItem?.part_number || ''}
                 itemId={previewItem?.id}
-                currentProcess={previewItem?.current_process}
+                status={previewItem?.status}
                 projectId={projectId}
             />
         </>
     );
-}
-</file>
-
-<file path="package.json">
-{
-  "name": "sn-923",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.5.0",
-    "@tailwindcss/postcss": "^4.1.18",
-    "@types/three": "^0.182.0",
-    "firebase": "^12.8.0",
-    "next": "^16.1.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "three": "^0.182.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^19.2.10",
-    "@types/react-dom": "^19.2.3",
-    "autoprefixer": "^10.4.23",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18",
-    "typescript": "^5.3.0"
-  }
-}
-</file>
-
-<file path="app/item/[id]/page.tsx">
-import { mockStore } from '@/lib/mockStore'
-import { updateProcess } from '@/app/actions/updateProcess'
-import { consumeItem } from '@/app/actions/consumeItem'
-import { reportDefect } from '@/app/actions/reportDefect' // アクションをインポート
-import { PROCESSES } from '@/app/constants'
-import Link from 'next/link'
-
-export default async function ItemPage(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const id = parseInt(params.id, 10);
-  const data = await mockStore.getPartItem(id);
-
-  if (!data) {
-    return <div className="p-8">アイテムが見つかりませんでした</div>;
-  }
-
-  return (
-    <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10 border border-gray-100">
-      <Link href={`/project/${data.parts.project_id}`} className="text-sm text-blue-600 hover:underline mb-6 inline-block font-bold">
-        ← プロジェクト進捗に戻る
-      </Link>
-
-      <div className="flex justify-between items-start mb-6">
-        <h1 className="text-3xl font-black text-gray-900">{data.parts.part_number}</h1>
-        <span className={`px-3 py-1 rounded-full text-xs font-bold ${data.current_process === 'DEFECTIVE' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-          ID: {id}
-        </span>
-      </div>
-
-      {/* ステータス表示 */}
-      <div className={`p-4 rounded-lg mb-8 border ${data.current_process === 'DEFECTIVE' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
-        <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Current Status</p>
-        <p className={`text-2xl font-black ${data.current_process === 'DEFECTIVE' ? 'text-red-700' : 'text-blue-800'}`}>
-          {PROCESSES.find(p => p.key === data.current_process)?.name || data.current_process}
-        </p>
-      </div>
-
-      <div className="space-y-10">
-        {/* 1. 通常の工程更新 */}
-        <section>
-          <h2 className="text-sm font-bold text-gray-400 uppercase mb-3">工程を進める</h2>
-          <form action={async (formData) => {
-            'use server'
-            const next = formData.get('next') as string;
-            await updateProcess(id, next, data.parts.project_id);
-          }} className="flex gap-2">
-            <select name="next" defaultValue={data.current_process} className="flex-1 p-3 border rounded-lg font-bold">
-              {PROCESSES.map(proc => <option key={proc.key} value={proc.key}>{proc.name}</option>)}
-            </select>
-            <button className="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition-colors">更新</button>
-          </form>
-        </section>
-
-        {/* 2. 不良報告セクション（ここが重要） */}
-        {data.current_process !== 'DEFECTIVE' && (
-          <section className="p-6 border-2 border-red-200 rounded-2xl bg-red-50/50">
-            <h2 className="text-lg font-black text-red-700 mb-2 flex items-center gap-2">
-              ⚠️ 不良・再製作の報告
-            </h2>
-            <p className="text-sm text-red-600 mb-4 font-medium">
-              この個体に欠陥がある場合、ここで報告します。この個体は「不良」として記録され、自動的に「未プリント」の新しいジョブが作成されます。
-            </p>
-            <form action={async (formData) => {
-              'use server'
-              const reason = formData.get('reason') as string;
-              await reportDefect(id, reason);
-            }} className="space-y-3">
-              <input
-                name="reason"
-                placeholder="不良理由（例：積層剥離、寸法誤差）"
-                className="w-full p-3 border-2 border-red-100 rounded-xl focus:border-red-500 outline-none bg-white font-medium"
-                required
-              />
-              <button className="w-full bg-red-600 text-white font-black py-4 rounded-xl hover:bg-red-700 transition-all shadow-lg active:scale-[0.98]">
-                不良を確定し、再製作を依頼
-              </button>
-            </form>
-          </section>
-        )}
-
-        {/* 3. 完了処理 */}
-        <section>
-          <form action={async () => {
-            'use server'
-            await consumeItem(id);
-          }}>
-            <button className="w-full border-2 border-green-600 text-green-600 font-black py-4 rounded-xl hover:bg-green-50 transition-colors">
-              組み込み完了（ストックから除外）
-            </button>
-          </form>
-        </section>
-      </div>
-    </div>
-  )
 }
 </file>
 
@@ -1683,6 +1686,141 @@ export default async function ProjectsDashboardPage() {
 }
 </file>
 
+<file path="package.json">
+{
+  "name": "sn-923",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/three": "^0.182.0",
+    "firebase": "^12.8.0",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.3.0"
+  }
+}
+</file>
+
+<file path="app/item/[id]/page.tsx">
+import { mockStore } from '@/lib/mockStore'
+import { updateProcess } from '@/app/actions/updateProcess'
+import { consumeItem } from '@/app/actions/consumeItem'
+import { reportDefect } from '@/app/actions/reportDefect' // アクションをインポート
+import { PROCESSES } from '@/app/constants'
+import Link from 'next/link'
+
+export default async function ItemPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const id = parseInt(params.id, 10);
+  const data = await mockStore.getPartItem(id);
+
+  if (!data) {
+    return <div className="p-8">アイテムが見つかりませんでした</div>;
+  }
+
+  return (
+    <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10 border border-gray-100">
+      <Link href={`/project/${data.parts.project_id}`} className="text-sm text-blue-600 hover:underline mb-6 inline-block font-bold">
+        ← プロジェクト進捗に戻る
+      </Link>
+
+      <div className="flex justify-between items-start mb-6">
+        <h1 className="text-3xl font-black text-gray-900">{data.parts.part_number}</h1>
+        <span className={`px-3 py-1 rounded-full text-xs font-bold ${data.status === 'DEFECTIVE' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+          ID: {id}
+        </span>
+      </div>
+
+      {/* ステータス表示 */}
+      <div className={`p-4 rounded-lg mb-8 border ${data.status === 'DEFECTIVE' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
+        <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Current Status</p>
+        <p className={`text-2xl font-black ${data.status === 'DEFECTIVE' ? 'text-red-700' : 'text-blue-800'}`}>
+          {PROCESSES.find(p => p.key === data.status)?.name || data.status}
+        </p>
+      </div>
+
+      <div className="space-y-10">
+        {/* 1. 通常の工程更新 */}
+        <section>
+          <h2 className="text-sm font-bold text-gray-400 uppercase mb-3">工程を進める</h2>
+          <form action={async (formData) => {
+            'use server'
+            const next = formData.get('next') as string;
+            await updateProcess(id, next, data.parts.project_id);
+          }} className="flex gap-2">
+            <select name="next" defaultValue={data.status} className="flex-1 p-3 border rounded-lg font-bold">
+              {PROCESSES.map(proc => <option key={proc.key} value={proc.key}>{proc.name}</option>)}
+            </select>
+            <button className="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition-colors">更新</button>
+          </form>
+        </section>
+
+        {/* 2. 不良報告セクション（ここが重要） */}
+        {data.status !== 'DEFECTIVE' && (
+          <section className="p-6 border-2 border-red-200 rounded-2xl bg-red-50/50">
+            <h2 className="text-lg font-black text-red-700 mb-2 flex items-center gap-2">
+              ⚠️ 不良・再製作の報告
+            </h2>
+            <p className="text-sm text-red-600 mb-4 font-medium">
+              この個体に欠陥がある場合、ここで報告します。この個体は「不良」として記録され、自動的に「未プリント」の新しいジョブが作成されます。
+            </p>
+            <form action={async (formData) => {
+              'use server'
+              const reason = formData.get('reason') as string;
+              await reportDefect(id, reason);
+            }} className="space-y-3">
+              <input
+                name="reason"
+                placeholder="不良理由（例：積層剥離、寸法誤差）"
+                className="w-full p-3 border-2 border-red-100 rounded-xl focus:border-red-500 outline-none bg-white font-medium"
+                required
+              />
+              <button className="w-full bg-red-600 text-white font-black py-4 rounded-xl hover:bg-red-700 transition-all shadow-lg active:scale-[0.98]">
+                不良を確定し、再製作を依頼
+              </button>
+            </form>
+          </section>
+        )}
+
+        {/* 3. 完了処理 */}
+        <section>
+          <form action={async () => {
+            'use server'
+            await consumeItem(id);
+          }}>
+            <button className="w-full border-2 border-green-600 text-green-600 font-black py-4 rounded-xl hover:bg-green-50 transition-colors">
+              組み込み完了（ストックから除外）
+            </button>
+          </form>
+        </section>
+      </div>
+    </div>
+  )
+}
+</file>
+
 <file path="app/print/page.tsx">
 'use client';
 
@@ -1711,7 +1849,7 @@ function PrintRegistrationContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedPartId, setSelectedPartId] = useState<number>(filteredParts[0]?.id || 0);
   const [quantity, setQuantity] = useState(1);
-  const [targetProcess, setTargetProcess] = useState('PRINTED');
+  const [targetStatus, setTargetStatus] = useState('PRINTED');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ファイル選択時の処理
@@ -1820,8 +1958,8 @@ function PrintRegistrationContent() {
                     type="radio"
                     name="status"
                     value={status}
-                    checked={targetProcess === status}
-                    onChange={(e) => setTargetProcess(e.target.value)}
+                    checked={targetStatus === status}
+                    onChange={(e) => setTargetStatus(e.target.value)}
                     className="mr-2"
                   />
                   {PROCESSES.find(p => p.key === status)?.name}

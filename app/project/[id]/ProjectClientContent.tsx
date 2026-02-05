@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useOptimistic, useTransition } from 'react';
+import React, { useState } from 'react';
 import {
     DndContext,
     DragOverlay,
@@ -10,10 +10,10 @@ import {
     useSensor,
     useSensors,
     DragEndEvent,
-    DragStartEvent
+    DragStartEvent,
+    useDroppable
 } from '@dnd-kit/core';
 import {
-    arrayMove,
     SortableContext,
     sortableKeyboardCoordinates,
     verticalListSortingStrategy,
@@ -23,19 +23,18 @@ import { CSS } from '@dnd-kit/utilities';
 import { PROCESSES } from '@/app/constants';
 import { CartModal } from '@/app/components/CartModal';
 import { PreviewModal } from '@/app/components/PreviewModal';
-import { PartItem, ProcessStatus } from '@/app/types';
+import { Part, PartItem } from '@/app/types';
 import { updateItemStatus } from '@/app/actions/updateItemStatus';
-import { updateProcess } from '@/app/actions/updateProcess';
 
 // --- Components ---
 
-interface KanbanItemProps {
-    item: PartItem & { part_number: string };
-    isUpdating?: boolean;
+interface DraggableItemProps {
+    item: PartItem & { part_number?: string }; // part_numberはデータにある場合とない場合がある
+    isOverlay?: boolean;
     onPreview: (item: any) => void;
 }
 
-function KanbanItem({ item, isUpdating, onPreview }: KanbanItemProps) {
+function DraggableItem({ item, isOverlay, onPreview }: DraggableItemProps) {
     const {
         attributes,
         listeners,
@@ -43,12 +42,12 @@ function KanbanItem({ item, isUpdating, onPreview }: KanbanItemProps) {
         transform,
         transition,
         isDragging
-    } = useSortable({ id: item.id });
+    } = useSortable({ id: `item-${item.id}` });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.3 : 1,
     };
 
     return (
@@ -58,59 +57,91 @@ function KanbanItem({ item, isUpdating, onPreview }: KanbanItemProps) {
             {...attributes}
             {...listeners}
             className={`
-                bg-white p-4 rounded-xl shadow-sm border-b-4 border-gray-200 mb-3 cursor-grab active:cursor-grabbing
-                hover:border-blue-400 transition-all group
-                ${isUpdating ? 'opacity-50 animate-pulse' : ''}
+                bg-white p-2 rounded-md shadow-sm border border-gray-200 mb-2 cursor-grab active:cursor-grabbing
+                hover:border-blue-400 transition-all text-xs
+                ${isOverlay ? 'shadow-xl scale-105 border-blue-500' : ''}
             `}
         >
-            <div className="flex justify-between items-start mb-2">
+            <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-gray-500">#{item.id}</span>
                 <button
                     onClick={(e) => {
-                        e.stopPropagation();
+                        e.stopPropagation(); // ドラッグ動作と競合しないように
                         onPreview(item);
                     }}
-                    className="font-black text-blue-600 hover:text-blue-800 hover:underline leading-none text-left"
+                    onPointerDown={(e) => e.stopPropagation()} // 重要: ボタン押下でドラッグが始まらないようにする
+                    className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded hover:bg-blue-100"
                 >
-                    {item.part_number}
+                    詳細
                 </button>
-                <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded">
-                    ID: {item.id}
-                </span>
             </div>
-            <div className="text-xs text-gray-500 font-bold uppercase truncate">
-                CASE: {item.storage_case || '-'}
+            <div className="text-[10px] text-gray-400 truncate font-mono">
+                {item.storage_case || 'No Case'}
             </div>
-            {item.status === 'READY' && (
-                <div className="mt-2 text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block">
-                    READY
-                </div>
-            )}
         </div>
     );
 }
 
-function KanbanColumn({ id, title, items, onPreview }: { id: string, title: string, items: any[], onPreview: (item: any) => void }) {
-    const { setNodeRef } = useSortable({ id });
+interface SwimlaneCellProps {
+    partId: number;
+    status: string;
+    items: PartItem[];
+    onPreview: (item: any) => void;
+}
+
+function SwimlaneCell({ partId, status, items, onPreview }: SwimlaneCellProps) {
+    // Droppable ID: container-{partId}-{status}
+    const droppableId = `container-${partId}-${status}`;
+    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
     return (
-        <div className="flex-1 min-w-[300px] bg-gray-50/50 rounded-2xl p-4 flex flex-col border border-gray-100">
-            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6 flex justify-between items-center px-2">
-                {title}
-                <span className="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full">
-                    {items.length}
-                </span>
-            </h3>
-            <div ref={setNodeRef} className="flex-1">
-                <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+        <div
+            ref={setNodeRef}
+            className={`
+                flex-1 min-w-[140px] border-r border-gray-100 p-2 flex flex-col transition-colors
+                ${isOver ? 'bg-blue-50/50' : 'bg-transparent'}
+            `}
+        >
+            <SortableContext
+                items={items.map(i => `item-${i.id}`)}
+                strategy={verticalListSortingStrategy}
+            >
+                <div className="flex-1 min-h-[60px]"> {/* 空でもドロップできるように高さを確保 */}
                     {items.map(item => (
-                        <KanbanItem key={item.id} item={item} onPreview={onPreview} />
+                        <DraggableItem key={item.id} item={item} onPreview={onPreview} />
                     ))}
-                </SortableContext>
-                {items.length === 0 && (
-                    <div className="border-2 border-dashed border-gray-200 rounded-xl h-24 flex items-center justify-center text-gray-300 text-xs font-bold uppercase italic">
-                        Empty
-                    </div>
-                )}
+                </div>
+            </SortableContext>
+        </div>
+    );
+}
+
+interface SwimlaneRowProps {
+    part: Part;
+    items: PartItem[];
+    onPreview: (item: any) => void;
+}
+
+function SwimlaneRow({ part, items, onPreview }: SwimlaneRowProps) {
+    return (
+        <div className="flex bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden mb-4 shrink-0">
+            {/* 左端：部品情報（固定列） */}
+            <div className="w-48 bg-gray-50 p-4 border-r border-gray-200 flex flex-col justify-center shrink-0">
+                <h3 className="font-bold text-gray-800 text-sm mb-1">{part.part_number}</h3>
+                <p className="text-xs text-gray-500">Total: {items.length} items</p>
+            </div>
+
+            {/* 右側：工程セル（横スクロール可能領域） */}
+            <div className="flex-1 flex divide-x divide-gray-100 overflow-x-auto">
+                {PROCESSES.map(proc => (
+                    <SwimlaneCell
+                        key={proc.key}
+                        partId={part.id}
+                        status={proc.key}
+                        items={items.filter(i => i.status === proc.key)}
+                        onPreview={onPreview}
+                    />
+                ))}
             </div>
         </div>
     );
@@ -120,27 +151,19 @@ function KanbanColumn({ id, title, items, onPreview }: { id: string, title: stri
 
 export default function ProjectClientContent({
     progressData,
+    parts,
     partItems: initialItems,
     projectId
 }: {
     progressData: any[],
+    parts: Part[],
     partItems: PartItem[],
     projectId: number
 }) {
-    const [items, setItems] = useState<any[]>(() => {
-        // PartNumberをマッピング
-        return initialItems.map(item => {
-            const partInfo = progressData.find(p => p.id === item.part_id);
-            return {
-                ...item,
-                part_number: partInfo?.part_number || `Part-${item.part_id}`
-            };
-        });
-    });
-
+    const [items, setItems] = useState<PartItem[]>(initialItems);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
-    const [activeId, setActiveId] = useState<number | null>(null);
+    const [activeId, setActiveId] = useState<string | null>(null);
     const [previewItem, setPreviewItem] = useState<any | null>(null);
 
     const sensors = useSensors(
@@ -155,7 +178,7 @@ export default function ProjectClientContent({
     );
 
     const handleDragStart = (event: DragStartEvent) => {
-        setActiveId(event.active.id as number);
+        setActiveId(event.active.id as string);
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
@@ -164,24 +187,49 @@ export default function ProjectClientContent({
 
         if (!over) return;
 
-        const itemId = active.id as number;
-        const overId = over.id as string;
+        // IDのパース
+        // Draggable ID: item-{itemId}
+        const activeIdStr = active.id as string;
+        const itemId = parseInt(activeIdStr.split('-')[1], 10);
 
-        // 移動先のカラム（工程名）を特定
-        const newStatus = PROCESSES.find(p => p.key === overId)?.key;
+        // Droppable ID: container-{partId}-{status}
+        // または Sortable Item ID: item-{itemId} (同じカラム内の並び替え時などはこれに乗ることもあるが、Droppableコンテナで受けるのが基本)
 
-        if (newStatus) {
+        let targetStatus: string | undefined;
+        // let targetPartId: number | undefined; // 今回はstatusだけわかればよいが、厳密にはPartの一致確認も可
+
+        const overIdStr = over.id as string;
+
+        if (overIdStr.startsWith('container-')) {
+            const parts = overIdStr.split('-');
+            // container-{partId}-{status}
+            // partIdが数値の場合、parts[1]は数値文字列。statusは残りの部分だが、status自体にハイフンが含まれない前提
+            // statusにハイフンが含まれる場合は slice で結合が必要
+            // 今回のPROCESS_STATUSESはハイフンを含まない (UNDERSCOREは含む) ので大丈夫
+            targetStatus = parts[2]; // status
+        } else if (overIdStr.startsWith('item-')) {
+            // アイテムの上にドロップした場合、そのアイテムの親コンテナのステータスを取得する必要がある
+            // items配列から検索して特定する
+            const overItemId = parseInt(overIdStr.split('-')[1], 10);
+            const overItem = items.find(i => i.id === overItemId);
+            if (overItem) {
+                targetStatus = overItem.status;
+            }
+        }
+
+        if (targetStatus) {
             const item = items.find(i => i.id === itemId);
-            if (item && item.status !== newStatus) {
+            // ステータスが変更される場合のみ処理
+            if (item && item.status !== targetStatus) {
                 // 楽観的UI更新
                 setItems(prev => prev.map(i =>
-                    i.id === itemId ? { ...i, status: newStatus } : i
+                    i.id === itemId ? { ...i, status: targetStatus! } : i
                 ));
 
                 // サーバーアクションの呼び出し
-                const result = await updateItemStatus(itemId, newStatus);
+                const result = await updateItemStatus(itemId, targetStatus);
                 if (!result.success) {
-                    // 失敗した場合は元に戻す
+                    // 失敗時はロールバック
                     setItems(prev => prev.map(i =>
                         i.id === itemId ? { ...i, status: item.status } : i
                     ));
@@ -191,68 +239,76 @@ export default function ProjectClientContent({
         }
     };
 
+    const activeItem = activeId
+        ? items.find(i => `item-${i.id}` === activeId)
+        : null;
+
+    // カート機能用の計算
     const cartItems = items
-        .filter(d => selectedIds.includes(d.id))
-        .map(d => ({ id: d.id, part_number: d.part_number, count: 1 }));
+        .filter(i => selectedIds.includes(i.id))
+        .map(i => {
+            const part = parts.find(p => p.id === i.part_id);
+            return {
+                id: i.id,
+                part_number: part?.part_number || `Part-${i.part_id}`,
+                count: 1
+            };
+        });
 
     return (
         <>
             <div className="mb-24">
+                {/* ヘッダー行（工程名） */}
+                <div className="flex ml-48 border-b border-gray-200 pb-2 mb-2 sticky top-0 bg-gray-50 z-10 shadow-sm">
+                    {PROCESSES.map(proc => (
+                        <div key={proc.key} className="flex-1 min-w-[140px] px-2 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">
+                            {proc.name}
+                        </div>
+                    ))}
+                </div>
+
                 <DndContext
                     sensors={sensors}
                     collisionDetection={closestCorners}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    <div className="flex gap-6 overflow-x-auto pb-8 snap-x">
-                        {PROCESSES.map(proc => (
-                            <KanbanColumn
-                                key={proc.key}
-                                id={proc.key}
-                                title={proc.name}
-                                items={items.filter(i => i.status === proc.key)}
-                                onPreview={setPreviewItem}
+                    <div className="flex flex-col gap-4">
+                        {parts.map(part => (
+                            <SwimlaneRow
+                                key={part.id}
+                                part={part}
+                                items={items.filter(i => i.part_id === part.id)}
+                                onPreview={(item) => {
+                                    const part = parts.find(p => p.id === item.part_id);
+                                    setPreviewItem({
+                                        ...item,
+                                        part_number: part?.part_number
+                                    });
+                                }}
                             />
                         ))}
-                        {/* 不良カラムも表示 */}
-                        <KanbanColumn
-                            id="DEFECTIVE"
-                            title="不良"
-                            items={items.filter(i => i.status === 'DEFECTIVE')}
-                            onPreview={setPreviewItem}
-                        />
                     </div>
 
                     <DragOverlay>
-                        {activeId ? (
-                            <div className="bg-white p-4 rounded-xl shadow-2xl border-2 border-blue-500 opacity-90 scale-105">
-                                <span className="font-black text-blue-600">
-                                    {items.find(i => i.id === activeId)?.part_number}
-                                </span>
-                            </div>
+                        {activeItem ? (
+                            <DraggableItem
+                                item={activeItem}
+                                isOverlay
+                                onPreview={() => { }}
+                            />
                         ) : null}
                     </DragOverlay>
                 </DndContext>
             </div>
 
-            {/* フローティングバー */}
+            {/* カートUIは一旦省略しないが、スペースの都合で簡易化する場合はここを調整 */}
             {selectedIds.length > 0 && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-8 bg-gray-900 text-white px-8 py-4 rounded-2xl z-50 shadow-2xl animate-in fade-in slide-in-from-bottom-4">
-                    <div className="flex flex-col">
-                        <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Selected</span>
-                        <span className="text-xl font-black text-blue-400">{selectedIds.length} <span className="text-sm">Items</span></span>
-                    </div>
-                    <div className="h-10 w-[1px] bg-gray-700"></div>
-                    <button
-                        onClick={() => setIsCartOpen(true)}
-                        className="bg-blue-500 text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-400 transition-colors flex items-center gap-2"
-                    >
-                        カートに追加 (STL)
-                    </button>
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl z-50 shadow-xl">
+                    <span className="font-bold">{selectedIds.length} items selected</span>
                 </div>
             )}
 
-            {/* カートモーダル */}
             <CartModal
                 isOpen={isCartOpen}
                 onClose={() => setIsCartOpen(false)}
@@ -260,7 +316,6 @@ export default function ProjectClientContent({
                 onDownload={() => alert("Zipダウンロードを開始します")}
             />
 
-            {/* プレビューモーダル */}
             <PreviewModal
                 isOpen={!!previewItem}
                 onClose={() => setPreviewItem(null)}
