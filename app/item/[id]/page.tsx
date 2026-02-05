@@ -22,16 +22,16 @@ export default async function ItemPage(props: { params: Promise<{ id: string }> 
 
       <div className="flex justify-between items-start mb-6">
         <h1 className="text-3xl font-black text-gray-900">{data.parts.part_number}</h1>
-        <span className={`px-3 py-1 rounded-full text-xs font-bold ${data.current_process === 'DEFECTIVE' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+        <span className={`px-3 py-1 rounded-full text-xs font-bold ${data.status === 'DEFECTIVE' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
           ID: {id}
         </span>
       </div>
 
       {/* ステータス表示 */}
-      <div className={`p-4 rounded-lg mb-8 border ${data.current_process === 'DEFECTIVE' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
+      <div className={`p-4 rounded-lg mb-8 border ${data.status === 'DEFECTIVE' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
         <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Current Status</p>
-        <p className={`text-2xl font-black ${data.current_process === 'DEFECTIVE' ? 'text-red-700' : 'text-blue-800'}`}>
-          {PROCESSES.find(p => p.key === data.current_process)?.name || data.current_process}
+        <p className={`text-2xl font-black ${data.status === 'DEFECTIVE' ? 'text-red-700' : 'text-blue-800'}`}>
+          {PROCESSES.find(p => p.key === data.status)?.name || data.status}
         </p>
       </div>
 
@@ -44,7 +44,7 @@ export default async function ItemPage(props: { params: Promise<{ id: string }> 
             const next = formData.get('next') as string;
             await updateProcess(id, next, data.parts.project_id);
           }} className="flex gap-2">
-            <select name="next" defaultValue={data.current_process} className="flex-1 p-3 border rounded-lg font-bold">
+            <select name="next" defaultValue={data.status} className="flex-1 p-3 border rounded-lg font-bold">
               {PROCESSES.map(proc => <option key={proc.key} value={proc.key}>{proc.name}</option>)}
             </select>
             <button className="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition-colors">更新</button>
@@ -52,7 +52,7 @@ export default async function ItemPage(props: { params: Promise<{ id: string }> 
         </section>
 
         {/* 2. 不良報告セクション（ここが重要） */}
-        {data.current_process !== 'DEFECTIVE' && (
+        {data.status !== 'DEFECTIVE' && (
           <section className="p-6 border-2 border-red-200 rounded-2xl bg-red-50/50">
             <h2 className="text-lg font-black text-red-700 mb-2 flex items-center gap-2">
               ⚠️ 不良・再製作の報告

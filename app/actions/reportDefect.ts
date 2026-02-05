@@ -19,7 +19,7 @@ export async function reportDefect(itemId: number | string, reason: string) {
 
     // 1. 現状のアイテムを「不良(DEFECTIVE)」にする
     await mockStore.updatePartItem(id, {
-        current_process: 'DEFECTIVE'
+        status: 'DEFECTIVE'
     });
 
     // 2. 新しいジョブ（再製作）を生成する
@@ -27,7 +27,7 @@ export async function reportDefect(itemId: number | string, reason: string) {
     await mockStore.addPartItem({
         part_id: item.part_id,
         storage_case: `${item.storage_case} (RE)`, // 再製作であることを示す
-        current_process: 'UNPRINTED',
+        status: 'UNPRINTED',
         completed_at: null
     });
 

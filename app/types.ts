@@ -1,4 +1,4 @@
-export type Process =
+export type ProcessStatus =
   | 'UNPRINTED'
   | 'PRINTED'
   | 'SURFACE_TREATMENT'
@@ -24,12 +24,13 @@ export interface PartItem {
   id: number;
   part_id: number;
   storage_case: string;
-  current_process: Process;
+  status: ProcessStatus;
   completed_at: Date | null;
+  updated_at?: any;
 }
 
 export interface ProgressData {
   part_number: string;
   storage_cases: string[];
-  counts: Record<Process, number>;
+  counts: Record<ProcessStatus, number>;
 }

@@ -1,143 +1,238 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useOptimistic, useTransition } from 'react';
+import {
+    DndContext,
+    DragOverlay,
+    closestCorners,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { PROCESSES } from '@/app/constants';
 import { CartModal } from '@/app/components/CartModal';
+import { PreviewModal } from '@/app/components/PreviewModal';
+import { PartItem, ProcessStatus } from '@/app/types';
+import { updateItemStatus } from '@/app/actions/updateItemStatus';
 import { updateProcess } from '@/app/actions/updateProcess';
-import { PreviewModal } from '@/app/components/PreviewModal'; // 新設したコンポーネント
 
-export default function ProjectClientContent({ progressData, projectId }: { progressData: any[], projectId: number }) {
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isUpdating, setIsUpdating] = useState<number | null>(null);
+// --- Components ---
 
-    // プレビュー表示用のステートを追加
-    const [previewItem, setPreviewItem] = useState<{
-        id: number;
-        part_number: string;
-        current_process: string;
-    } | null>(null);
+interface KanbanItemProps {
+    item: PartItem & { part_number: string };
+    isUpdating?: boolean;
+    onPreview: (item: any) => void;
+}
 
-    // チェックボックス選択制御
-    const toggleSelection = (id: number) => {
-        setSelectedIds(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        );
+function KanbanItem({ item, isUpdating, onPreview }: KanbanItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: item.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
     };
 
-    // 工程を一つ進めるクイック操作
-    const handleQuickForward = async (itemId: number, currentProcKey: string) => {
-        const currentIndex = PROCESSES.findIndex(p => p.key === currentProcKey);
-        if (currentIndex < PROCESSES.length - 1) {
-            setIsUpdating(itemId);
-            const nextProcess = PROCESSES[currentIndex + 1].key;
-            await updateProcess(itemId, nextProcess, projectId);
-            setIsUpdating(null);
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className={`
+                bg-white p-4 rounded-xl shadow-sm border-b-4 border-gray-200 mb-3 cursor-grab active:cursor-grabbing
+                hover:border-blue-400 transition-all group
+                ${isUpdating ? 'opacity-50 animate-pulse' : ''}
+            `}
+        >
+            <div className="flex justify-between items-start mb-2">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPreview(item);
+                    }}
+                    className="font-black text-blue-600 hover:text-blue-800 hover:underline leading-none text-left"
+                >
+                    {item.part_number}
+                </button>
+                <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded">
+                    ID: {item.id}
+                </span>
+            </div>
+            <div className="text-xs text-gray-500 font-bold uppercase truncate">
+                CASE: {item.storage_case || '-'}
+            </div>
+            {item.status === 'READY' && (
+                <div className="mt-2 text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full inline-block">
+                    READY
+                </div>
+            )}
+        </div>
+    );
+}
+
+function KanbanColumn({ id, title, items, onPreview }: { id: string, title: string, items: any[], onPreview: (item: any) => void }) {
+    const { setNodeRef } = useSortable({ id });
+
+    return (
+        <div className="flex-1 min-w-[300px] bg-gray-50/50 rounded-2xl p-4 flex flex-col border border-gray-100">
+            <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6 flex justify-between items-center px-2">
+                {title}
+                <span className="bg-gray-200 text-gray-600 text-[10px] px-2 py-0.5 rounded-full">
+                    {items.length}
+                </span>
+            </h3>
+            <div ref={setNodeRef} className="flex-1">
+                <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+                    {items.map(item => (
+                        <KanbanItem key={item.id} item={item} onPreview={onPreview} />
+                    ))}
+                </SortableContext>
+                {items.length === 0 && (
+                    <div className="border-2 border-dashed border-gray-200 rounded-xl h-24 flex items-center justify-center text-gray-300 text-xs font-bold uppercase italic">
+                        Empty
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// --- Main Component ---
+
+export default function ProjectClientContent({
+    progressData,
+    partItems: initialItems,
+    projectId
+}: {
+    progressData: any[],
+    partItems: PartItem[],
+    projectId: number
+}) {
+    const [items, setItems] = useState<any[]>(() => {
+        // PartNumberをマッピング
+        return initialItems.map(item => {
+            const partInfo = progressData.find(p => p.id === item.part_id);
+            return {
+                ...item,
+                part_number: partInfo?.part_number || `Part-${item.part_id}`
+            };
+        });
+    });
+
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [activeId, setActiveId] = useState<number | null>(null);
+    const [previewItem, setPreviewItem] = useState<any | null>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as number);
+    };
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveId(null);
+
+        if (!over) return;
+
+        const itemId = active.id as number;
+        const overId = over.id as string;
+
+        // 移動先のカラム（工程名）を特定
+        const newStatus = PROCESSES.find(p => p.key === overId)?.key;
+
+        if (newStatus) {
+            const item = items.find(i => i.id === itemId);
+            if (item && item.status !== newStatus) {
+                // 楽観的UI更新
+                setItems(prev => prev.map(i =>
+                    i.id === itemId ? { ...i, status: newStatus } : i
+                ));
+
+                // サーバーアクションの呼び出し
+                const result = await updateItemStatus(itemId, newStatus);
+                if (!result.success) {
+                    // 失敗した場合は元に戻す
+                    setItems(prev => prev.map(i =>
+                        i.id === itemId ? { ...i, status: item.status } : i
+                    ));
+                    alert(`Failed to update status: ${result.error}`);
+                }
+            }
         }
     };
 
-    const cartItems = progressData
+    const cartItems = items
         .filter(d => selectedIds.includes(d.id))
-        .map(d => ({ id: d.id, part_number: d.part_number, count: d.count }));
+        .map(d => ({ id: d.id, part_number: d.part_number, count: 1 }));
 
     return (
         <>
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 mb-24">
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="bg-gray-100 border-b border-gray-200">
-                                <th className="sticky left-0 z-30 bg-gray-100 p-4 border-r border-gray-200 min-w-[240px] text-left">
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.length === progressData.length && progressData.length > 0}
-                                            onChange={(e) => {
-                                                if (e.target.checked) setSelectedIds(progressData.map(d => d.id));
-                                                else setSelectedIds([]);
-                                            }}
-                                            className="w-5 h-5 rounded border-gray-300 text-blue-600"
-                                        />
-                                        <span className="text-sm font-bold text-gray-600 uppercase">部品番号 / 数量</span>
-                                    </div>
-                                </th>
-                                {PROCESSES.map(proc => (
-                                    <th key={proc.key} className="p-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-center border-r border-gray-200 min-w-[160px]">
-                                        {proc.name}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {progressData.map(data => (
-                                <tr key={data.id} className="hover:bg-gray-50 transition-colors group">
-                                    <td className="sticky left-0 z-20 bg-white group-hover:bg-gray-50 p-4 border-r border-gray-200 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                                        <div className="flex items-start gap-3">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.includes(data.id)}
-                                                onChange={() => toggleSelection(data.id)}
-                                                className="w-5 h-5 mt-1 rounded border-gray-300 text-blue-600 cursor-pointer"
-                                            />
-                                            <div>
-                                                {/* 部品名をクリックするとプレビューが開くように変更 */}
-                                                <button
-                                                    onClick={() => setPreviewItem({
-                                                        id: data.id,
-                                                        part_number: data.part_number,
-                                                        current_process: data.current_process
-                                                    })}
-                                                    className="font-black text-blue-600 hover:text-blue-800 hover:underline leading-none text-left transition-colors"
-                                                >
-                                                    {data.part_number}
-                                                </button>
-                                                <div className="text-xs text-gray-400 mt-2 font-bold uppercase">保管: {data.storage_cases.join(', ') || '-'}</div>
-                                                <div className="mt-1 inline-block bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold text-gray-500">
-                                                    QTY: {data.count}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
+            <div className="mb-24">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                >
+                    <div className="flex gap-6 overflow-x-auto pb-8 snap-x">
+                        {PROCESSES.map(proc => (
+                            <KanbanColumn
+                                key={proc.key}
+                                id={proc.key}
+                                title={proc.name}
+                                items={items.filter(i => i.status === proc.key)}
+                                onPreview={setPreviewItem}
+                            />
+                        ))}
+                        {/* 不良カラムも表示 */}
+                        <KanbanColumn
+                            id="DEFECTIVE"
+                            title="不良"
+                            items={items.filter(i => i.status === 'DEFECTIVE')}
+                            onPreview={setPreviewItem}
+                        />
+                    </div>
 
-                                    {PROCESSES.map(proc => {
-                                        const isCurrent = data.current_process === proc.key;
-                                        return (
-                                            <td key={proc.key} className={`p-2 border-r border-gray-100 align-middle ${isCurrent ? 'bg-blue-50/30' : ''}`}>
-                                                {isCurrent && (
-                                                    <div
-                                                        onClick={() => handleQuickForward(data.id, proc.key)}
-                                                        className={`
-                                                            relative group/card cursor-pointer p-3 rounded-xl shadow-md border-b-4 transition-all duration-200 transform hover:-translate-y-1 active:scale-95
-                                                            ${proc.key === 'READY'
-                                                                ? 'bg-green-600 border-green-800 text-white'
-                                                                : 'bg-white border-blue-600 text-blue-900'}
-                                                            ${isUpdating === data.id ? 'opacity-50 animate-pulse' : ''}
-                                                        `}
-                                                    >
-                                                        <div className="text-[10px] font-black uppercase opacity-60 mb-1">
-                                                            {isUpdating === data.id ? 'Updating...' : 'Current Status'}
-                                                        </div>
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="font-bold text-sm">加工中</span>
-                                                            {proc.key !== 'READY' && (
-                                                                <span className="text-lg font-bold group-hover/card:translate-x-1 transition-transform">→</span>
-                                                            )}
-                                                        </div>
-                                                        {proc.key !== 'READY' && (
-                                                            <div className="absolute -bottom-10 left-0 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/card:opacity-100 transition-opacity z-50 whitespace-nowrap">
-                                                                クリックで次へ進む
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                    <DragOverlay>
+                        {activeId ? (
+                            <div className="bg-white p-4 rounded-xl shadow-2xl border-2 border-blue-500 opacity-90 scale-105">
+                                <span className="font-black text-blue-600">
+                                    {items.find(i => i.id === activeId)?.part_number}
+                                </span>
+                            </div>
+                        ) : null}
+                    </DragOverlay>
+                </DndContext>
             </div>
 
             {/* フローティングバー */}
@@ -165,13 +260,13 @@ export default function ProjectClientContent({ progressData, projectId }: { prog
                 onDownload={() => alert("Zipダウンロードを開始します")}
             />
 
-            {/* 追加：プレビューモーダル */}
+            {/* プレビューモーダル */}
             <PreviewModal
                 isOpen={!!previewItem}
                 onClose={() => setPreviewItem(null)}
                 partNumber={previewItem?.part_number || ''}
                 itemId={previewItem?.id}
-                currentProcess={previewItem?.current_process}
+                status={previewItem?.status}
                 projectId={projectId}
             />
         </>

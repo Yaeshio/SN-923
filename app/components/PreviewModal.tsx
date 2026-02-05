@@ -11,7 +11,7 @@ interface PreviewModalProps {
     onClose: () => void
     partNumber: string
     itemId?: number
-    currentProcess?: string
+    status?: string
     projectId?: number
 }
 
@@ -20,7 +20,7 @@ export function PreviewModal({
     onClose,
     partNumber,
     itemId,
-    currentProcess,
+    status,
     projectId
 }: PreviewModalProps) {
     const [isPending, startTransition] = useTransition()
@@ -29,7 +29,7 @@ export function PreviewModal({
     if (!isOpen) return null
 
     // 現在の工程より「前」の工程を抽出（差し戻し用）
-    const currentIndex = PROCESSES.findIndex(p => p.key === currentProcess)
+    const currentIndex = PROCESSES.findIndex(p => p.key === status)
     const previousProcesses = PROCESSES.slice(0, currentIndex)
 
     const handleUpdateStatus = (statusKey: string) => {
@@ -57,7 +57,7 @@ export function PreviewModal({
                 <div className="p-6 border-b flex justify-between items-center bg-gray-50">
                     <div>
                         <h3 className="text-2xl font-black text-gray-900">{partNumber}</h3>
-                        <p className="text-sm text-gray-500 font-bold">ITEM ID: {itemId} / CURRENT: {currentProcess}</p>
+                        <p className="text-sm text-gray-500 font-bold">ITEM ID: {itemId} / CURRENT: {status}</p>
                     </div>
                     <button
                         onClick={onClose}
@@ -120,8 +120,8 @@ export function PreviewModal({
                                     onClick={handleReportDefect}
                                     disabled={isPending || !defectReason}
                                     className={`w-full py-4 rounded-xl font-black transition-all shadow-md ${isPending || !defectReason
-                                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            : 'bg-red-600 text-white hover:bg-red-700 active:scale-95'
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-red-600 text-white hover:bg-red-700 active:scale-95'
                                         }`}
                                 >
                                     {isPending ? '処理中...' : '不良確定 & 再製作依頼'}

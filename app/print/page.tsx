@@ -25,7 +25,7 @@ function PrintRegistrationContent() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedPartId, setSelectedPartId] = useState<number>(filteredParts[0]?.id || 0);
   const [quantity, setQuantity] = useState(1);
-  const [targetProcess, setTargetProcess] = useState('PRINTED');
+  const [targetStatus, setTargetStatus] = useState('PRINTED');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ファイル選択時の処理
@@ -134,8 +134,8 @@ function PrintRegistrationContent() {
                     type="radio"
                     name="status"
                     value={status}
-                    checked={targetProcess === status}
-                    onChange={(e) => setTargetProcess(e.target.value)}
+                    checked={targetStatus === status}
+                    onChange={(e) => setTargetStatus(e.target.value)}
                     className="mr-2"
                   />
                   {PROCESSES.find(p => p.key === status)?.name}

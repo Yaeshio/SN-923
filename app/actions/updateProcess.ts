@@ -1,7 +1,7 @@
 'use server'
 
 import { mockStore } from '@/lib/mockStore'
-import { Process } from '@/app/types'
+import { ProcessStatus } from '@/app/types'
 import { revalidatePath } from 'next/cache'
 
 /**
@@ -19,13 +19,13 @@ export async function updateProcess(
 
   // メモリ上のデータを更新
   await mockStore.updatePartItem(id, {
-    current_process: nextProcess as Process,
+    status: nextProcess as ProcessStatus,
     // READYに移行した場合は完了日時を設定
     completed_at: nextProcess === 'READY' ? new Date() : null
   });
 
   // 工程ログはモック版では省略、または必要なら追加
-  console.log(`Updated item ${id} to process ${nextProcess}`);
+  console.log(`Updated item ${id} to status ${nextProcess}`);
 
   // キャッシュを更新してUIに反映
   revalidatePath('/');

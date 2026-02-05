@@ -1,6 +1,6 @@
 import { db } from '../lib/firebase';
 import { projects, parts, partItems } from '../app/data';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 // @ts-ignore
 process.env.NODE_ENV = 'development';
@@ -32,8 +32,9 @@ async function seed() {
         const itemRef = doc(db, 'partItems', String(item.id));
         await setDoc(itemRef, {
             ...item,
-            // Convert Date object to Timestamp or keep as Date (Client SDK handles Date -> Timestamp conversion)
-            completed_at: item.completed_at ? item.completed_at : null
+            // Convert Date object to Timestamp or keep as Date
+            completed_at: item.completed_at ? item.completed_at : null,
+            updated_at: serverTimestamp()
         });
     }
 

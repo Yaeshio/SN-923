@@ -11,7 +11,7 @@ export async function consumeItem(itemId: string | number) {
   const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
 
   await mockStore.updatePartItem(id, {
-    current_process: 'READY', // 本来のロジックに合わせてREADYにするか、または別のステータス
+    status: 'READY', // 本来のロジックに合わせてREADYにするか、または別のステータス
     completed_at: new Date(),
     storage_case: 'CONSUMED' // 便宜上の表記
   });

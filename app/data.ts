@@ -13,7 +13,7 @@ export const parts: Part[] = [
 ];
 
 export const partItems: PartItem[] = [
-  { id: 101, part_id: 1, storage_case: 'Case-01', current_process: 'PRINTED', completed_at: null },
-  { id: 102, part_id: 2, storage_case: 'Case-02', current_process: 'READY', completed_at: new Date() },
-  { id: 103, part_id: 3, storage_case: 'Case-03', current_process: 'UNPRINTED', completed_at: null }
+  { id: 101, part_id: 1, storage_case: 'Case-01', status: 'PRINTED', completed_at: null },
+  { id: 102, part_id: 2, storage_case: 'Case-02', status: 'READY', completed_at: new Date() },
+  { id: 103, part_id: 3, storage_case: 'Case-03', status: 'UNPRINTED', completed_at: null }
 ];

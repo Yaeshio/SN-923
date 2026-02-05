@@ -1,4 +1,4 @@
-import { Part, PartItem, Project } from '@/app/types';
+import { Part, PartItem, Project, ProcessStatus } from '@/app/types';
 import { db } from './firebase';
 import {
     collection,
@@ -9,7 +9,8 @@ import {
     setDoc,
     query,
     where,
-    Timestamp
+    Timestamp,
+    serverTimestamp
 } from 'firebase/firestore';
 
 // Firestoreのデータコンバーター（Date型の復元など）
@@ -102,9 +103,16 @@ export const mockStore = {
         await updateDoc(docRef, updates);
     },
 
+    updatePartItemStatus: async (id: string | number, newStatus: string): Promise<void> => {
+        const docRef = doc(db, 'partItems', String(id));
+        await updateDoc(docRef, {
+            status: newStatus as ProcessStatus,
+            updated_at: serverTimestamp()
+        });
+    },
+
     addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
         // IDの自動採番（Max + 1）
-        // トランザクションを使うのが安全だが、ここでは簡易的に全件取得で最大値を計算
         const snapshot = await getDocs(collection(db, 'partItems'));
         const ids = snapshot.docs.map(d => Number(d.id));
         const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
@@ -113,10 +121,10 @@ export const mockStore = {
         const docRef = doc(db, 'partItems', String(newId));
         await setDoc(docRef, newItem);
 
-        return newItem;
+        return newItem as PartItem;
     },
 
-    // 互換性のためのダミーメソッド（Firestore化により不要だがエラー防止のため残す）
+    // 互換性のためのダミーメソッド
     saveToLocalStorage: () => {
         console.warn('saveToLocalStorage is deprecated in Firestore mode');
     },

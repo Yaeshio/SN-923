@@ -31,7 +31,7 @@ export default async function ProjectDetailPage(props: PageProps) {
     const partItems = await mockStore.getPartItems(projectId);
 
     const totalInventory = partItems.length;
-    const inProgress = partItems.filter(item => item.current_process !== 'READY').length;
+    const inProgress = partItems.filter(item => item.status !== 'READY').length;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -73,6 +73,7 @@ export default async function ProjectDetailPage(props: PageProps) {
             {/* インタラクティブな一覧・カート機能 (クライアントコンポーネント) */}
             <ProjectClientContent
                 progressData={progressData}
+                partItems={partItems}
                 projectId={projectId}
             />
         </div>

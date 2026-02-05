@@ -1,6 +1,6 @@
-import { Process } from './types';
+import { ProcessStatus } from './types';
 
-export const PROCESSES: { key: Process; name: string }[] = [
+export const PROCESSES: { key: ProcessStatus; name: string }[] = [
   { key: 'UNPRINTED', name: '未プリント' },
   { key: 'PRINTED', name: 'プリント済み' },
   { key: 'SURFACE_TREATMENT', name: '表面処理' },

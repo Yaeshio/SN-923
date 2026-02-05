@@ -1,5 +1,5 @@
 // app/utils.ts
-import { Part, PartItem, ProgressData, Process } from './types';
+import { Part, PartItem, ProgressData, ProcessStatus } from './types';
 import { PROCESSES } from './constants';
 
 export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] => {
@@ -11,16 +11,16 @@ export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] =
     const processOrder = PROCESSES.map(p => p.key);
     const currentProcess = items.length > 0
       ? items.reduce((earliest, item) => {
-        return processOrder.indexOf(item.current_process) < processOrder.indexOf(earliest)
-          ? item.current_process
+        return processOrder.indexOf(item.status) < processOrder.indexOf(earliest)
+          ? item.status
           : earliest;
-      }, 'READY' as Process)
+      }, 'READY' as ProcessStatus)
       : 'UNPRINTED';
 
     return {
       id: part.id,
       part_number: part.part_number,
-      current_process: currentProcess,
+      status: currentProcess, // Rename field
       storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
       count: items.length
     };

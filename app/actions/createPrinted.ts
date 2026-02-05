@@ -20,7 +20,7 @@ export async function createPrinted(
   for (let i = 0; i < qty; i++) {
     await mockStore.addPartItem({
       part_id: pId,
-      current_process: 'PRINTED',
+      status: 'PRINTED',
       storage_case: storageCaseLabel,
       completed_at: null
     });
