@@ -1,10 +1,10 @@
 export type ProcessStatus =
   | 'UNPRINTED'
   | 'PRINTED'
-  | 'SURFACE_TREATMENT'
   | 'CUTTING'
+  | 'SURFACE_TREATMENT'
   | 'PAINTING'
-  | 'READY'
+  | 'ASSEMBLED'
   | 'DEFECTIVE';
 
 export interface Project {

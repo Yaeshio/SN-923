@@ -19,11 +19,11 @@ export const partItems: PartItem[] = [
   { id: 102, part_id: 1, storage_case: 'Case-A1', status: 'PRINTED', completed_at: null },
   { id: 103, part_id: 1, storage_case: 'Case-A2', status: 'PRINTED', completed_at: null },
   { id: 104, part_id: 1, storage_case: 'Case-A3', status: 'SURFACE_TREATMENT', completed_at: null },
-  { id: 105, part_id: 1, storage_case: 'Case-A4', status: 'READY', completed_at: new Date() },
+  { id: 105, part_id: 1, storage_case: 'Case-A4', status: 'ASSEMBLED', completed_at: new Date() },
 
   // DRONE-BODY-01 (id: 2) - 特定工程に集中
-  { id: 201, part_id: 2, storage_case: 'Case-B1', status: 'CUTTING', completed_at: null },
-  { id: 202, part_id: 2, storage_case: 'Case-B1', status: 'CUTTING', completed_at: null },
+  { id: 201, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
+  { id: 202, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
   { id: 203, part_id: 2, storage_case: 'Case-B2', status: 'PAINTING', completed_at: null },
 
   // DRONE-PROP-01 (id: 3) - 少ないアイテム、不良あり
@@ -31,5 +31,5 @@ export const partItems: PartItem[] = [
   { id: 302, part_id: 3, storage_case: 'Case-C2', status: 'DEFECTIVE', completed_at: null },
 
   // ROBO-WHEEL-X (id: 4) - 別プロジェクト
-  { id: 401, part_id: 4, storage_case: 'Case-R1', status: 'READY', completed_at: new Date() }
+  { id: 401, part_id: 4, storage_case: 'Case-R1', status: 'ASSEMBLED', completed_at: new Date(new Date().setDate(new Date().getDate() - 2)) }
 ];

@@ -31,7 +31,7 @@ export default async function ProjectDetailPage(props: PageProps) {
     const partItems = await mockStore.getPartItems(projectId);
 
     const totalInventory = partItems.length;
-    const inProgress = partItems.filter(item => item.status !== 'READY').length;
+    const inProgress = partItems.filter(item => item.status !== 'ASSEMBLED').length;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

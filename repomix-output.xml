@@ -58,6 +58,9 @@ app/components/ModelViewer.tsx
 app/components/PreviewModal.tsx
 app/components/StlImportModal.tsx
 app/components/SummaryCard.tsx
+app/components/swimlane/SwimlaneCell.tsx
+app/components/swimlane/SwimlaneItem.tsx
+app/components/swimlane/SwimlaneRow.tsx
 app/constants.ts
 app/data.ts
 app/globals.css
@@ -77,7 +80,9 @@ firebase-data/firebase-export-metadata.json
 firebase-data/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
 firebase-data/firestore_export/all_namespaces/all_kinds/output-0
 firebase-data/firestore_export/firestore_export.overall_export_metadata
+firebase-data/storage_export/blobs/962b3f69-c119-415e-9e0b-7214764838df
 firebase-data/storage_export/buckets.json
+firebase-data/storage_export/metadata/962b3f69-c119-415e-9e0b-7214764838df.json
 firebase.json
 firestore.indexes.json
 firestore.rules
@@ -97,6 +102,393 @@ tsconfig.node.json
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="app/components/swimlane/SwimlaneCell.tsx">
+import React from 'react';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { PartItem, ProcessStatus } from '@/app/types';
+import { SwimlaneItem } from './SwimlaneItem';
+import { Check, Circle } from 'lucide-react';
+
+interface SwimlaneCellProps {
+    partId: number;
+    status: ProcessStatus;
+    statusName: string;
+    items: PartItem[];
+    isLast: boolean;
+    statusState: 'active' | 'completed' | 'pending';
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneCell({ partId, status, statusName, items, isLast, statusState, onPreview }: SwimlaneCellProps) {
+    const droppableId = `container-${partId}-${status}`;
+    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+
+    // Status-specific styling
+    const getStatusColor = (s: string) => {
+        switch (s) {
+            case 'ASSEMBLED': return 'text-green-600 bg-green-50 border-green-200';
+            case 'DEFECTIVE': return 'text-red-600 bg-red-50 border-red-200';
+            case 'UNPRINTED': return 'text-gray-400 bg-gray-50 border-gray-200';
+            default: return 'text-blue-600 bg-blue-50 border-blue-200';
+        }
+    };
+
+    const isActive = statusState === 'active';
+    const isCompleted = statusState === 'completed';
+    const statusColor = getStatusColor(status);
+
+    return (
+        <div className="flex gap-3 relative">
+            {/* Timeline Column */}
+            <div className="flex flex-col items-center min-w-[24px]">
+                {/* Connector Line */}
+                {!isLast && (
+                    <div className={`absolute top-6 bottom-0 w-0.5 -z-10 ${isCompleted ? 'bg-blue-300' : 'bg-gray-200'}`} />
+                )}
+
+                {/* Status Check/Dot */}
+                <div className={`
+          w-6 h-6 rounded-full flex items-center justify-center border-2 z-10 bg-white transition-colors
+          ${isActive ? 'border-blue-500 text-blue-500 shadow-md scale-110' : ''}
+          ${isCompleted ? 'border-blue-500 bg-blue-500 text-white' : ''}
+          ${!isActive && !isCompleted ? 'border-gray-200 text-gray-300' : ''}
+        `}>
+                    {isCompleted ? (
+                        <Check size={14} strokeWidth={3} />
+                    ) : isActive ? (
+                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
+                    ) : (
+                        <div className="w-2 h-2 bg-gray-200 rounded-full" />
+                    )}
+                </div>
+            </div>
+
+            {/* Content Column */}
+            <div className="flex-1 pb-6 w-full min-w-0"> {/* Padding bottom for spacing between steps */}
+                <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-bold uppercase tracking-wider ${isActive ? 'text-blue-700' : 'text-gray-400'}`}>
+                        {statusName}
+                    </span>
+                    <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 rounded-full">
+                        {items.length}
+                    </span>
+                </div>
+
+                <div
+                    ref={setNodeRef}
+                    className={`
+            min-h-[60px] rounded-lg border-2 border-dashed transition-colors p-2
+            ${isOver ? 'bg-blue-50 border-blue-300' : 'border-gray-100 bg-gray-50/30'}
+            ${items.length === 0 && !isOver ? 'hover:border-gray-200' : ''}
+          `}
+                >
+                    <SortableContext
+                        items={items.map(i => `item-${i.id}`)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        {items.length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                                {items.map(item => (
+                                    <SwimlaneItem key={item.id} item={item} onPreview={onPreview} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="h-full flex items-center justify-center">
+                                <span className="text-[10px] text-gray-300 font-medium select-none">
+                                    Drop Here
+                                </span>
+                            </div>
+                        )}
+                    </SortableContext>
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="app/components/swimlane/SwimlaneItem.tsx">
+import React from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Eye } from 'lucide-react';
+import { PartItem } from '@/app/types';
+
+interface SwimlaneItemProps {
+    item: PartItem & { part_number?: string };
+    isOverlay?: boolean;
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneItem({ item, isOverlay, onPreview }: SwimlaneItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: `item-${item.id}` });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+        zIndex: isDragging || isOverlay ? 999 : 'auto',
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`
+        bg-white rounded-lg shadow-sm border border-gray-200 p-2 mb-2 select-none group relative
+        ${isOverlay ? 'shadow-xl scale-105 border-blue-500 ring-2 ring-blue-200' : 'hover:border-blue-400'}
+      `}
+        >
+            <div className="flex items-center justify-between gap-2">
+                {/* Drag Handle - Mobile/Touch Target */}
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-gray-400 hover:text-gray-600 touch-none"
+                >
+                    <GripVertical size={16} />
+                </div>
+
+                {/* Item Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs text-gray-700">#{item.id}</span>
+                        {item.storage_case && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 truncate max-w-[80px]">
+                                {item.storage_case}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Action Buttons */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPreview(item);
+                    }}
+                    className="text-gray-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50 transition-colors"
+                    title="詳細を見る"
+                >
+                    <Eye size={14} />
+                </button>
+            </div>
+
+            {/* Date or extra info if needed */}
+            {item.updated_at && (
+                <div className="text-[10px] text-gray-400 mt-1 pl-6">
+                    {new Date(item.updated_at).toLocaleDateString()}
+                </div>
+            )}
+        </div>
+    );
+}
+</file>
+
+<file path="app/components/swimlane/SwimlaneRow.tsx">
+import React from 'react';
+import { Download } from 'lucide-react';
+import { Part, PartItem } from '@/app/types';
+import { PROCESSES } from '@/app/constants';
+import { SwimlaneCell } from './SwimlaneCell';
+import FileDownloadButton from '@/app/components/common/FileDownloadButton';
+
+interface SwimlaneRowProps {
+    part: Part;
+    items: PartItem[];
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneRow({ part, items, onPreview }: SwimlaneRowProps) {
+    // Sort processes based on the constant order
+    const sortedProcesses = PROCESSES;
+
+    return (
+        <div className="
+      group relative flex flex-col
+      w-[85vw] md:w-80 shrink-0 snap-center
+      bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden
+      transition-shadow hover:shadow-md
+    ">
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200 p-4">
+                <div className="flex justify-between items-start mb-2">
+                    <div>
+                        <h3 className="font-bold text-gray-800 text-lg leading-tight truncate" title={part.part_number}>
+                            {part.part_number}
+                        </h3>
+                        <span className="text-xs text-gray-500 font-medium bg-gray-200 px-2 py-0.5 rounded-full inline-block mt-1">
+                            Total: {items.length} unit{items.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                    <FileDownloadButton
+                        storagePath={`models/${part.part_number}.stl`}
+                        fileName={`${part.part_number}_model.stl`}
+                        label="STL"
+                        variant="outline"
+                    />
+                </div>
+
+                {/* Progress Bar (Optional Visual Flair) */}
+                <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden mt-2">
+                    <div
+                        className="h-full bg-blue-500 transition-all duration-500"
+                        style={{
+                            width: `${(items.filter(i => i.status === 'ASSEMBLED').length / (items.length || 1)) * 100}%`
+                        }}
+                    />
+                </div>
+            </div>
+
+            {/* Vertical Timeline Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-0 bg-white">
+                {sortedProcesses.map((proc, index) => {
+                    const itemsHere = items.filter(i => i.status === proc.key).length;
+
+                    // Check if any items are ahead of this process
+                    const itemsAhead = items.filter(i => {
+                        const itemStatusIndex = sortedProcesses.findIndex(p => p.key === i.status);
+                        // If status not found (e.g. DEFECTIVE), treat as not ahead
+                        return itemStatusIndex > index;
+                    }).length;
+
+                    let statusState: 'active' | 'completed' | 'pending' = 'pending';
+                    if (itemsHere > 0) {
+                        statusState = 'active';
+                    } else if (itemsAhead > 0) {
+                        statusState = 'completed';
+                    }
+
+                    return (
+                        <SwimlaneCell
+                            key={proc.key}
+                            partId={part.id}
+                            status={proc.key}
+                            statusName={proc.name}
+                            items={items.filter(i => i.status === proc.key)}
+                            isLast={index === sortedProcesses.length - 1}
+                            statusState={statusState}
+                            onPreview={onPreview}
+                        />
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/962b3f69-c119-415e-9e0b-7214764838df.json">
+{
+  "name": "projects/1/stl/ボディ187_1770448719111.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770448719129,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "0d5b873f-5566-41c8-9aed-2966cb89c568"
+  ],
+  "etag": "/8CRwCb9eSxkxd1bg1VpEt1L/RM",
+  "customMetadata": {},
+  "timeCreated": "2026-02-07T07:18:39.129Z",
+  "updated": "2026-02-07T07:18:39.129Z",
+  "size": 39684,
+  "md5Hash": "jZtKIN6hQiBgTaoJmooYZg==",
+  "crc32c": "166781100"
+}
+</file>
+
+<file path=".continue/agents/new-config.yaml">
+# This is an example configuration file
+# To learn more, see the full config.yaml reference: https://docs.continue.dev/reference
+
+name: Example Config
+version: 1.0.0
+schema: v1
+
+# Define which models can be used
+# https://docs.continue.dev/customization/models
+models:
+  - name: my gpt-5
+    provider: openai
+    model: gpt-5
+    apiKey: YOUR_OPENAI_API_KEY_HERE
+  - uses: ollama/qwen2.5-coder-7b
+  - uses: anthropic/claude-4-sonnet
+    with:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+# MCP Servers that Continue can access
+# https://docs.continue.dev/customization/mcp-tools
+mcpServers:
+  - uses: anthropic/memory-mcp
+</file>
+
+<file path=".env,local">
+# Firebase Project ID (Emulator用に 'demo-' を付ける)
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-bom3d-sn923
+
+# 各種エミュレータのポート番号（デフォルト）
+NEXT_PUBLIC_FIREBASE_FIRESTORE_EMULATOR_HOST=localhost:8080
+NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=http://localhost:9099
+</file>
+
+<file path=".gitignore">
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+</file>
 
 <file path="app/actions/importStl.ts">
 'use server'
@@ -274,6 +666,32 @@ export async function previewFileNames(fileNames: string[]): Promise<ParsedFileI
 }
 </file>
 
+<file path="app/actions/updateItemStatus.ts">
+'use server'
+
+import { mockStore } from '@/lib/mockStore'
+import { revalidatePath } from 'next/cache'
+
+/**
+ * 部品アイテムのステータスを更新するサーバーアクション
+ * @param itemId - 部品アイテムのID
+ * @param newStatus - 新しいステータス（工程）
+ */
+export async function updateItemStatus(itemId: string | number, newStatus: string) {
+    try {
+        await mockStore.updatePartItemStatus(itemId, newStatus);
+
+        // キャッシュを更新してUIに反映
+        revalidatePath('/');
+
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to update item status:', error);
+        return { success: false, error: (error as Error).message };
+    }
+}
+</file>
+
 <file path="app/api/import-stl/route.ts">
 import { NextRequest, NextResponse } from 'next/server';
 import { importMultipleStl } from '@/app/actions/importStl';
@@ -337,6 +755,201 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         );
     }
+}
+</file>
+
+<file path="app/components/CartModal.tsx">
+'use client';
+
+import React from 'react';
+
+interface CartItem {
+    id: number;
+    part_number: string;
+    count: number;
+}
+
+interface CartModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    items: CartItem[];
+    onDownload: () => void;
+}
+
+export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-800">プリント用カート</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="p-6 max-h-[60vh] overflow-y-auto">
+                    {items.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8">カートに部品が入っていません。</p>
+                    ) : (
+                        <table className="w-full">
+                            <thead className="text-xs text-gray-400 uppercase border-b">
+                                <tr>
+                                    <th className="text-left pb-2">部品番号</th>
+                                    <th className="text-right pb-2">ダウンロード数量</th>
+                                    <th className="text-right pb-2">ファイル名</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {items.map((item) => (
+                                    <tr key={item.id}>
+                                        <td className="py-4 font-semibold text-gray-800">{item.part_number}</td>
+                                        <td className="py-4 text-right">
+                                            <input
+                                                type="number"
+                                                defaultValue={item.count}
+                                                className="w-16 border rounded p-1 text-right"
+                                            />
+                                        </td>
+                                        <td className="py-4 text-right text-sm text-gray-500 font-mono">
+                                            {item.part_number}.stl
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+
+                <div className="p-6 bg-gray-50 flex gap-4">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 px-6 py-3 rounded-xl border border-gray-300 font-bold text-gray-600 hover:bg-white transition-colors"
+                    >
+                        戻る
+                    </button>
+                    <button
+                        onClick={onDownload}
+                        disabled={items.length === 0}
+                        className="flex-1 px-6 py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors shadow-lg disabled:bg-gray-300"
+                    >
+                        Zipで一括ダウンロード
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="app/components/common/FileDownloadButton.tsx">
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { ref, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
+
+interface FileDownloadButtonProps {
+    storagePath: string;
+    fileName: string;
+    label?: string;
+    variant?: 'primary' | 'outline' | 'ghost';
+    icon?: React.ReactNode;
+}
+
+export default function FileDownloadButton({
+    storagePath,
+    fileName,
+    label,
+    variant = 'outline',
+    icon
+}: FileDownloadButtonProps) {
+    const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isError, setIsError] = useState(false);
+
+    useEffect(() => {
+        const fetchUrl = async () => {
+            setIsLoading(true);
+            setIsError(false);
+            try {
+                const fileRef = ref(storage, storagePath);
+                const url = await getDownloadURL(fileRef);
+                setDownloadUrl(url);
+            } catch (error: any) {
+                console.error(`Error fetching download URL for ${storagePath}:`, error);
+                if (error.code === 'storage/object-not-found') {
+                    setIsError(true);
+                } else {
+                    setIsError(true);
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (storagePath) {
+            fetchUrl();
+        }
+    }, [storagePath]);
+
+    const handleDownload = () => {
+        if (!downloadUrl) return;
+
+        // Use a hidden anchor tag to trigger download with fileName
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const baseStyles = "inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+
+    const variants = {
+        primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
+        outline: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50",
+        ghost: "bg-transparent text-gray-600 hover:bg-gray-100"
+    };
+
+    const defaultIcon = (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+    );
+
+    if (isLoading) {
+        return (
+            <button disabled className={`${baseStyles} ${variants[variant]}`}>
+                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></span>
+                {label || 'Loading...'}
+            </button>
+        );
+    }
+
+    if (isError) {
+        return (
+            <button disabled title="ファイルが登録されていません" className={`${baseStyles} ${variants[variant]} opacity-40`}>
+                {icon || defaultIcon}
+                {label ? `${label} (未登録)` : '未登録'}
+            </button>
+        );
+    }
+
+    return (
+        <button
+            onClick={handleDownload}
+            className={`${baseStyles} ${variants[variant]}`}
+        >
+            {icon || defaultIcon}
+            {label}
+        </button>
+    );
 }
 </file>
 
@@ -669,6 +1282,28 @@ export function StlImportModal({ isOpen, onClose, projectId, onImportComplete }:
             </div>
         </div>
     );
+}
+</file>
+
+<file path="app/components/SummaryCard.tsx">
+// app/dashboard/components/SummaryCard.tsx
+import React from 'react';
+
+interface SummaryCardProps {
+  title: string;
+  value: number | string;
+  valueColor?: string;
+}
+
+export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: SummaryCardProps) {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-lg flex items-center">
+      <div>
+        <p className="text-lg text-gray-500">{title}</p>
+        <p className={`text-5xl font-extrabold ${valueColor}`}>{value}</p>
+      </div>
+    </div>
+  );
 }
 </file>
 
@@ -1084,452 +1719,6 @@ const storagePath = `custom/path/${partNumber}.stl`;
 - [ ] CSVによる一括インポート
 </file>
 
-<file path="lib/utils/parseFileName.ts">
-/**
- * STLファイル名から部品情報を抽出するユーティリティ
- */
-
-export interface ParsedFileInfo {
-    /** 元のファイル名 */
-    originalFileName: string;
-    /** 抽出された部品番号 */
-    partNumber: string;
-    /** 個数（デフォルト: 1） */
-    quantity: number;
-    /** 解析が成功したか */
-    isValid: boolean;
-    /** エラーメッセージ（解析失敗時） */
-    errorMessage?: string;
-}
-
-/**
- * ファイル名から部品番号と個数を抽出する
- * 
- * 対応フォーマット:
- * - PART123.stl → 部品番号: PART123, 個数: 1
- * - PART123_x5.stl → 部品番号: PART123, 個数: 5
- * - PART123_X10.stl → 部品番号: PART123, 個数: 10
- * - ABC-456_x3.stl → 部品番号: ABC-456, 個数: 3
- * 
- * @param fileName - 解析するファイル名（拡張子含む）
- * @returns 解析結果
- */
-export function parseFileName(fileName: string): ParsedFileInfo {
-    // 拡張子を除去
-    const nameWithoutExt = fileName.replace(/\.(stl|STL)$/, '');
-
-    if (!nameWithoutExt) {
-        return {
-            originalFileName: fileName,
-            partNumber: '',
-            quantity: 1,
-            isValid: false,
-            errorMessage: 'ファイル名が空です'
-        };
-    }
-
-    // パターン1: 部品番号_x個数 または 部品番号_X個数
-    const quantityPattern = /^(.+?)_[xX](\d+)$/;
-    const match = nameWithoutExt.match(quantityPattern);
-
-    if (match) {
-        const partNumber = match[1].trim();
-        const quantity = parseInt(match[2], 10);
-
-        if (!partNumber) {
-            return {
-                originalFileName: fileName,
-                partNumber: '',
-                quantity: 1,
-                isValid: false,
-                errorMessage: '部品番号が空です'
-            };
-        }
-
-        if (quantity <= 0 || quantity > 1000) {
-            return {
-                originalFileName: fileName,
-                partNumber,
-                quantity: 1,
-                isValid: false,
-                errorMessage: `個数が範囲外です（1-1000）: ${quantity}`
-            };
-        }
-
-        return {
-            originalFileName: fileName,
-            partNumber,
-            quantity,
-            isValid: true
-        };
-    }
-
-    // パターン2: 部品番号のみ（個数指定なし）
-    const partNumber = nameWithoutExt.trim();
-
-    if (!partNumber) {
-        return {
-            originalFileName: fileName,
-            partNumber: '',
-            quantity: 1,
-            isValid: false,
-            errorMessage: '部品番号が空です'
-        };
-    }
-
-    return {
-        originalFileName: fileName,
-        partNumber,
-        quantity: 1,
-        isValid: true
-    };
-}
-
-/**
- * 複数のファイル名を一括解析する
- * 
- * @param fileNames - ファイル名の配列
- * @returns 解析結果の配列
- */
-export function parseFileNames(fileNames: string[]): ParsedFileInfo[] {
-    return fileNames.map(parseFileName);
-}
-
-/**
- * 解析結果から有効なもののみをフィルタリング
- * 
- * @param parsedInfos - 解析結果の配列
- * @returns 有効な解析結果のみの配列
- */
-export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFileInfo[] {
-    return parsedInfos.filter(info => info.isValid);
-}
-</file>
-
-<file path=".continue/agents/new-config.yaml">
-# This is an example configuration file
-# To learn more, see the full config.yaml reference: https://docs.continue.dev/reference
-
-name: Example Config
-version: 1.0.0
-schema: v1
-
-# Define which models can be used
-# https://docs.continue.dev/customization/models
-models:
-  - name: my gpt-5
-    provider: openai
-    model: gpt-5
-    apiKey: YOUR_OPENAI_API_KEY_HERE
-  - uses: ollama/qwen2.5-coder-7b
-  - uses: anthropic/claude-4-sonnet
-    with:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-# MCP Servers that Continue can access
-# https://docs.continue.dev/customization/mcp-tools
-mcpServers:
-  - uses: anthropic/memory-mcp
-</file>
-
-<file path=".env,local">
-# Firebase Project ID (Emulator用に 'demo-' を付ける)
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-bom3d-sn923
-
-# 各種エミュレータのポート番号（デフォルト）
-NEXT_PUBLIC_FIREBASE_FIRESTORE_EMULATOR_HOST=localhost:8080
-NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=http://localhost:9099
-</file>
-
-<file path=".gitignore">
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-Thumbs.db
-</file>
-
-<file path="app/actions/updateItemStatus.ts">
-'use server'
-
-import { mockStore } from '@/lib/mockStore'
-import { revalidatePath } from 'next/cache'
-
-/**
- * 部品アイテムのステータスを更新するサーバーアクション
- * @param itemId - 部品アイテムのID
- * @param newStatus - 新しいステータス（工程）
- */
-export async function updateItemStatus(itemId: string | number, newStatus: string) {
-    try {
-        await mockStore.updatePartItemStatus(itemId, newStatus);
-
-        // キャッシュを更新してUIに反映
-        revalidatePath('/');
-
-        return { success: true };
-    } catch (error) {
-        console.error('Failed to update item status:', error);
-        return { success: false, error: (error as Error).message };
-    }
-}
-</file>
-
-<file path="app/components/CartModal.tsx">
-'use client';
-
-import React from 'react';
-
-interface CartItem {
-    id: number;
-    part_number: string;
-    count: number;
-}
-
-interface CartModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    items: CartItem[];
-    onDownload: () => void;
-}
-
-export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps) {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-800">プリント用カート</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <div className="p-6 max-h-[60vh] overflow-y-auto">
-                    {items.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">カートに部品が入っていません。</p>
-                    ) : (
-                        <table className="w-full">
-                            <thead className="text-xs text-gray-400 uppercase border-b">
-                                <tr>
-                                    <th className="text-left pb-2">部品番号</th>
-                                    <th className="text-right pb-2">ダウンロード数量</th>
-                                    <th className="text-right pb-2">ファイル名</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {items.map((item) => (
-                                    <tr key={item.id}>
-                                        <td className="py-4 font-semibold text-gray-800">{item.part_number}</td>
-                                        <td className="py-4 text-right">
-                                            <input
-                                                type="number"
-                                                defaultValue={item.count}
-                                                className="w-16 border rounded p-1 text-right"
-                                            />
-                                        </td>
-                                        <td className="py-4 text-right text-sm text-gray-500 font-mono">
-                                            {item.part_number}.stl
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
-
-                <div className="p-6 bg-gray-50 flex gap-4">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 px-6 py-3 rounded-xl border border-gray-300 font-bold text-gray-600 hover:bg-white transition-colors"
-                    >
-                        戻る
-                    </button>
-                    <button
-                        onClick={onDownload}
-                        disabled={items.length === 0}
-                        className="flex-1 px-6 py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors shadow-lg disabled:bg-gray-300"
-                    >
-                        Zipで一括ダウンロード
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="app/components/common/FileDownloadButton.tsx">
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { ref, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
-
-interface FileDownloadButtonProps {
-    storagePath: string;
-    fileName: string;
-    label?: string;
-    variant?: 'primary' | 'outline' | 'ghost';
-    icon?: React.ReactNode;
-}
-
-export default function FileDownloadButton({
-    storagePath,
-    fileName,
-    label,
-    variant = 'outline',
-    icon
-}: FileDownloadButtonProps) {
-    const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isError, setIsError] = useState(false);
-
-    useEffect(() => {
-        const fetchUrl = async () => {
-            setIsLoading(true);
-            setIsError(false);
-            try {
-                const fileRef = ref(storage, storagePath);
-                const url = await getDownloadURL(fileRef);
-                setDownloadUrl(url);
-            } catch (error: any) {
-                console.error(`Error fetching download URL for ${storagePath}:`, error);
-                if (error.code === 'storage/object-not-found') {
-                    setIsError(true);
-                } else {
-                    setIsError(true);
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (storagePath) {
-            fetchUrl();
-        }
-    }, [storagePath]);
-
-    const handleDownload = () => {
-        if (!downloadUrl) return;
-
-        // Use a hidden anchor tag to trigger download with fileName
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = fileName;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const baseStyles = "inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
-
-    const variants = {
-        primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
-        outline: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50",
-        ghost: "bg-transparent text-gray-600 hover:bg-gray-100"
-    };
-
-    const defaultIcon = (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-    );
-
-    if (isLoading) {
-        return (
-            <button disabled className={`${baseStyles} ${variants[variant]}`}>
-                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></span>
-                {label || 'Loading...'}
-            </button>
-        );
-    }
-
-    if (isError) {
-        return (
-            <button disabled title="ファイルが登録されていません" className={`${baseStyles} ${variants[variant]} opacity-40`}>
-                {icon || defaultIcon}
-                {label ? `${label} (未登録)` : '未登録'}
-            </button>
-        );
-    }
-
-    return (
-        <button
-            onClick={handleDownload}
-            className={`${baseStyles} ${variants[variant]}`}
-        >
-            {icon || defaultIcon}
-            {label}
-        </button>
-    );
-}
-</file>
-
-<file path="app/components/SummaryCard.tsx">
-// app/dashboard/components/SummaryCard.tsx
-import React from 'react';
-
-interface SummaryCardProps {
-  title: string;
-  value: number | string;
-  valueColor?: string;
-}
-
-export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: SummaryCardProps) {
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-lg flex items-center">
-      <div>
-        <p className="text-lg text-gray-500">{title}</p>
-        <p className={`text-5xl font-extrabold ${valueColor}`}>{value}</p>
-      </div>
-    </div>
-  );
-}
-</file>
-
 <file path="firebase-data/auth_export/accounts.json">
 {"kind":"identitytoolkit#DownloadAccountResponse","users":[]}
 </file>
@@ -1665,6 +1854,128 @@ service cloud.firestore {
       allow read, write: if request.time < timestamp.date(2026, 3, 5);
     }
   }
+}
+</file>
+
+<file path="lib/utils/parseFileName.ts">
+/**
+ * STLファイル名から部品情報を抽出するユーティリティ
+ */
+
+export interface ParsedFileInfo {
+    /** 元のファイル名 */
+    originalFileName: string;
+    /** 抽出された部品番号 */
+    partNumber: string;
+    /** 個数（デフォルト: 1） */
+    quantity: number;
+    /** 解析が成功したか */
+    isValid: boolean;
+    /** エラーメッセージ（解析失敗時） */
+    errorMessage?: string;
+}
+
+/**
+ * ファイル名から部品番号と個数を抽出する
+ * 
+ * 対応フォーマット:
+ * - PART123.stl → 部品番号: PART123, 個数: 1
+ * - PART123_x5.stl → 部品番号: PART123, 個数: 5
+ * - PART123_X10.stl → 部品番号: PART123, 個数: 10
+ * - ABC-456_x3.stl → 部品番号: ABC-456, 個数: 3
+ * 
+ * @param fileName - 解析するファイル名（拡張子含む）
+ * @returns 解析結果
+ */
+export function parseFileName(fileName: string): ParsedFileInfo {
+    // 拡張子を除去
+    const nameWithoutExt = fileName.replace(/\.(stl|STL)$/, '');
+
+    if (!nameWithoutExt) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: 'ファイル名が空です'
+        };
+    }
+
+    // パターン1: 部品番号_x個数 または 部品番号_X個数
+    const quantityPattern = /^(.+?)_[xX](\d+)$/;
+    const match = nameWithoutExt.match(quantityPattern);
+
+    if (match) {
+        const partNumber = match[1].trim();
+        const quantity = parseInt(match[2], 10);
+
+        if (!partNumber) {
+            return {
+                originalFileName: fileName,
+                partNumber: '',
+                quantity: 1,
+                isValid: false,
+                errorMessage: '部品番号が空です'
+            };
+        }
+
+        if (quantity <= 0 || quantity > 1000) {
+            return {
+                originalFileName: fileName,
+                partNumber,
+                quantity: 1,
+                isValid: false,
+                errorMessage: `個数が範囲外です（1-1000）: ${quantity}`
+            };
+        }
+
+        return {
+            originalFileName: fileName,
+            partNumber,
+            quantity,
+            isValid: true
+        };
+    }
+
+    // パターン2: 部品番号のみ（個数指定なし）
+    const partNumber = nameWithoutExt.trim();
+
+    if (!partNumber) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: '部品番号が空です'
+        };
+    }
+
+    return {
+        originalFileName: fileName,
+        partNumber,
+        quantity: 1,
+        isValid: true
+    };
+}
+
+/**
+ * 複数のファイル名を一括解析する
+ * 
+ * @param fileNames - ファイル名の配列
+ * @returns 解析結果の配列
+ */
+export function parseFileNames(fileNames: string[]): ParsedFileInfo[] {
+    return fileNames.map(parseFileName);
+}
+
+/**
+ * 解析結果から有効なもののみをフィルタリング
+ * 
+ * @param parsedInfos - 解析結果の配列
+ * @returns 有効な解析結果のみの配列
+ */
+export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFileInfo[] {
+    return parsedInfos.filter(info => info.isValid);
 }
 </file>
 
@@ -1826,11 +2137,11 @@ import { ProcessStatus } from './types';
 
 export const PROCESSES: { key: ProcessStatus; name: string }[] = [
   { key: 'UNPRINTED', name: '未プリント' },
-  { key: 'PRINTED', name: 'プリント済み' },
-  { key: 'SURFACE_TREATMENT', name: '表面処理' },
+  { key: 'PRINTED', name: 'プリント済' },
   { key: 'CUTTING', name: '切削' },
+  { key: 'SURFACE_TREATMENT', name: '表面処理' },
   { key: 'PAINTING', name: '塗装' },
-  { key: 'READY', name: '準備完了' },
+  { key: 'ASSEMBLED', name: '組付け済み' },
 ];
 </file>
 
@@ -2211,41 +2522,6 @@ export async function consumeItem(itemId: string | number) {
 }
 </file>
 
-<file path="app/actions/createPrinted.ts">
-'use server'
-
-import { mockStore } from '@/lib/mockStore'
-import { revalidatePath } from 'next/cache'
-
-/**
- * 3Dプリントされた新しい部品アイテムを作成するサーバーアクション
- * @param partId - 部品のID
- * @param qty - 数量
- * @param storageCaseLabel - 保管ケースのラベル（mock版では文字列）
- */
-export async function createPrinted(
-  partId: string | number,
-  qty: number,
-  storageCaseLabel: string
-) {
-  const pId = typeof partId === 'string' ? parseInt(partId, 10) : partId;
-
-  // 指定された数量だけループを実行
-  for (let i = 0; i < qty; i++) {
-    await mockStore.addPartItem({
-      part_id: pId,
-      status: 'PRINTED',
-      storage_case: storageCaseLabel,
-      completed_at: null
-    });
-  }
-
-  console.log(`Created ${qty} items for part ${pId}`);
-
-  revalidatePath('/');
-}
-</file>
-
 <file path="app/data.ts">
 // app/data.ts
 import { Part, PartItem, Project } from './types';
@@ -2268,11 +2544,11 @@ export const partItems: PartItem[] = [
   { id: 102, part_id: 1, storage_case: 'Case-A1', status: 'PRINTED', completed_at: null },
   { id: 103, part_id: 1, storage_case: 'Case-A2', status: 'PRINTED', completed_at: null },
   { id: 104, part_id: 1, storage_case: 'Case-A3', status: 'SURFACE_TREATMENT', completed_at: null },
-  { id: 105, part_id: 1, storage_case: 'Case-A4', status: 'READY', completed_at: new Date() },
+  { id: 105, part_id: 1, storage_case: 'Case-A4', status: 'ASSEMBLED', completed_at: new Date() },
 
   // DRONE-BODY-01 (id: 2) - 特定工程に集中
-  { id: 201, part_id: 2, storage_case: 'Case-B1', status: 'CUTTING', completed_at: null },
-  { id: 202, part_id: 2, storage_case: 'Case-B1', status: 'CUTTING', completed_at: null },
+  { id: 201, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
+  { id: 202, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
   { id: 203, part_id: 2, storage_case: 'Case-B2', status: 'PAINTING', completed_at: null },
 
   // DRONE-PROP-01 (id: 3) - 少ないアイテム、不良あり
@@ -2280,7 +2556,7 @@ export const partItems: PartItem[] = [
   { id: 302, part_id: 3, storage_case: 'Case-C2', status: 'DEFECTIVE', completed_at: null },
 
   // ROBO-WHEEL-X (id: 4) - 別プロジェクト
-  { id: 401, part_id: 4, storage_case: 'Case-R1', status: 'READY', completed_at: new Date() }
+  { id: 401, part_id: 4, storage_case: 'Case-R1', status: 'ASSEMBLED', completed_at: new Date(new Date().setDate(new Date().getDate() - 2)) }
 ];
 </file>
 
@@ -2288,10 +2564,10 @@ export const partItems: PartItem[] = [
 export type ProcessStatus =
   | 'UNPRINTED'
   | 'PRINTED'
-  | 'SURFACE_TREATMENT'
   | 'CUTTING'
+  | 'SURFACE_TREATMENT'
   | 'PAINTING'
-  | 'READY'
+  | 'ASSEMBLED'
   | 'DEFECTIVE';
 
 export interface Project {
@@ -2461,6 +2737,131 @@ export const mockStore = {
 };
 </file>
 
+<file path="app/actions/createPrinted.ts">
+'use server'
+
+import { storage, db } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {
+  collection,
+  getDocs,
+  doc,
+  runTransaction,
+  query,
+  where,
+  serverTimestamp,
+  increment
+} from 'firebase/firestore';
+import { revalidatePath } from 'next/cache';
+import { parseFileName } from '@/lib/utils/parseFileName';
+import { Part, PartItem, ProcessStatus } from '@/app/types';
+
+/**
+ * 3Dプリントされた新しい部品アイテムを作成するサーバーアクション（強化版）
+ * 
+ * @param fileBuffer - STLファイルのArrayBuffer
+ * @param fileName - ファイル名
+ * @param projectId - プロジェクトID
+ * @param qty - 数量
+ * @param targetStatus - 初期ステータス
+ */
+export async function createPrinted(
+  fileBuffer: ArrayBuffer,
+  fileName: string,
+  projectId: number,
+  qty: number,
+  targetStatus: ProcessStatus = 'PRINTED'
+) {
+  try {
+    // 1. ファイル名を解析して部品番号を取得
+    const parsed = parseFileName(fileName);
+    if (!parsed.isValid) {
+      throw new Error(parsed.errorMessage || 'ファイル名の解析に失敗しました');
+    }
+    const partNumber = parsed.partNumber;
+
+    // 2. Firebase Storage にファイルを保存
+    const timestamp = Date.now();
+    const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
+    const storageRef = ref(storage, storagePath);
+    await uploadBytes(storageRef, fileBuffer);
+    const downloadUrl = await getDownloadURL(storageRef);
+
+    // 3. Firestore トランザクションで部品とアイテムを作成
+    await runTransaction(db, async (transaction) => {
+      // 3a. 部品(Part)の存在確認
+      const partsRef = collection(db, 'parts');
+      const q = query(
+        partsRef,
+        where('part_number', '==', partNumber),
+        where('project_id', '==', projectId)
+      );
+      const partQuerySnapshot = await getDocs(q); // トランザクション内での getDocs は制限がある場合があるが、Firebase V9+ では transaction.get(query) が基本。
+
+      // 注意: Firestore トランザクション内でのクエリは複雑なため、
+      // ここではドキュメントIDとして部品番号を使用するか、一度検索した後にトランザクションを実行するのが一般的。
+      // しかし、要件に合わせて「整合性を保つ」ためにトランザクションを使用。
+
+      let partId: number;
+
+      if (partQuerySnapshot.empty) {
+        // 新規作成が必要な場合、新しいIDを決定（ここでは簡易的に全件取得で最大ID+1）
+        // 本来はカウンター用ドキュメントを使用するのが望ましい
+        const allPartsSnapshot = await getDocs(collection(db, 'parts'));
+        const existingIds = allPartsSnapshot.docs.map(d => Number(d.id));
+        partId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+
+        const newPart: Part = {
+          id: partId,
+          part_number: partNumber,
+          project_id: projectId
+        };
+
+        const partDocRef = doc(db, 'parts', String(partId));
+        transaction.set(partDocRef, newPart);
+        console.log(`Transaction: Created new Part: ${partNumber} (ID: ${partId})`);
+      } else {
+        partId = Number(partQuerySnapshot.docs[0].id);
+        console.log(`Transaction: Using existing Part: ${partNumber} (ID: ${partId})`);
+      }
+
+      // 3b. PartItem を指定された個数分作成
+      const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
+      const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
+      let nextItemId = existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
+
+      for (let i = 0; i < qty; i++) {
+        const newItem: PartItem = {
+          id: nextItemId,
+          part_id: partId,
+          storage_case: `AUTO-${partNumber}-${i + 1}`,
+          status: targetStatus,
+          completed_at: null,
+          updated_at: serverTimestamp()
+        };
+
+        const itemDocRef = doc(db, 'partItems', String(nextItemId));
+        transaction.set(itemDocRef, {
+          ...newItem,
+          stl_url: downloadUrl // 保存されたURLを紐付け
+        });
+        nextItemId++;
+      }
+    });
+
+    console.log(`Successfully created ${qty} items for part ${partNumber}`);
+    revalidatePath('/');
+    if (projectId) revalidatePath(`/project/${projectId}`);
+
+    return { success: true, partNumber };
+
+  } catch (error) {
+    console.error('Error in createPrinted:', error);
+    throw error;
+  }
+}
+</file>
+
 <file path="app/actions/updateProcess.ts">
 'use server'
 
@@ -2605,7 +3006,7 @@ export default async function ProjectDetailPage(props: PageProps) {
     const partItems = await mockStore.getPartItems(projectId);
 
     const totalInventory = partItems.length;
-    const inProgress = partItems.filter(item => item.status !== 'READY').length;
+    const inProgress = partItems.filter(item => item.status !== 'ASSEMBLED').length;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -2676,6 +3077,7 @@ export default async function ProjectDetailPage(props: PageProps) {
     "@tailwindcss/postcss": "^4.1.18",
     "@types/three": "^0.182.0",
     "firebase": "^12.8.0",
+    "lucide-react": "^0.563.0",
     "next": "^16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -2791,176 +3193,6 @@ export default async function ItemPage(props: { params: Promise<{ id: string }> 
 }
 </file>
 
-<file path="app/print/page.tsx">
-'use client';
-
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { parts as allParts } from '../data'; // 既存のテストデータを使用
-import { PROCESSES } from '../constants'; // 工程定義を使用
-import { createPrinted } from '../actions/createPrinted';
-
-import { Suspense } from 'react';
-
-// ... imports remain the same
-
-function PrintRegistrationContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const projectIdStr = searchParams.get('project_id');
-  const projectId = projectIdStr ? parseInt(projectIdStr) : null;
-
-  // プロジェクトIDがあればフィルタリング
-  const filteredParts = projectId
-    ? allParts.filter(p => p.project_id === projectId)
-    : allParts;
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedPartId, setSelectedPartId] = useState<number>(filteredParts[0]?.id || 0);
-  const [quantity, setQuantity] = useState(1);
-  const [targetStatus, setTargetStatus] = useState('PRINTED');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // ファイル選択時の処理
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      // ファイル名に部品番号が含まれていれば自動選択する簡易ロジック
-      const matchedPart = filteredParts.find(p => file.name.includes(p.part_number));
-      if (matchedPart) setSelectedPartId(matchedPart.id);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      // サーバーアクションを呼び出してモックデータを更新
-      await createPrinted(
-        selectedPartId,
-        quantity,
-        selectedFile?.name || `JOB-${Date.now()}`
-      );
-
-      const redirectPath = projectId ? `/project/${projectId}` : '/';
-      router.push(redirectPath);
-      router.refresh();
-    } catch (error) {
-      alert('エラーが発生しました');
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const backHref = projectId ? `/project/${projectId}` : '/';
-
-  return (
-    <div className="bg-gray-50 min-h-screen p-4 sm:p-8 font-sans">
-      <div className="max-w-2xl mx-auto">
-        <header className="mb-8">
-          <Link href={backHref} className="text-blue-600 hover:underline mb-2 inline-block">
-            ← {projectId ? 'プロジェクト別進捗に戻る' : 'ダッシュボードに戻る'}
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-800">3Dプリント登録</h1>
-        </header>
-
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
-          {/* STLファイルアップロード */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
-            <input
-              type="file"
-              accept=".stl"
-              onChange={handleFileChange}
-              className="hidden"
-              id="stl-upload"
-            />
-            <label htmlFor="stl-upload" className="cursor-pointer">
-              <div className="text-gray-600">
-                {selectedFile ? (
-                  <span className="font-semibold text-blue-600">{selectedFile.name}</span>
-                ) : (
-                  "CADから出力したSTLファイルをアップロード"
-                )}
-              </div>
-              <p className="text-sm text-gray-400 mt-2">クリックまたはドラッグ＆ドロップ</p>
-            </label>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* 部品選択 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">対象部品</label>
-              <select
-                value={selectedPartId}
-                onChange={(e) => setSelectedPartId(Number(e.target.value))}
-                className="w-full border-gray-300 rounded-md shadow-sm p-2 border"
-              >
-                {filteredParts.map(p => (
-                  <option key={p.id} value={p.id}>{p.part_number}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* 数量入力 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">数量</label>
-              <input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-full border-gray-300 rounded-md shadow-sm p-2 border"
-              />
-            </div>
-          </div>
-
-          {/* ステータス選択 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">登録時のステータス</label>
-            <div className="flex gap-4 mt-2">
-              {['UNPRINTED', 'PRINTED'].map((status) => (
-                <label key={status} className="flex items-center">
-                  <input
-                    type="radio"
-                    name="status"
-                    value={status}
-                    checked={targetStatus === status}
-                    onChange={(e) => setTargetStatus(e.target.value)}
-                    className="mr-2"
-                  />
-                  {PROCESSES.find(p => p.key === status)?.name}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors text-lg ${isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-          >
-            {isSubmitting ? '登録中...' : 'プリントジョブを登録'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-export default function PrintRegistrationPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <PrintRegistrationContent />
-    </Suspense>
-  );
-}
-</file>
-
 <file path="app/project/[id]/ProjectClientContent.tsx">
 'use client';
 
@@ -2975,149 +3207,16 @@ import {
     useSensors,
     DragEndEvent,
     DragStartEvent,
-    useDroppable
 } from '@dnd-kit/core';
 import {
-    SortableContext,
     sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-    useSortable
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { PROCESSES } from '@/app/constants';
 import { CartModal } from '@/app/components/CartModal';
 import { PreviewModal } from '@/app/components/PreviewModal';
 import { Part, PartItem, ProcessStatus } from '@/app/types';
 import { updateItemStatus } from '@/app/actions/updateItemStatus';
-import FileDownloadButton from '@/app/components/common/FileDownloadButton';
-
-// --- Components ---
-
-interface DraggableItemProps {
-    item: PartItem & { part_number?: string }; // part_numberはデータにある場合とない場合がある
-    isOverlay?: boolean;
-    onPreview: (item: any) => void;
-}
-
-function DraggableItem({ item, isOverlay, onPreview }: DraggableItemProps) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: `item-${item.id}` });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.3 : 1,
-    };
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className={`
-                bg-white p-2 rounded-md shadow-sm border border-gray-200 mb-2 cursor-grab active:cursor-grabbing
-                hover:border-blue-400 transition-all text-xs
-                ${isOverlay ? 'shadow-xl scale-105 border-blue-500' : ''}
-            `}
-        >
-            <div className="flex justify-between items-center mb-1">
-                <span className="font-bold text-gray-500">#{item.id}</span>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation(); // ドラッグ動作と競合しないように
-                        onPreview(item);
-                    }}
-                    onPointerDown={(e) => e.stopPropagation()} // 重要: ボタン押下でドラッグが始まらないようにする
-                    className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded hover:bg-blue-100"
-                >
-                    詳細
-                </button>
-            </div>
-            <div className="text-[10px] text-gray-400 truncate font-mono">
-                {item.storage_case || 'No Case'}
-            </div>
-        </div>
-    );
-}
-
-interface SwimlaneCellProps {
-    partId: number;
-    status: string;
-    items: PartItem[];
-    onPreview: (item: any) => void;
-}
-
-function SwimlaneCell({ partId, status, items, onPreview }: SwimlaneCellProps) {
-    // Droppable ID: container-{partId}-{status}
-    const droppableId = `container-${partId}-${status}`;
-    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
-
-    return (
-        <div
-            ref={setNodeRef}
-            className={`
-                flex-1 min-w-[140px] border-r border-gray-100 p-2 flex flex-col transition-colors
-                ${isOver ? 'bg-blue-50/50' : 'bg-transparent'}
-            `}
-        >
-            <SortableContext
-                items={items.map(i => `item-${i.id}`)}
-                strategy={verticalListSortingStrategy}
-            >
-                <div className="flex-1 min-h-[60px]"> {/* 空でもドロップできるように高さを確保 */}
-                    {items.map(item => (
-                        <DraggableItem key={item.id} item={item} onPreview={onPreview} />
-                    ))}
-                </div>
-            </SortableContext>
-        </div>
-    );
-}
-
-interface SwimlaneRowProps {
-    part: Part;
-    items: PartItem[];
-    onPreview: (item: any) => void;
-}
-
-function SwimlaneRow({ part, items, onPreview }: SwimlaneRowProps) {
-    return (
-        <div className="flex bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden mb-4 shrink-0">
-            {/* 左端：部品情報（固定列） */}
-            <div className="w-48 bg-gray-50 p-4 border-r border-gray-200 flex flex-col justify-center shrink-0">
-                <h3 className="font-bold text-gray-800 text-sm mb-1">{part.part_number}</h3>
-                <p className="text-xs text-gray-500 mb-3">Total: {items.length} items</p>
-
-                <FileDownloadButton
-                    storagePath={`models/${part.part_number}.stl`}
-                    fileName={`${part.part_number}_model.stl`}
-                    label="STLダウンロード"
-                    variant="outline"
-                />
-            </div>
-
-            {/* 右側：工程セル（横スクロール可能領域） */}
-            <div className="flex-1 flex divide-x divide-gray-100 overflow-x-auto">
-                {PROCESSES.map(proc => (
-                    <SwimlaneCell
-                        key={proc.key}
-                        partId={part.id}
-                        status={proc.key}
-                        items={items.filter(i => i.status === proc.key)}
-                        onPreview={onPreview}
-                    />
-                ))}
-            </div>
-        </div>
-    );
-}
+import { SwimlaneRow } from '@/app/components/swimlane/SwimlaneRow';
+import { SwimlaneItem } from '@/app/components/swimlane/SwimlaneItem';
 
 // --- Main Component ---
 
@@ -3141,7 +3240,7 @@ export default function ProjectClientContent({
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 5,
+                distance: 5, // Requires slight movement to start, helps preventing accidental clicks
             },
         }),
         useSensor(KeyboardSensor, {
@@ -3159,29 +3258,22 @@ export default function ProjectClientContent({
 
         if (!over) return;
 
-        // IDのパース
-        // Draggable ID: item-{itemId}
+        // Parse IDs
         const activeIdStr = active.id as string;
         const itemId = parseInt(activeIdStr.split('-')[1], 10);
 
-        // Droppable ID: container-{partId}-{status}
-        // または Sortable Item ID: item-{itemId} (同じカラム内の並び替え時などはこれに乗ることもあるが、Droppableコンテナで受けるのが基本)
-
         let targetStatus: string | undefined;
-        // let targetPartId: number | undefined; // 今回はstatusだけわかればよいが、厳密にはPartの一致確認も可
 
         const overIdStr = over.id as string;
 
         if (overIdStr.startsWith('container-')) {
+            // Dropped on a container (SwimlaneCell)
             const parts = overIdStr.split('-');
             // container-{partId}-{status}
-            // partIdが数値の場合、parts[1]は数値文字列。statusは残りの部分だが、status自体にハイフンが含まれない前提
-            // statusにハイフンが含まれる場合は slice で結合が必要
-            // 今回のPROCESS_STATUSESはハイフンを含まない (UNDERSCOREは含む) ので大丈夫
-            targetStatus = parts[2]; // status
+            // If status has hyphens, we need to join the rest
+            targetStatus = parts.slice(2).join('-');
         } else if (overIdStr.startsWith('item-')) {
-            // アイテムの上にドロップした場合、そのアイテムの親コンテナのステータスを取得する必要がある
-            // items配列から検索して特定する
+            // Dropped on another item
             const overItemId = parseInt(overIdStr.split('-')[1], 10);
             const overItem = items.find(i => i.id === overItemId);
             if (overItem) {
@@ -3191,17 +3283,18 @@ export default function ProjectClientContent({
 
         if (targetStatus) {
             const item = items.find(i => i.id === itemId);
-            // ステータスが変更される場合のみ処理
+
+            // Only update if status changed
             if (item && item.status !== targetStatus) {
-                // 楽観的UI更新
+                // Optimistic UI update
                 setItems(prev => prev.map(i =>
                     i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
                 ));
 
-                // サーバーアクションの呼び出し
+                // Call Server Action
                 const result = await updateItemStatus(itemId, targetStatus);
                 if (!result.success) {
-                    // 失敗時はロールバック
+                    // Rollback on failure
                     setItems(prev => prev.map(i =>
                         i.id === itemId ? { ...i, status: item.status } : i
                     ));
@@ -3215,7 +3308,7 @@ export default function ProjectClientContent({
         ? items.find(i => `item-${i.id}` === activeId)
         : null;
 
-    // カート機能用の計算
+    // Cart Logic
     const cartItems = items
         .filter(i => selectedIds.includes(i.id))
         .map(i => {
@@ -3228,56 +3321,64 @@ export default function ProjectClientContent({
         });
 
     return (
-        <>
-            <div className="mb-24">
-                {/* ヘッダー行（工程名） */}
-                <div className="flex ml-48 border-b border-gray-200 pb-2 mb-2 sticky top-0 bg-gray-50 z-10 shadow-sm">
-                    {PROCESSES.map(proc => (
-                        <div key={proc.key} className="flex-1 min-w-[140px] px-2 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">
-                            {proc.name}
-                        </div>
+        <div className="h-[calc(100vh-100px)] w-full flex flex-col bg-gray-50/50">
+            {/* Main Content Area - Horizontal Scroll */}
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCorners}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            >
+                <div className="
+                    flex-1 flex overflow-x-auto overflow-y-hidden gap-4 p-4 md:p-6
+                    snap-x snap-mandatory md:snap-none
+                    scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent
+                ">
+                    {parts.map(part => (
+                        <SwimlaneRow
+                            key={part.id}
+                            part={part}
+                            items={items.filter(i => i.part_id === part.id)}
+                            onPreview={(item) => {
+                                const part = parts.find(p => p.id === item.part_id);
+                                setPreviewItem({
+                                    ...item,
+                                    part_number: part?.part_number
+                                });
+                            }}
+                        />
                     ))}
+
+                    {/* Spacer for last item to be fully visible on mobile */}
+                    <div className="w-4 shrink-0 md:hidden" />
                 </div>
 
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCorners}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                >
-                    <div className="flex flex-col gap-4">
-                        {parts.map(part => (
-                            <SwimlaneRow
-                                key={part.id}
-                                part={part}
-                                items={items.filter(i => i.part_id === part.id)}
-                                onPreview={(item) => {
-                                    const part = parts.find(p => p.id === item.part_id);
-                                    setPreviewItem({
-                                        ...item,
-                                        part_number: part?.part_number
-                                    });
+                <DragOverlay>
+                    {activeItem ? (
+                        <div className="w-64"> {/* Constrain width of overlay */}
+                            <SwimlaneItem
+                                item={{
+                                    ...activeItem,
+                                    part_number: parts.find(p => p.id === activeItem.part_id)?.part_number
                                 }}
-                            />
-                        ))}
-                    </div>
-
-                    <DragOverlay>
-                        {activeItem ? (
-                            <DraggableItem
-                                item={activeItem}
                                 isOverlay
                                 onPreview={() => { }}
                             />
-                        ) : null}
-                    </DragOverlay>
-                </DndContext>
-            </div>
+                        </div>
+                    ) : null}
+                </DragOverlay>
+            </DndContext>
 
-            {/* カートUIは一旦省略しないが、スペースの都合で簡易化する場合はここを調整 */}
+            {/* Cart UI - Floating Action Button Style */}
             {selectedIds.length > 0 && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl z-50 shadow-xl">
-                    <span className="font-bold">{selectedIds.length} items selected</span>
+                <div className="fixed bottom-8 right-8 z-50">
+                    <button
+                        onClick={() => setIsCartOpen(true)}
+                        className="bg-gray-900 text-white px-6 py-3 rounded-full shadow-xl hover:bg-black transition-transform hover:scale-105 flex items-center gap-2"
+                    >
+                        <span className="font-bold">{selectedIds.length}</span>
+                        <span>items selected</span>
+                    </button>
                 </div>
             )}
 
@@ -3296,8 +3397,229 @@ export default function ProjectClientContent({
                 status={previewItem?.status}
                 projectId={projectId}
             />
-        </>
+        </div>
     );
+}
+</file>
+
+<file path="app/print/page.tsx">
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { PROCESSES } from '../constants';
+import { createPrinted } from '../actions/createPrinted';
+import { parseFileName, ParsedFileInfo } from '@/lib/utils/parseFileName';
+import { ProcessStatus } from '../types';
+
+import { Suspense } from 'react';
+
+function PrintRegistrationContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const projectIdStr = searchParams.get('project_id');
+  const projectId = projectIdStr ? parseInt(projectIdStr) : null;
+
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [parsedInfos, setParsedInfos] = useState<(ParsedFileInfo & { file: File })[]>([]);
+  const [targetStatus, setTargetStatus] = useState<ProcessStatus>('PRINTED');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ファイル選択時の解析処理
+  useEffect(() => {
+    if (selectedFiles.length > 0) {
+      const infos = selectedFiles.map(file => ({
+        ...parseFileName(file.name),
+        file
+      }));
+      setParsedInfos(infos);
+    } else {
+      setParsedInfos([]);
+    }
+  }, [selectedFiles]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      setSelectedFiles(Array.from(files));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedFiles.length === 0 || !projectId) {
+      alert('ファイルを選択し、プロジェクトIDを指定してください。');
+      return;
+    }
+
+    const invalidFiles = parsedInfos.filter(info => !info.isValid);
+    if (invalidFiles.length > 0) {
+      alert('解析に失敗したファイルが含まれています。修正または削除してください。');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // 順次登録（並列にするとFirestoreのID採番でぶつかる可能性があるため、ここでは順次処理）
+      for (const info of parsedInfos) {
+        const arrayBuffer = await info.file.arrayBuffer();
+        await createPrinted(
+          arrayBuffer,
+          info.file.name,
+          projectId,
+          info.quantity,
+          targetStatus
+        );
+      }
+
+      alert(`${parsedInfos.length} 件の部品登録が完了しました。`);
+      const redirectPath = `/project/${projectId}`;
+      router.push(redirectPath);
+      router.refresh();
+    } catch (error) {
+      alert('エラーが発生しました: ' + (error instanceof Error ? error.message : '不明なエラー'));
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const backHref = projectId ? `/project/${projectId}` : '/';
+
+  return (
+    <div className="bg-gray-50 min-h-screen p-4 sm:p-8 font-sans">
+      <div className="max-w-3xl mx-auto">
+        <header className="mb-8">
+          <Link href={backHref} className="text-blue-600 hover:underline mb-2 inline-block">
+            ← {projectId ? 'プロジェクト別進捗に戻る' : 'ダッシュボードに戻る'}
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-800">3Dプリント一括追加登録</h1>
+          <p className="text-gray-500 mt-2">STLファイル名から部品情報を自動取得して登録します。</p>
+        </header>
+
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+          {/* STLファイルアップロード */}
+          <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${selectedFiles.length > 0 ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-500'
+            }`}>
+            <input
+              type="file"
+              accept=".stl"
+              onChange={handleFileChange}
+              multiple
+              className="hidden"
+              id="stl-upload"
+            />
+            <label htmlFor="stl-upload" className="cursor-pointer">
+              <div className="text-gray-600">
+                {selectedFiles.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="font-semibold text-blue-600 text-lg">{selectedFiles.length} 個のファイルを選択中</p>
+                    <p className="text-sm text-gray-500">クリックしてファイルを変更・追加</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="text-4xl">📁</div>
+                    <p className="font-medium">CADから出力したSTLファイルをアップロード</p>
+                    <p className="text-sm text-gray-400">複数選択が可能です（クリックまたはドラッグ＆ドロップ）</p>
+                  </div>
+                )}
+              </div>
+            </label>
+          </div>
+
+          {/* 解析プレビューリスト */}
+          {parsedInfos.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="font-bold text-gray-800 flex justify-between items-center">
+                <span>解析プレビュー</span>
+                <span className="text-sm font-normal text-gray-500">{parsedInfos.length} 件</span>
+              </h3>
+              <div className="border rounded-lg overflow-hidden divide-y bg-gray-50">
+                {parsedInfos.map((info, idx) => (
+                  <div key={idx} className={`p-4 flex items-center justify-between ${info.isValid ? 'bg-white' : 'bg-red-50'}`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-500">STL</span>
+                        <p className="font-medium text-gray-900 truncate">{info.file.name}</p>
+                      </div>
+                      {info.isValid ? (
+                        <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
+                          <span>部品番号: <strong className="font-mono text-blue-600">{info.partNumber}</strong></span>
+                          <span>個数: <strong className="text-gray-900">{info.quantity}</strong></span>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-sm text-red-600 font-medium">⚠️ {info.errorMessage}</p>
+                      )}
+                    </div>
+                    <div className="ml-4">
+                      {info.isValid ? (
+                        <span className="text-green-500 text-xl">✓</span>
+                      ) : (
+                        <span className="text-red-500 text-xl">✕</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="pt-4 border-t">
+            {/* ステータス選択 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">登録後の初期ステータス</label>
+              <div className="flex gap-6">
+                {['UNPRINTED', 'PRINTED'].map((status) => (
+                  <label key={status} className="flex items-center cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="status"
+                      value={status}
+                      checked={targetStatus === status}
+                      onChange={(e) => setTargetStatus(e.target.value as ProcessStatus)}
+                      className="mr-2 h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className={`text-sm font-medium transition-colors ${targetStatus === status ? 'text-blue-700' : 'text-gray-600 group-hover:text-gray-800'}`}>
+                      {PROCESSES.find(p => p.key === status)?.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting || selectedFiles.length === 0 || parsedInfos.some(i => !i.isValid)}
+            className={`w-full text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all text-xl ${isSubmitting || selectedFiles.length === 0 || parsedInfos.some(i => !i.isValid)
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:transform active:scale-[0.98]'
+              }`}
+          >
+            {isSubmitting ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {selectedFiles.length} 件を登録処理中...
+              </span>
+            ) : `プリントジョブ ${selectedFiles.length} 件を登録実行`}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default function PrintRegistrationPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">読み込み中...</div>}>
+      <PrintRegistrationContent />
+    </Suspense>
+  );
 }
 </file>
 
