@@ -46,12 +46,17 @@ The content is organized as follows:
 .gitignore
 app/actions/consumeItem.ts
 app/actions/createPrinted.ts
+app/actions/importStl.ts
 app/actions/reportDefect.ts
 app/actions/updateItemStatus.ts
 app/actions/updateProcess.ts
+app/api/import-stl/route.ts
+app/api/preview-filenames/route.ts
 app/components/CartModal.tsx
+app/components/common/FileDownloadButton.tsx
 app/components/ModelViewer.tsx
 app/components/PreviewModal.tsx
+app/components/StlImportModal.tsx
 app/components/SummaryCard.tsx
 app/constants.ts
 app/data.ts
@@ -64,6 +69,8 @@ app/project/[id]/page.tsx
 app/project/[id]/ProjectClientContent.tsx
 app/types.ts
 app/utils.ts
+docs/INTEGRATION_EXAMPLE.md
+docs/STL_IMPORT_GUIDE.md
 firebase-data/auth_export/accounts.json
 firebase-data/auth_export/config.json
 firebase-data/firebase-export-metadata.json
@@ -76,6 +83,7 @@ firestore.indexes.json
 firestore.rules
 lib/firebase.ts
 lib/mockStore.ts
+lib/utils/parseFileName.ts
 next.config.js
 package.json
 postcss.config.js
@@ -89,6 +97,1114 @@ tsconfig.node.json
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="app/actions/importStl.ts">
+'use server'
+
+import { storage, db } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import {
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    query,
+    where,
+    serverTimestamp
+} from 'firebase/firestore';
+import { revalidatePath } from 'next/cache';
+import { parseFileName, ParsedFileInfo } from '@/lib/utils/parseFileName';
+import { Part, PartItem, ProcessStatus } from '@/app/types';
+
+export interface ImportResult {
+    success: boolean;
+    fileName: string;
+    partNumber?: string;
+    partId?: number;
+    itemsCreated?: number;
+    error?: string;
+}
+
+/**
+ * 単一のSTLファイルをインポートする
+ * 
+ * @param file - アップロードするファイル（FormData経由）
+ * @param projectId - プロジェクトID
+ * @param defaultStatus - 初期ステータス（デフォルト: 'CUTTING'）
+ * @returns インポート結果
+ */
+export async function importSingleStl(
+    fileBuffer: ArrayBuffer,
+    fileName: string,
+    projectId: number,
+    defaultStatus: ProcessStatus = 'CUTTING'
+): Promise<ImportResult> {
+    try {
+        // 1. ファイル名を解析
+        const parsed = parseFileName(fileName);
+
+        if (!parsed.isValid) {
+            return {
+                success: false,
+                fileName,
+                error: parsed.errorMessage || 'ファイル名の解析に失敗しました'
+            };
+        }
+
+        const { partNumber, quantity } = parsed;
+
+        // 2. Firebase Storage にアップロード
+        const timestamp = Date.now();
+        const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
+        const storageRef = ref(storage, storagePath);
+
+        await uploadBytes(storageRef, fileBuffer);
+        const downloadUrl = await getDownloadURL(storageRef);
+
+        // 3. Firestore で該当する part_number を検索
+        const partsRef = collection(db, 'parts');
+        const q = query(
+            partsRef,
+            where('part_number', '==', partNumber),
+            where('project_id', '==', projectId)
+        );
+        const snapshot = await getDocs(q);
+
+        let partId: number;
+
+        if (snapshot.empty) {
+            // 4a. 該当する Part がなければ新規作成
+            const allPartsSnapshot = await getDocs(collection(db, 'parts'));
+            const existingIds = allPartsSnapshot.docs.map(d => Number(d.id));
+            partId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+
+            const newPart: Part = {
+                id: partId,
+                part_number: partNumber,
+                project_id: projectId
+            };
+
+            await setDoc(doc(db, 'parts', String(partId)), newPart);
+            console.log(`Created new Part: ${partNumber} (ID: ${partId})`);
+        } else {
+            // 4b. 既存の Part を使用
+            partId = Number(snapshot.docs[0].id);
+            console.log(`Using existing Part: ${partNumber} (ID: ${partId})`);
+        }
+
+        // 5. 指定された個数分の PartItem を作成
+        const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
+        const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
+        let nextItemId = existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
+
+        for (let i = 0; i < quantity; i++) {
+            const newItem: PartItem = {
+                id: nextItemId,
+                part_id: partId,
+                storage_case: `AUTO-${partNumber}-${i + 1}`,
+                status: defaultStatus,
+                completed_at: null,
+                updated_at: serverTimestamp()
+            };
+
+            await setDoc(doc(db, 'partItems', String(nextItemId)), newItem);
+            nextItemId++;
+        }
+
+        console.log(`Created ${quantity} PartItems for Part ${partId}`);
+
+        // 6. キャッシュを再検証
+        revalidatePath('/');
+        revalidatePath(`/project/${projectId}`);
+
+        return {
+            success: true,
+            fileName,
+            partNumber,
+            partId,
+            itemsCreated: quantity
+        };
+
+    } catch (error) {
+        console.error('Error importing STL:', error);
+        return {
+            success: false,
+            fileName,
+            error: error instanceof Error ? error.message : '不明なエラーが発生しました'
+        };
+    }
+}
+
+/**
+ * 複数のSTLファイルを一括インポートする
+ * 
+ * @param files - アップロードするファイルの配列
+ * @param projectId - プロジェクトID
+ * @param defaultStatus - 初期ステータス
+ * @returns インポート結果の配列
+ */
+export async function importMultipleStl(
+    filesData: Array<{ buffer: ArrayBuffer; name: string }>,
+    projectId: number,
+    defaultStatus: ProcessStatus = 'CUTTING'
+): Promise<ImportResult[]> {
+    const results: ImportResult[] = [];
+
+    for (const fileData of filesData) {
+        const result = await importSingleStl(
+            fileData.buffer,
+            fileData.name,
+            projectId,
+            defaultStatus
+        );
+        results.push(result);
+    }
+
+    return results;
+}
+
+/**
+ * ファイル名のプレビュー解析（実際のインポートは行わない）
+ * 
+ * @param fileNames - ファイル名の配列
+ * @returns 解析結果の配列
+ */
+export async function previewFileNames(fileNames: string[]): Promise<ParsedFileInfo[]> {
+    return fileNames.map(parseFileName);
+}
+</file>
+
+<file path="app/api/import-stl/route.ts">
+import { NextRequest, NextResponse } from 'next/server';
+import { importMultipleStl } from '@/app/actions/importStl';
+import { ProcessStatus } from '@/app/types';
+
+export async function POST(request: NextRequest) {
+    try {
+        const { projectId, defaultStatus, filesData } = await request.json();
+
+        if (!projectId || !filesData || !Array.isArray(filesData)) {
+            return NextResponse.json(
+                { error: 'Invalid request parameters' },
+                { status: 400 }
+            );
+        }
+
+        // Uint8Array を ArrayBuffer に変換
+        const convertedFilesData = filesData.map((fd: any) => ({
+            name: fd.name,
+            buffer: new Uint8Array(fd.buffer).buffer
+        }));
+
+        const results = await importMultipleStl(
+            convertedFilesData,
+            projectId,
+            (defaultStatus as ProcessStatus) || 'CUTTING'
+        );
+
+        return NextResponse.json(results);
+    } catch (error) {
+        console.error('Error in import-stl API:', error);
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
+</file>
+
+<file path="app/api/preview-filenames/route.ts">
+import { NextRequest, NextResponse } from 'next/server';
+import { parseFileNames } from '@/lib/utils/parseFileName';
+
+export async function POST(request: NextRequest) {
+    try {
+        const { fileNames } = await request.json();
+
+        if (!Array.isArray(fileNames)) {
+            return NextResponse.json(
+                { error: 'fileNames must be an array' },
+                { status: 400 }
+            );
+        }
+
+        const results = parseFileNames(fileNames);
+        return NextResponse.json(results);
+    } catch (error) {
+        console.error('Error in preview-filenames API:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
+</file>
+
+<file path="app/components/StlImportModal.tsx">
+'use client';
+
+import React, { useState, useCallback } from 'react';
+import { ParsedFileInfo } from '@/lib/utils/parseFileName';
+import { ProcessStatus } from '@/app/types';
+
+interface StlImportModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    projectId: number;
+    onImportComplete?: () => void;
+}
+
+interface FileWithPreview {
+    file: File;
+    parsed: ParsedFileInfo;
+}
+
+export function StlImportModal({ isOpen, onClose, projectId, onImportComplete }: StlImportModalProps) {
+    const [files, setFiles] = useState<FileWithPreview[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<string>('');
+    const [defaultStatus, setDefaultStatus] = useState<ProcessStatus>('CUTTING');
+
+    // ファイル名を解析してプレビューリストに追加
+    const handleFiles = useCallback(async (fileList: FileList | File[]) => {
+        const stlFiles = Array.from(fileList).filter(
+            file => file.name.toLowerCase().endsWith('.stl')
+        );
+
+        if (stlFiles.length === 0) {
+            alert('STLファイルを選択してください');
+            return;
+        }
+
+        // サーバーサイドの解析関数を呼び出す
+        const fileNames = stlFiles.map(f => f.name);
+        const response = await fetch('/api/preview-filenames', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fileNames })
+        });
+
+        const parsedInfos: ParsedFileInfo[] = await response.json();
+
+        const filesWithPreview: FileWithPreview[] = stlFiles.map((file, index) => ({
+            file,
+            parsed: parsedInfos[index]
+        }));
+
+        setFiles(prev => [...prev, ...filesWithPreview]);
+    }, []);
+
+    // ドラッグ&ドロップのハンドラー
+    const handleDragEnter = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    }, []);
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    }, []);
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const droppedFiles = e.dataTransfer.files;
+        if (droppedFiles.length > 0) {
+            handleFiles(droppedFiles);
+        }
+    }, [handleFiles]);
+
+    // ファイル選択ダイアログ
+    const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleFiles(e.target.files);
+        }
+    }, [handleFiles]);
+
+    // ファイルを削除
+    const removeFile = useCallback((index: number) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
+    }, []);
+
+    // インポート実行
+    const handleImport = useCallback(async () => {
+        if (files.length === 0) {
+            alert('ファイルを選択してください');
+            return;
+        }
+
+        // 無効なファイルがあるかチェック
+        const invalidFiles = files.filter(f => !f.parsed.isValid);
+        if (invalidFiles.length > 0) {
+            const confirm = window.confirm(
+                `${invalidFiles.length}件の無効なファイルがあります。有効なファイルのみインポートしますか?`
+            );
+            if (!confirm) return;
+        }
+
+        setIsUploading(true);
+        setUploadProgress('アップロード中...');
+
+        try {
+            // ファイルをArrayBufferに変換
+            const filesData = await Promise.all(
+                files
+                    .filter(f => f.parsed.isValid)
+                    .map(async ({ file }) => ({
+                        buffer: await file.arrayBuffer(),
+                        name: file.name
+                    }))
+            );
+
+            // サーバーアクションを呼び出す
+            const response = await fetch('/api/import-stl', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    projectId,
+                    defaultStatus,
+                    filesData: filesData.map(fd => ({
+                        name: fd.name,
+                        buffer: Array.from(new Uint8Array(fd.buffer))
+                    }))
+                })
+            });
+
+            const results = await response.json();
+
+            const successCount = results.filter((r: any) => r.success).length;
+            const failCount = results.filter((r: any) => !r.success).length;
+
+            setUploadProgress(`完了: ${successCount}件成功, ${failCount}件失敗`);
+
+            setTimeout(() => {
+                setFiles([]);
+                setUploadProgress('');
+                setIsUploading(false);
+                onImportComplete?.();
+                onClose();
+            }, 2000);
+
+        } catch (error) {
+            console.error('Import error:', error);
+            setUploadProgress('エラーが発生しました');
+            setIsUploading(false);
+        }
+    }, [files, projectId, defaultStatus, onImportComplete, onClose]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden">
+                {/* ヘッダー */}
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-700">
+                    <h2 className="text-2xl font-bold text-white">STLファイルインポート</h2>
+                    <button
+                        onClick={onClose}
+                        disabled={isUploading}
+                        className="text-white/80 hover:text-white disabled:opacity-50"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* ドラッグ&ドロップエリア */}
+                <div className="p-6">
+                    <div
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${isDragging
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50'
+                            }`}
+                    >
+                        <svg
+                            className="mx-auto h-16 w-16 text-gray-400 mb-4"
+                            stroke="currentColor"
+                            fill="none"
+                            viewBox="0 0 48 48"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                strokeWidth={2}
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        </svg>
+                        <p className="text-lg font-semibold text-gray-700 mb-2">
+                            STLファイルをドラッグ&ドロップ
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">または</p>
+                        <label className="inline-block px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors cursor-pointer shadow-lg">
+                            ファイルを選択
+                            <input
+                                type="file"
+                                multiple
+                                accept=".stl"
+                                onChange={handleFileSelect}
+                                className="hidden"
+                                disabled={isUploading}
+                            />
+                        </label>
+                    </div>
+
+                    {/* 初期ステータス選択 */}
+                    <div className="mt-6 flex items-center gap-4">
+                        <label className="font-semibold text-gray-700">初期ステータス:</label>
+                        <select
+                            value={defaultStatus}
+                            onChange={(e) => setDefaultStatus(e.target.value as ProcessStatus)}
+                            disabled={isUploading}
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="UNPRINTED">未プリント</option>
+                            <option value="PRINTED">プリント済み</option>
+                            <option value="SURFACE_TREATMENT">表面処理</option>
+                            <option value="CUTTING">切削</option>
+                            <option value="PAINTING">塗装</option>
+                            <option value="READY">完成</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* プレビューリスト */}
+                {files.length > 0 && (
+                    <div className="px-6 pb-6">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">
+                            抽出された部品番号 ({files.length}件)
+                        </h3>
+                        <div className="max-h-[40vh] overflow-y-auto border border-gray-200 rounded-xl">
+                            <table className="w-full">
+                                <thead className="bg-gray-100 sticky top-0">
+                                    <tr className="text-xs text-gray-600 uppercase">
+                                        <th className="text-left p-3">ファイル名</th>
+                                        <th className="text-left p-3">部品番号</th>
+                                        <th className="text-center p-3">個数</th>
+                                        <th className="text-left p-3">状態</th>
+                                        <th className="text-center p-3">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {files.map((fileWithPreview, index) => (
+                                        <tr key={index} className={fileWithPreview.parsed.isValid ? '' : 'bg-red-50'}>
+                                            <td className="p-3 text-sm font-mono text-gray-700">
+                                                {fileWithPreview.file.name}
+                                            </td>
+                                            <td className="p-3 font-semibold text-gray-800">
+                                                {fileWithPreview.parsed.partNumber || '-'}
+                                            </td>
+                                            <td className="p-3 text-center font-bold text-blue-600">
+                                                {fileWithPreview.parsed.quantity}
+                                            </td>
+                                            <td className="p-3">
+                                                {fileWithPreview.parsed.isValid ? (
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                                        ✓ 有効
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                                        ✗ {fileWithPreview.parsed.errorMessage}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="p-3 text-center">
+                                                <button
+                                                    onClick={() => removeFile(index)}
+                                                    disabled={isUploading}
+                                                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                                                >
+                                                    削除
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* アップロード進捗 */}
+                {uploadProgress && (
+                    <div className="px-6 pb-4">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                            <p className="text-blue-800 font-semibold">{uploadProgress}</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* フッター */}
+                <div className="p-6 bg-gray-50 flex gap-4">
+                    <button
+                        onClick={onClose}
+                        disabled={isUploading}
+                        className="flex-1 px-6 py-3 rounded-xl border border-gray-300 font-bold text-gray-600 hover:bg-white transition-colors disabled:opacity-50"
+                    >
+                        キャンセル
+                    </button>
+                    <button
+                        onClick={handleImport}
+                        disabled={files.length === 0 || isUploading}
+                        className="flex-1 px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                        {isUploading ? 'インポート中...' : `インポート実行 (${files.filter(f => f.parsed.isValid).length}件)`}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="docs/INTEGRATION_EXAMPLE.md">
+# プロジェクトページへのSTLインポート機能統合例
+
+## 統合方法
+
+`app/project/[id]/page.tsx` を以下のように修正して、STLインポートボタンを追加します。
+
+```tsx
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { aggregateProgress } from '@/app/utils';
+import { SummaryCard } from '@/app/components/SummaryCard';
+import { mockStore } from '@/lib/mockStore';
+import ProjectClientContent from './ProjectClientContent';
+// ↓ 追加
+import ProjectPageClient from './ProjectPageClient';
+
+interface PageProps {
+    params: Promise<{
+        id: string;
+    }>;
+}
+
+export default async function ProjectDetailPage(props: PageProps) {
+    const params = await props.params;
+    const projectId = parseInt(params.id);
+    if (isNaN(projectId)) {
+        notFound();
+    }
+
+    const project = await mockStore.getProject(projectId);
+    if (!project) {
+        notFound();
+    }
+
+    const parts = await mockStore.getParts(projectId);
+    const partItems = await mockStore.getPartItems(projectId);
+
+    const totalInventory = partItems.length;
+    const inProgress = partItems.filter(item => item.status !== 'READY').length;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const completedToday = partItems.filter(item =>
+        item.completed_at && new Date(item.completed_at) >= today
+    ).length;
+
+    const progressData = aggregateProgress(parts, partItems);
+
+    return (
+        <ProjectPageClient
+            project={project}
+            projectId={projectId}
+            totalInventory={totalInventory}
+            inProgress={inProgress}
+            completedToday={completedToday}
+            progressData={progressData}
+            parts={parts}
+            partItems={partItems}
+        />
+    );
+}
+```
+
+## 新しいクライアントコンポーネントの作成
+
+`app/project/[id]/ProjectPageClient.tsx` を作成:
+
+```tsx
+'use client';
+
+import Link from 'next/link';
+import { useState } from 'react';
+import { SummaryCard } from '@/app/components/SummaryCard';
+import { StlImportModal } from '@/app/components/StlImportModal';
+import ProjectClientContent from './ProjectClientContent';
+import { Part, PartItem, Project } from '@/app/types';
+
+interface ProjectPageClientProps {
+    project: Project;
+    projectId: number;
+    totalInventory: number;
+    inProgress: number;
+    completedToday: number;
+    progressData: any[];
+    parts: Part[];
+    partItems: PartItem[];
+}
+
+export default function ProjectPageClient({
+    project,
+    projectId,
+    totalInventory,
+    inProgress,
+    completedToday,
+    progressData,
+    parts,
+    partItems
+}: ProjectPageClientProps) {
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+    const handleImportComplete = () => {
+        // インポート完了後にページをリロード
+        window.location.reload();
+    };
+
+    return (
+        <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <Link href="/" className="text-blue-600 hover:text-blue-800 mb-2 inline-block font-medium">
+                        ← プロジェクト一覧へ戻る
+                    </Link>
+                    <h1 className="text-3xl font-bold text-gray-800">
+                        {project.name}
+                    </h1>
+                    <p className="text-gray-600 mt-1">{project.description}</p>
+                </div>
+                <div className="flex gap-3">
+                    {/* STLインポートボタン（新規追加） */}
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-green-700 transition-all"
+                    >
+                        📁 STLインポート
+                    </button>
+                    
+                    <Link href={`/print?project_id=${projectId}`}>
+                        <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block">
+                            3Dプリント登録
+                        </span>
+                    </Link>
+                </div>
+            </header>
+
+            {/* サマリーカード */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <SummaryCard title="総在庫数" value={totalInventory} />
+                <SummaryCard title="仕掛品数" value={inProgress} valueColor="text-orange-500" />
+                <SummaryCard title="本日完了数" value={completedToday} valueColor="text-green-500" />
+            </div>
+
+            {/* インタラクティブな一覧・カート機能 */}
+            <ProjectClientContent
+                progressData={progressData}
+                parts={parts}
+                partItems={partItems}
+                projectId={projectId}
+            />
+
+            {/* STLインポートモーダル */}
+            <StlImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                projectId={projectId}
+                onImportComplete={handleImportComplete}
+            />
+        </div>
+    );
+}
+```
+
+## 変更点の説明
+
+### 1. サーバーコンポーネントとクライアントコンポーネントの分離
+- `page.tsx`: サーバーコンポーネント（データ取得のみ）
+- `ProjectPageClient.tsx`: クライアントコンポーネント（UI + インタラクション）
+
+### 2. STLインポートボタンの追加
+- ヘッダー部分に緑色の「STLインポート」ボタンを追加
+- クリックするとモーダルが開く
+
+### 3. モーダルの統合
+- `StlImportModal` コンポーネントをインポート
+- `isImportModalOpen` ステートで表示/非表示を管理
+- インポート完了後は `window.location.reload()` でページをリフレッシュ
+
+## 使用フロー
+
+1. ユーザーがプロジェクトページを開く
+2. 「STLインポート」ボタンをクリック
+3. モーダルが開き、ファイルをドラッグ&ドロップまたは選択
+4. ファイル名が自動解析され、プレビュー表示
+5. 初期ステータスを選択（デフォルト: CUTTING）
+6. 「インポート実行」ボタンをクリック
+7. Firebase Storage にアップロード + Firestore に保存
+8. 完了後、ページが自動リロードされ、新しい部品が表示される
+
+## より良い実装（オプション）
+
+ページリロードの代わりに、SWRやReact Queryを使ってデータを再取得する方法もあります:
+
+```tsx
+import { useRouter } from 'next/navigation';
+
+const router = useRouter();
+
+const handleImportComplete = () => {
+    // Next.jsのキャッシュを無効化してリフレッシュ
+    router.refresh();
+};
+```
+
+この方法なら、ページ全体をリロードせずにデータのみを再取得できます。
+</file>
+
+<file path="docs/STL_IMPORT_GUIDE.md">
+# STLインポート機能 使用ガイド
+
+## 概要
+
+STLファイルのインポート機能により、ファイル名から部品番号と個数を自動解析し、Firebase Storageへのアップロードと同時にFirestoreに部品（Part）と工程アイテム（PartItem）を自動生成します。
+
+## 実装されたファイル
+
+### 1. ユーティリティ
+- **`lib/utils/parseFileName.ts`**: ファイル名解析エンジン
+
+### 2. サーバーアクション
+- **`app/actions/importStl.ts`**: インポート処理のサーバーアクション
+
+### 3. UIコンポーネント
+- **`app/components/StlImportModal.tsx`**: ドラッグ&ドロップ対応のインポートモーダル
+
+### 4. APIルート
+- **`app/api/preview-filenames/route.ts`**: ファイル名プレビュー用API
+- **`app/api/import-stl/route.ts`**: インポート実行用API
+
+## ファイル名フォーマット
+
+以下のフォーマットに対応しています:
+
+| ファイル名 | 部品番号 | 個数 |
+|-----------|---------|------|
+| `PART123.stl` | PART123 | 1 |
+| `PART123_x5.stl` | PART123 | 5 |
+| `ABC-456_X10.stl` | ABC-456 | 10 |
+| `ITEM_789_x3.stl` | ITEM_789 | 3 |
+
+### ルール
+- 拡張子は `.stl` または `.STL`
+- 個数指定は `_x数字` または `_X数字` の形式
+- 個数指定がない場合はデフォルトで1個
+- 個数の範囲は 1〜1000
+
+## 使用方法
+
+### プロジェクトページに組み込む例
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+import { StlImportModal } from '@/app/components/StlImportModal';
+
+export default function ProjectPage({ projectId }: { projectId: number }) {
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  const handleImportComplete = () => {
+    // インポート完了後の処理（例: データ再取得）
+    window.location.reload();
+  };
+
+  return (
+    <div>
+      {/* インポートボタン */}
+      <button
+        onClick={() => setIsImportModalOpen(true)}
+        className="bg-green-600 text-white font-bold py-3 px-6 rounded-lg"
+      >
+        STLファイルをインポート
+      </button>
+
+      {/* インポートモーダル */}
+      <StlImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        projectId={projectId}
+        onImportComplete={handleImportComplete}
+      />
+    </div>
+  );
+}
+```
+
+## 処理フロー
+
+1. **ファイル選択/ドロップ**
+   - ユーザーがSTLファイルを選択またはドラッグ&ドロップ
+   - 複数ファイルの同時選択が可能
+
+2. **プレビュー解析**
+   - `/api/preview-filenames` を呼び出し
+   - ファイル名から部品番号と個数を抽出
+   - 解析結果をテーブル表示（有効/無効を色分け）
+
+3. **初期ステータス選択**
+   - ユーザーが初期ステータスを選択（デフォルト: CUTTING）
+   - 選択肢: UNPRINTED, PRINTED, SURFACE_TREATMENT, CUTTING, PAINTING, READY
+
+4. **インポート実行**
+   - 「インポート実行」ボタンをクリック
+   - `/api/import-stl` を呼び出し
+   - 各ファイルに対して以下を実行:
+     - Firebase Storageにアップロード（パス: `projects/{projectId}/stl/{partNumber}_{timestamp}.stl`）
+     - Firestoreで部品番号を検索
+     - 該当する部品がなければ新規作成
+     - 指定個数分のPartItemを作成
+
+5. **完了通知**
+   - 成功/失敗件数を表示
+   - `onImportComplete` コールバックを実行
+   - モーダルを自動クローズ
+
+## データ構造
+
+### Part（部品）
+```typescript
+{
+  id: number;
+  part_number: string;  // ファイル名から抽出
+  project_id: number;
+}
+```
+
+### PartItem（工程アイテム）
+```typescript
+{
+  id: number;
+  part_id: number;
+  storage_case: string;  // 自動生成: "AUTO-{partNumber}-{連番}"
+  status: ProcessStatus;  // ユーザーが選択した初期ステータス
+  completed_at: Date | null;
+  updated_at: Timestamp;
+}
+```
+
+## エラーハンドリング
+
+- **無効なファイル名**: プレビュー時に赤色で表示、エラーメッセージを表示
+- **アップロード失敗**: 個別にエラーを記録し、結果レポートに含める
+- **重複部品番号**: 既存の部品を使用（新規作成しない）
+- **ネットワークエラー**: エラーメッセージを表示し、リトライを促す
+
+## カスタマイズ
+
+### ファイル名パターンの拡張
+
+`lib/utils/parseFileName.ts` の `parseFileName` 関数を編集:
+
+```typescript
+// 例: プレフィックス付きパターンに対応
+const prefixPattern = /^PREFIX_(.+?)_x(\d+)$/;
+```
+
+### 初期ステータスの変更
+
+`app/components/StlImportModal.tsx` の `defaultStatus` の初期値を変更:
+
+```typescript
+const [defaultStatus, setDefaultStatus] = useState<ProcessStatus>('PRINTED');
+```
+
+### ストレージパスのカスタマイズ
+
+`app/actions/importStl.ts` の `storagePath` を変更:
+
+```typescript
+const storagePath = `custom/path/${partNumber}.stl`;
+```
+
+## テスト方法
+
+1. Firebase Emulatorを起動
+2. プロジェクトページを開く
+3. 以下のテストファイルを準備:
+   - `TEST001.stl`
+   - `TEST002_x3.stl`
+   - `INVALID_NAME.txt` (エラーテスト用)
+4. ファイルをドラッグ&ドロップ
+5. プレビューを確認
+6. インポート実行
+7. Firestore Emulator UIで確認:
+   - `parts` コレクション
+   - `partItems` コレクション
+8. Storage Emulator UIでファイルを確認
+
+## トラブルシューティング
+
+### ファイルがアップロードされない
+- Firebase Emulatorが起動しているか確認
+- `lib/firebase.ts` の接続設定を確認
+- ブラウザのコンソールでエラーを確認
+
+### 部品が重複して作成される
+- Firestoreのクエリが正しく動作しているか確認
+- `part_number` と `project_id` の両方で検索していることを確認
+
+### プレビューが表示されない
+- `/api/preview-filenames` のレスポンスを確認
+- ファイル名が `.stl` で終わっているか確認
+
+## 今後の拡張案
+
+- [ ] バッチインポートの進捗バー表示
+- [ ] インポート履歴の記録
+- [ ] ファイル名パターンのカスタム設定UI
+- [ ] STLファイルのサムネイル生成
+- [ ] 重複チェック時の上書き/スキップ選択
+- [ ] CSVによる一括インポート
+</file>
+
+<file path="lib/utils/parseFileName.ts">
+/**
+ * STLファイル名から部品情報を抽出するユーティリティ
+ */
+
+export interface ParsedFileInfo {
+    /** 元のファイル名 */
+    originalFileName: string;
+    /** 抽出された部品番号 */
+    partNumber: string;
+    /** 個数（デフォルト: 1） */
+    quantity: number;
+    /** 解析が成功したか */
+    isValid: boolean;
+    /** エラーメッセージ（解析失敗時） */
+    errorMessage?: string;
+}
+
+/**
+ * ファイル名から部品番号と個数を抽出する
+ * 
+ * 対応フォーマット:
+ * - PART123.stl → 部品番号: PART123, 個数: 1
+ * - PART123_x5.stl → 部品番号: PART123, 個数: 5
+ * - PART123_X10.stl → 部品番号: PART123, 個数: 10
+ * - ABC-456_x3.stl → 部品番号: ABC-456, 個数: 3
+ * 
+ * @param fileName - 解析するファイル名（拡張子含む）
+ * @returns 解析結果
+ */
+export function parseFileName(fileName: string): ParsedFileInfo {
+    // 拡張子を除去
+    const nameWithoutExt = fileName.replace(/\.(stl|STL)$/, '');
+
+    if (!nameWithoutExt) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: 'ファイル名が空です'
+        };
+    }
+
+    // パターン1: 部品番号_x個数 または 部品番号_X個数
+    const quantityPattern = /^(.+?)_[xX](\d+)$/;
+    const match = nameWithoutExt.match(quantityPattern);
+
+    if (match) {
+        const partNumber = match[1].trim();
+        const quantity = parseInt(match[2], 10);
+
+        if (!partNumber) {
+            return {
+                originalFileName: fileName,
+                partNumber: '',
+                quantity: 1,
+                isValid: false,
+                errorMessage: '部品番号が空です'
+            };
+        }
+
+        if (quantity <= 0 || quantity > 1000) {
+            return {
+                originalFileName: fileName,
+                partNumber,
+                quantity: 1,
+                isValid: false,
+                errorMessage: `個数が範囲外です（1-1000）: ${quantity}`
+            };
+        }
+
+        return {
+            originalFileName: fileName,
+            partNumber,
+            quantity,
+            isValid: true
+        };
+    }
+
+    // パターン2: 部品番号のみ（個数指定なし）
+    const partNumber = nameWithoutExt.trim();
+
+    if (!partNumber) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: '部品番号が空です'
+        };
+    }
+
+    return {
+        originalFileName: fileName,
+        partNumber,
+        quantity: 1,
+        isValid: true
+    };
+}
+
+/**
+ * 複数のファイル名を一括解析する
+ * 
+ * @param fileNames - ファイル名の配列
+ * @returns 解析結果の配列
+ */
+export function parseFileNames(fileNames: string[]): ParsedFileInfo[] {
+    return fileNames.map(parseFileName);
+}
+
+/**
+ * 解析結果から有効なもののみをフィルタリング
+ * 
+ * @param parsedInfos - 解析結果の配列
+ * @returns 有効な解析結果のみの配列
+ */
+export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFileInfo[] {
+    return parsedInfos.filter(info => info.isValid);
+}
+</file>
 
 <file path=".continue/agents/new-config.yaml">
 # This is an example configuration file
@@ -284,6 +1400,114 @@ export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps
 }
 </file>
 
+<file path="app/components/common/FileDownloadButton.tsx">
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { ref, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
+
+interface FileDownloadButtonProps {
+    storagePath: string;
+    fileName: string;
+    label?: string;
+    variant?: 'primary' | 'outline' | 'ghost';
+    icon?: React.ReactNode;
+}
+
+export default function FileDownloadButton({
+    storagePath,
+    fileName,
+    label,
+    variant = 'outline',
+    icon
+}: FileDownloadButtonProps) {
+    const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isError, setIsError] = useState(false);
+
+    useEffect(() => {
+        const fetchUrl = async () => {
+            setIsLoading(true);
+            setIsError(false);
+            try {
+                const fileRef = ref(storage, storagePath);
+                const url = await getDownloadURL(fileRef);
+                setDownloadUrl(url);
+            } catch (error: any) {
+                console.error(`Error fetching download URL for ${storagePath}:`, error);
+                if (error.code === 'storage/object-not-found') {
+                    setIsError(true);
+                } else {
+                    setIsError(true);
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (storagePath) {
+            fetchUrl();
+        }
+    }, [storagePath]);
+
+    const handleDownload = () => {
+        if (!downloadUrl) return;
+
+        // Use a hidden anchor tag to trigger download with fileName
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const baseStyles = "inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+
+    const variants = {
+        primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
+        outline: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50",
+        ghost: "bg-transparent text-gray-600 hover:bg-gray-100"
+    };
+
+    const defaultIcon = (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+    );
+
+    if (isLoading) {
+        return (
+            <button disabled className={`${baseStyles} ${variants[variant]}`}>
+                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></span>
+                {label || 'Loading...'}
+            </button>
+        );
+    }
+
+    if (isError) {
+        return (
+            <button disabled title="ファイルが登録されていません" className={`${baseStyles} ${variants[variant]} opacity-40`}>
+                {icon || defaultIcon}
+                {label ? `${label} (未登録)` : '未登録'}
+            </button>
+        );
+    }
+
+    return (
+        <button
+            onClick={handleDownload}
+            className={`${baseStyles} ${variants[variant]}`}
+        >
+            {icon || defaultIcon}
+            {label}
+        </button>
+    );
+}
+</file>
+
 <file path="app/components/SummaryCard.tsx">
 // app/dashboard/components/SummaryCard.tsx
 import React from 'react';
@@ -334,16 +1558,6 @@ export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: Summ
     "version": "15.5.1",
     "path": "storage_export"
   }
-}
-</file>
-
-<file path="firebase-data/storage_export/buckets.json">
-{
-  "buckets": [
-    {
-      "id": "demo-no-project.appspot.com"
-    }
-  ]
 }
 </file>
 
@@ -646,41 +1860,17 @@ export default function RootLayout({
 }
 </file>
 
-<file path="lib/firebase.ts">
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
-
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-bom3d-sn923";
-
-const firebaseConfig = {
-    apiKey: "fake-api-key", // Emulator用ダミー
-    authDomain: `${projectId}.firebaseapp.com`,
-    projectId: projectId,
-    storageBucket: `${projectId}.appspot.com`,
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
-
-if (isEmulator) {
-    const g = global as any;
-    if (!g._firebase_emulators_connected) {
-        // 環境変数からポートを取得、なければデフォルト
-        // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
-        connectFirestoreEmulator(db, '127.0.0.1', 8080);
-        connectAuthEmulator(auth, "http://127.0.0.1:9099");
-        g._firebase_emulators_connected = true;
-        console.log(`Connected to Firebase Emulators: ${projectId}`);
+<file path="firebase-data/storage_export/buckets.json">
+{
+  "buckets": [
+    {
+      "id": "demo-no-project.appspot.com"
+    },
+    {
+      "id": "demo-bom3d-sn923.appspot.com"
     }
+  ]
 }
-
-export { db, auth };
 </file>
 
 <file path="scripts/seed-emulator.ts">
@@ -953,6 +2143,46 @@ export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] =
     };
   });
 };
+</file>
+
+<file path="lib/firebase.ts">
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
+
+const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-bom3d-sn923";
+
+const firebaseConfig = {
+    apiKey: "fake-api-key", // Emulator用ダミー
+    authDomain: `${projectId}.firebaseapp.com`,
+    projectId: projectId,
+    storageBucket: `${projectId}.appspot.com`,
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
+
+const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
+
+if (isEmulator) {
+    const g = global as any;
+    if (!g._firebase_emulators_connected) {
+        // 環境変数からポートを取得、なければデフォルト
+        // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
+        connectFirestoreEmulator(db, '127.0.0.1', 8080);
+        connectAuthEmulator(auth, "http://127.0.0.1:9099");
+        connectStorageEmulator(storage, '127.0.0.1', 9199);
+        g._firebase_emulators_connected = true;
+        console.log(`Connected to Firebase Emulators: ${projectId}`);
+    }
+}
+
+export { db, auth, storage };
 </file>
 
 <file path="app/actions/consumeItem.ts">
@@ -1426,338 +2656,6 @@ export default async function ProjectDetailPage(props: PageProps) {
 }
 </file>
 
-<file path="app/project/[id]/ProjectClientContent.tsx">
-'use client';
-
-import React, { useState } from 'react';
-import {
-    DndContext,
-    DragOverlay,
-    closestCorners,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent,
-    DragStartEvent,
-    useDroppable
-} from '@dnd-kit/core';
-import {
-    SortableContext,
-    sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
-    useSortable
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { PROCESSES } from '@/app/constants';
-import { CartModal } from '@/app/components/CartModal';
-import { PreviewModal } from '@/app/components/PreviewModal';
-import { Part, PartItem } from '@/app/types';
-import { updateItemStatus } from '@/app/actions/updateItemStatus';
-
-// --- Components ---
-
-interface DraggableItemProps {
-    item: PartItem & { part_number?: string }; // part_numberはデータにある場合とない場合がある
-    isOverlay?: boolean;
-    onPreview: (item: any) => void;
-}
-
-function DraggableItem({ item, isOverlay, onPreview }: DraggableItemProps) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: `item-${item.id}` });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.3 : 1,
-    };
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            {...attributes}
-            {...listeners}
-            className={`
-                bg-white p-2 rounded-md shadow-sm border border-gray-200 mb-2 cursor-grab active:cursor-grabbing
-                hover:border-blue-400 transition-all text-xs
-                ${isOverlay ? 'shadow-xl scale-105 border-blue-500' : ''}
-            `}
-        >
-            <div className="flex justify-between items-center mb-1">
-                <span className="font-bold text-gray-500">#{item.id}</span>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation(); // ドラッグ動作と競合しないように
-                        onPreview(item);
-                    }}
-                    onPointerDown={(e) => e.stopPropagation()} // 重要: ボタン押下でドラッグが始まらないようにする
-                    className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded hover:bg-blue-100"
-                >
-                    詳細
-                </button>
-            </div>
-            <div className="text-[10px] text-gray-400 truncate font-mono">
-                {item.storage_case || 'No Case'}
-            </div>
-        </div>
-    );
-}
-
-interface SwimlaneCellProps {
-    partId: number;
-    status: string;
-    items: PartItem[];
-    onPreview: (item: any) => void;
-}
-
-function SwimlaneCell({ partId, status, items, onPreview }: SwimlaneCellProps) {
-    // Droppable ID: container-{partId}-{status}
-    const droppableId = `container-${partId}-${status}`;
-    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
-
-    return (
-        <div
-            ref={setNodeRef}
-            className={`
-                flex-1 min-w-[140px] border-r border-gray-100 p-2 flex flex-col transition-colors
-                ${isOver ? 'bg-blue-50/50' : 'bg-transparent'}
-            `}
-        >
-            <SortableContext
-                items={items.map(i => `item-${i.id}`)}
-                strategy={verticalListSortingStrategy}
-            >
-                <div className="flex-1 min-h-[60px]"> {/* 空でもドロップできるように高さを確保 */}
-                    {items.map(item => (
-                        <DraggableItem key={item.id} item={item} onPreview={onPreview} />
-                    ))}
-                </div>
-            </SortableContext>
-        </div>
-    );
-}
-
-interface SwimlaneRowProps {
-    part: Part;
-    items: PartItem[];
-    onPreview: (item: any) => void;
-}
-
-function SwimlaneRow({ part, items, onPreview }: SwimlaneRowProps) {
-    return (
-        <div className="flex bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden mb-4 shrink-0">
-            {/* 左端：部品情報（固定列） */}
-            <div className="w-48 bg-gray-50 p-4 border-r border-gray-200 flex flex-col justify-center shrink-0">
-                <h3 className="font-bold text-gray-800 text-sm mb-1">{part.part_number}</h3>
-                <p className="text-xs text-gray-500">Total: {items.length} items</p>
-            </div>
-
-            {/* 右側：工程セル（横スクロール可能領域） */}
-            <div className="flex-1 flex divide-x divide-gray-100 overflow-x-auto">
-                {PROCESSES.map(proc => (
-                    <SwimlaneCell
-                        key={proc.key}
-                        partId={part.id}
-                        status={proc.key}
-                        items={items.filter(i => i.status === proc.key)}
-                        onPreview={onPreview}
-                    />
-                ))}
-            </div>
-        </div>
-    );
-}
-
-// --- Main Component ---
-
-export default function ProjectClientContent({
-    progressData,
-    parts,
-    partItems: initialItems,
-    projectId
-}: {
-    progressData: any[],
-    parts: Part[],
-    partItems: PartItem[],
-    projectId: number
-}) {
-    const [items, setItems] = useState<PartItem[]>(initialItems);
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [activeId, setActiveId] = useState<string | null>(null);
-    const [previewItem, setPreviewItem] = useState<any | null>(null);
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 5,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
-
-    const handleDragStart = (event: DragStartEvent) => {
-        setActiveId(event.active.id as string);
-    };
-
-    const handleDragEnd = async (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveId(null);
-
-        if (!over) return;
-
-        // IDのパース
-        // Draggable ID: item-{itemId}
-        const activeIdStr = active.id as string;
-        const itemId = parseInt(activeIdStr.split('-')[1], 10);
-
-        // Droppable ID: container-{partId}-{status}
-        // または Sortable Item ID: item-{itemId} (同じカラム内の並び替え時などはこれに乗ることもあるが、Droppableコンテナで受けるのが基本)
-
-        let targetStatus: string | undefined;
-        // let targetPartId: number | undefined; // 今回はstatusだけわかればよいが、厳密にはPartの一致確認も可
-
-        const overIdStr = over.id as string;
-
-        if (overIdStr.startsWith('container-')) {
-            const parts = overIdStr.split('-');
-            // container-{partId}-{status}
-            // partIdが数値の場合、parts[1]は数値文字列。statusは残りの部分だが、status自体にハイフンが含まれない前提
-            // statusにハイフンが含まれる場合は slice で結合が必要
-            // 今回のPROCESS_STATUSESはハイフンを含まない (UNDERSCOREは含む) ので大丈夫
-            targetStatus = parts[2]; // status
-        } else if (overIdStr.startsWith('item-')) {
-            // アイテムの上にドロップした場合、そのアイテムの親コンテナのステータスを取得する必要がある
-            // items配列から検索して特定する
-            const overItemId = parseInt(overIdStr.split('-')[1], 10);
-            const overItem = items.find(i => i.id === overItemId);
-            if (overItem) {
-                targetStatus = overItem.status;
-            }
-        }
-
-        if (targetStatus) {
-            const item = items.find(i => i.id === itemId);
-            // ステータスが変更される場合のみ処理
-            if (item && item.status !== targetStatus) {
-                // 楽観的UI更新
-                setItems(prev => prev.map(i =>
-                    i.id === itemId ? { ...i, status: targetStatus! } : i
-                ));
-
-                // サーバーアクションの呼び出し
-                const result = await updateItemStatus(itemId, targetStatus);
-                if (!result.success) {
-                    // 失敗時はロールバック
-                    setItems(prev => prev.map(i =>
-                        i.id === itemId ? { ...i, status: item.status } : i
-                    ));
-                    alert(`Failed to update status: ${result.error}`);
-                }
-            }
-        }
-    };
-
-    const activeItem = activeId
-        ? items.find(i => `item-${i.id}` === activeId)
-        : null;
-
-    // カート機能用の計算
-    const cartItems = items
-        .filter(i => selectedIds.includes(i.id))
-        .map(i => {
-            const part = parts.find(p => p.id === i.part_id);
-            return {
-                id: i.id,
-                part_number: part?.part_number || `Part-${i.part_id}`,
-                count: 1
-            };
-        });
-
-    return (
-        <>
-            <div className="mb-24">
-                {/* ヘッダー行（工程名） */}
-                <div className="flex ml-48 border-b border-gray-200 pb-2 mb-2 sticky top-0 bg-gray-50 z-10 shadow-sm">
-                    {PROCESSES.map(proc => (
-                        <div key={proc.key} className="flex-1 min-w-[140px] px-2 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">
-                            {proc.name}
-                        </div>
-                    ))}
-                </div>
-
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCorners}
-                    onDragStart={handleDragStart}
-                    onDragEnd={handleDragEnd}
-                >
-                    <div className="flex flex-col gap-4">
-                        {parts.map(part => (
-                            <SwimlaneRow
-                                key={part.id}
-                                part={part}
-                                items={items.filter(i => i.part_id === part.id)}
-                                onPreview={(item) => {
-                                    const part = parts.find(p => p.id === item.part_id);
-                                    setPreviewItem({
-                                        ...item,
-                                        part_number: part?.part_number
-                                    });
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    <DragOverlay>
-                        {activeItem ? (
-                            <DraggableItem
-                                item={activeItem}
-                                isOverlay
-                                onPreview={() => { }}
-                            />
-                        ) : null}
-                    </DragOverlay>
-                </DndContext>
-            </div>
-
-            {/* カートUIは一旦省略しないが、スペースの都合で簡易化する場合はここを調整 */}
-            {selectedIds.length > 0 && (
-                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl z-50 shadow-xl">
-                    <span className="font-bold">{selectedIds.length} items selected</span>
-                </div>
-            )}
-
-            <CartModal
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                items={cartItems}
-                onDownload={() => alert("Zipダウンロードを開始します")}
-            />
-
-            <PreviewModal
-                isOpen={!!previewItem}
-                onClose={() => setPreviewItem(null)}
-                partNumber={previewItem?.part_number || ''}
-                itemId={previewItem?.id}
-                status={previewItem?.status}
-                projectId={projectId}
-            />
-        </>
-    );
-}
-</file>
-
 <file path="package.json">
 {
   "name": "sn-923",
@@ -2060,6 +2958,346 @@ export default function PrintRegistrationPage() {
       <PrintRegistrationContent />
     </Suspense>
   );
+}
+</file>
+
+<file path="app/project/[id]/ProjectClientContent.tsx">
+'use client';
+
+import React, { useState } from 'react';
+import {
+    DndContext,
+    DragOverlay,
+    closestCorners,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent,
+    useDroppable
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { PROCESSES } from '@/app/constants';
+import { CartModal } from '@/app/components/CartModal';
+import { PreviewModal } from '@/app/components/PreviewModal';
+import { Part, PartItem, ProcessStatus } from '@/app/types';
+import { updateItemStatus } from '@/app/actions/updateItemStatus';
+import FileDownloadButton from '@/app/components/common/FileDownloadButton';
+
+// --- Components ---
+
+interface DraggableItemProps {
+    item: PartItem & { part_number?: string }; // part_numberはデータにある場合とない場合がある
+    isOverlay?: boolean;
+    onPreview: (item: any) => void;
+}
+
+function DraggableItem({ item, isOverlay, onPreview }: DraggableItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: `item-${item.id}` });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className={`
+                bg-white p-2 rounded-md shadow-sm border border-gray-200 mb-2 cursor-grab active:cursor-grabbing
+                hover:border-blue-400 transition-all text-xs
+                ${isOverlay ? 'shadow-xl scale-105 border-blue-500' : ''}
+            `}
+        >
+            <div className="flex justify-between items-center mb-1">
+                <span className="font-bold text-gray-500">#{item.id}</span>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation(); // ドラッグ動作と競合しないように
+                        onPreview(item);
+                    }}
+                    onPointerDown={(e) => e.stopPropagation()} // 重要: ボタン押下でドラッグが始まらないようにする
+                    className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded hover:bg-blue-100"
+                >
+                    詳細
+                </button>
+            </div>
+            <div className="text-[10px] text-gray-400 truncate font-mono">
+                {item.storage_case || 'No Case'}
+            </div>
+        </div>
+    );
+}
+
+interface SwimlaneCellProps {
+    partId: number;
+    status: string;
+    items: PartItem[];
+    onPreview: (item: any) => void;
+}
+
+function SwimlaneCell({ partId, status, items, onPreview }: SwimlaneCellProps) {
+    // Droppable ID: container-{partId}-{status}
+    const droppableId = `container-${partId}-${status}`;
+    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={`
+                flex-1 min-w-[140px] border-r border-gray-100 p-2 flex flex-col transition-colors
+                ${isOver ? 'bg-blue-50/50' : 'bg-transparent'}
+            `}
+        >
+            <SortableContext
+                items={items.map(i => `item-${i.id}`)}
+                strategy={verticalListSortingStrategy}
+            >
+                <div className="flex-1 min-h-[60px]"> {/* 空でもドロップできるように高さを確保 */}
+                    {items.map(item => (
+                        <DraggableItem key={item.id} item={item} onPreview={onPreview} />
+                    ))}
+                </div>
+            </SortableContext>
+        </div>
+    );
+}
+
+interface SwimlaneRowProps {
+    part: Part;
+    items: PartItem[];
+    onPreview: (item: any) => void;
+}
+
+function SwimlaneRow({ part, items, onPreview }: SwimlaneRowProps) {
+    return (
+        <div className="flex bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden mb-4 shrink-0">
+            {/* 左端：部品情報（固定列） */}
+            <div className="w-48 bg-gray-50 p-4 border-r border-gray-200 flex flex-col justify-center shrink-0">
+                <h3 className="font-bold text-gray-800 text-sm mb-1">{part.part_number}</h3>
+                <p className="text-xs text-gray-500 mb-3">Total: {items.length} items</p>
+
+                <FileDownloadButton
+                    storagePath={`models/${part.part_number}.stl`}
+                    fileName={`${part.part_number}_model.stl`}
+                    label="STLダウンロード"
+                    variant="outline"
+                />
+            </div>
+
+            {/* 右側：工程セル（横スクロール可能領域） */}
+            <div className="flex-1 flex divide-x divide-gray-100 overflow-x-auto">
+                {PROCESSES.map(proc => (
+                    <SwimlaneCell
+                        key={proc.key}
+                        partId={part.id}
+                        status={proc.key}
+                        items={items.filter(i => i.status === proc.key)}
+                        onPreview={onPreview}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// --- Main Component ---
+
+export default function ProjectClientContent({
+    progressData,
+    parts,
+    partItems: initialItems,
+    projectId
+}: {
+    progressData: any[],
+    parts: Part[],
+    partItems: PartItem[],
+    projectId: number
+}) {
+    const [items, setItems] = useState<PartItem[]>(initialItems);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [activeId, setActiveId] = useState<string | null>(null);
+    const [previewItem, setPreviewItem] = useState<any | null>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as string);
+    };
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveId(null);
+
+        if (!over) return;
+
+        // IDのパース
+        // Draggable ID: item-{itemId}
+        const activeIdStr = active.id as string;
+        const itemId = parseInt(activeIdStr.split('-')[1], 10);
+
+        // Droppable ID: container-{partId}-{status}
+        // または Sortable Item ID: item-{itemId} (同じカラム内の並び替え時などはこれに乗ることもあるが、Droppableコンテナで受けるのが基本)
+
+        let targetStatus: string | undefined;
+        // let targetPartId: number | undefined; // 今回はstatusだけわかればよいが、厳密にはPartの一致確認も可
+
+        const overIdStr = over.id as string;
+
+        if (overIdStr.startsWith('container-')) {
+            const parts = overIdStr.split('-');
+            // container-{partId}-{status}
+            // partIdが数値の場合、parts[1]は数値文字列。statusは残りの部分だが、status自体にハイフンが含まれない前提
+            // statusにハイフンが含まれる場合は slice で結合が必要
+            // 今回のPROCESS_STATUSESはハイフンを含まない (UNDERSCOREは含む) ので大丈夫
+            targetStatus = parts[2]; // status
+        } else if (overIdStr.startsWith('item-')) {
+            // アイテムの上にドロップした場合、そのアイテムの親コンテナのステータスを取得する必要がある
+            // items配列から検索して特定する
+            const overItemId = parseInt(overIdStr.split('-')[1], 10);
+            const overItem = items.find(i => i.id === overItemId);
+            if (overItem) {
+                targetStatus = overItem.status;
+            }
+        }
+
+        if (targetStatus) {
+            const item = items.find(i => i.id === itemId);
+            // ステータスが変更される場合のみ処理
+            if (item && item.status !== targetStatus) {
+                // 楽観的UI更新
+                setItems(prev => prev.map(i =>
+                    i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
+                ));
+
+                // サーバーアクションの呼び出し
+                const result = await updateItemStatus(itemId, targetStatus);
+                if (!result.success) {
+                    // 失敗時はロールバック
+                    setItems(prev => prev.map(i =>
+                        i.id === itemId ? { ...i, status: item.status } : i
+                    ));
+                    alert(`Failed to update status: ${result.error}`);
+                }
+            }
+        }
+    };
+
+    const activeItem = activeId
+        ? items.find(i => `item-${i.id}` === activeId)
+        : null;
+
+    // カート機能用の計算
+    const cartItems = items
+        .filter(i => selectedIds.includes(i.id))
+        .map(i => {
+            const part = parts.find(p => p.id === i.part_id);
+            return {
+                id: i.id,
+                part_number: part?.part_number || `Part-${i.part_id}`,
+                count: 1
+            };
+        });
+
+    return (
+        <>
+            <div className="mb-24">
+                {/* ヘッダー行（工程名） */}
+                <div className="flex ml-48 border-b border-gray-200 pb-2 mb-2 sticky top-0 bg-gray-50 z-10 shadow-sm">
+                    {PROCESSES.map(proc => (
+                        <div key={proc.key} className="flex-1 min-w-[140px] px-2 text-center text-xs font-bold text-gray-500 uppercase tracking-widest">
+                            {proc.name}
+                        </div>
+                    ))}
+                </div>
+
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                >
+                    <div className="flex flex-col gap-4">
+                        {parts.map(part => (
+                            <SwimlaneRow
+                                key={part.id}
+                                part={part}
+                                items={items.filter(i => i.part_id === part.id)}
+                                onPreview={(item) => {
+                                    const part = parts.find(p => p.id === item.part_id);
+                                    setPreviewItem({
+                                        ...item,
+                                        part_number: part?.part_number
+                                    });
+                                }}
+                            />
+                        ))}
+                    </div>
+
+                    <DragOverlay>
+                        {activeItem ? (
+                            <DraggableItem
+                                item={activeItem}
+                                isOverlay
+                                onPreview={() => { }}
+                            />
+                        ) : null}
+                    </DragOverlay>
+                </DndContext>
+            </div>
+
+            {/* カートUIは一旦省略しないが、スペースの都合で簡易化する場合はここを調整 */}
+            {selectedIds.length > 0 && (
+                <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-xl z-50 shadow-xl">
+                    <span className="font-bold">{selectedIds.length} items selected</span>
+                </div>
+            )}
+
+            <CartModal
+                isOpen={isCartOpen}
+                onClose={() => setIsCartOpen(false)}
+                items={cartItems}
+                onDownload={() => alert("Zipダウンロードを開始します")}
+            />
+
+            <PreviewModal
+                isOpen={!!previewItem}
+                onClose={() => setPreviewItem(null)}
+                partNumber={previewItem?.part_number || ''}
+                itemId={previewItem?.id}
+                status={previewItem?.status}
+                projectId={projectId}
+            />
+        </>
+    );
 }
 </file>
 
