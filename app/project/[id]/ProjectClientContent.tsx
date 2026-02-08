@@ -128,6 +128,13 @@ export default function ProjectClientContent({
         }
     };
 
+    const handleToggleSelect = (itemId: number) => {
+        setSelectedIds(prev => prev.includes(itemId)
+            ? prev.filter(id => id !== itemId)
+            : [...prev, itemId]
+        );
+    };
+
     const activeItem = activeId
         ? items.find(i => `item-${i.id}` === activeId)
         : null;
@@ -139,6 +146,7 @@ export default function ProjectClientContent({
             return {
                 id: i.id,
                 part_number: part?.part_number || `Part-${i.part_id}`,
+                status: i.status,
                 count: 1
             };
         });
@@ -190,6 +198,8 @@ export default function ProjectClientContent({
                                     key={part.id}
                                     part={part}
                                     items={items.filter(i => i.part_id === part.id)}
+                                    selectedIds={selectedIds}
+                                    onToggleSelect={handleToggleSelect}
                                     onPreview={(item) => {
                                         const part = parts.find(p => p.id === item.part_id);
                                         setPreviewItem({
@@ -212,6 +222,8 @@ export default function ProjectClientContent({
                                     part_number: parts.find(p => p.id === activeItem.part_id)?.part_number
                                 }}
                                 isOverlay
+                                isSelected={selectedIds.includes(activeItem.id)}
+                                onToggleSelect={() => { }}
                                 onPreview={() => { }}
                             />
                         </div>
@@ -219,23 +231,31 @@ export default function ProjectClientContent({
                 </DragOverlay>
             </DndContext>
 
-            {selectedIds.length > 0 && (
-                <div className="fixed bottom-8 right-8 z-50">
-                    <button
-                        onClick={() => setIsCartOpen(true)}
-                        className="bg-black text-white px-6 py-3 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                    >
-                        <span className="font-bold">{selectedIds.length}</span>
-                        <span>Items Selected</span>
-                    </button>
-                </div>
-            )}
+            {/* Floating Cart Button */}
+            <div className="fixed bottom-8 right-8 z-50">
+                <button
+                    onClick={() => setIsCartOpen(true)}
+                    className="relative bg-black text-white p-4 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all group"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    {selectedIds.length > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                            {selectedIds.length}
+                        </span>
+                    )}
+                </button>
+            </div>
 
             <CartModal
                 isOpen={isCartOpen}
                 onClose={() => setIsCartOpen(false)}
                 items={cartItems}
-                onDownload={() => alert("Zipダウンロードを開始します")}
+                onDownload={() => {
+                    console.log('Downloading Zip for items:', selectedIds);
+                    alert("Zipダウンロードを開始します");
+                }}
             />
 
             <PreviewModal

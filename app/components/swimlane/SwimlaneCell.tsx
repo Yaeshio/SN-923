@@ -9,10 +9,12 @@ interface SwimlaneCellProps {
     status: ProcessStatus;
     items: PartItem[];
     isLast: boolean;
+    selectedIds: number[];
+    onToggleSelect: (itemId: number) => void;
     onPreview: (item: any) => void;
 }
 
-export function SwimlaneCell({ partId, status, items, isLast, onPreview }: SwimlaneCellProps) {
+export function SwimlaneCell({ partId, status, items, isLast, selectedIds, onToggleSelect, onPreview }: SwimlaneCellProps) {
     const droppableId = `container-${partId}-${status}`;
     const { setNodeRef, isOver } = useDroppable({ id: droppableId });
 
@@ -31,7 +33,13 @@ export function SwimlaneCell({ partId, status, items, isLast, onPreview }: Swiml
             >
                 <div className="flex flex-col gap-2 h-full">
                     {items.map(item => (
-                        <SwimlaneItem key={item.id} item={item} onPreview={onPreview} />
+                        <SwimlaneItem
+                            key={item.id}
+                            item={item}
+                            isSelected={selectedIds.includes(item.id)}
+                            onToggleSelect={onToggleSelect}
+                            onPreview={onPreview}
+                        />
                     ))}
 
                     {/* Placeholder when empty */}

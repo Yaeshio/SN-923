@@ -7,10 +7,12 @@ import { PartItem } from '@/app/types';
 interface SwimlaneItemProps {
     item: PartItem & { part_number?: string };
     isOverlay?: boolean;
+    isSelected?: boolean;
+    onToggleSelect: (itemId: number) => void;
     onPreview: (item: any) => void;
 }
 
-export function SwimlaneItem({ item, isOverlay, onPreview }: SwimlaneItemProps) {
+export function SwimlaneItem({ item, isOverlay, isSelected, onToggleSelect, onPreview }: SwimlaneItemProps) {
     const {
         attributes,
         listeners,
@@ -32,8 +34,9 @@ export function SwimlaneItem({ item, isOverlay, onPreview }: SwimlaneItemProps) 
             ref={setNodeRef}
             style={style}
             className={`
-        bg-white rounded-xl shadow-sm border border-gray-200 p-2 select-none group relative
+        bg-white rounded-xl shadow-sm border p-2 select-none group relative
         ${isOverlay ? 'shadow-2xl scale-105 border-blue-500 ring-4 ring-blue-50' : 'hover:border-blue-400 hover:shadow-md'}
+        ${isSelected ? 'border-blue-500 bg-blue-50/30 ring-2 ring-blue-100' : 'border-gray-200'}
         transition-all duration-200
       `}
         >
@@ -64,6 +67,19 @@ export function SwimlaneItem({ item, isOverlay, onPreview }: SwimlaneItemProps) 
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* Selection Checkbox */}
+                <div className="flex items-center">
+                    <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                            e.stopPropagation();
+                            onToggleSelect(item.id);
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
                 </div>
 
                 {/* Action Buttons */}

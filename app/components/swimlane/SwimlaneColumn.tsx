@@ -7,10 +7,12 @@ import FileDownloadButton from '@/app/components/common/FileDownloadButton';
 interface SwimlaneColumnProps {
     part: Part;
     items: PartItem[];
+    selectedIds: number[];
+    onToggleSelect: (itemId: number) => void;
     onPreview: (item: any) => void;
 }
 
-export function SwimlaneColumn({ part, items, onPreview }: SwimlaneColumnProps) {
+export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPreview }: SwimlaneColumnProps) {
     // Find the "furthest" process index that has items
     const lastActiveIndex = items.reduce((max, item) => {
         const idx = PROCESSES.findIndex(p => p.key === item.status);
@@ -38,12 +40,9 @@ export function SwimlaneColumn({ part, items, onPreview }: SwimlaneColumnProps) 
                 </div>
 
                 <div className="flex items-center justify-between gap-2 mt-2">
-                    <FileDownloadButton
-                        storagePath={`models/${part.part_number}.stl`}
-                        fileName={`${part.part_number}_model.stl`}
-                        label="STL"
-                        variant="outline"
-                    />
+                    <div className="text-[10px] text-gray-400 font-medium">
+                        {items.length} units
+                    </div>
                 </div>
             </div>
 
@@ -71,6 +70,8 @@ export function SwimlaneColumn({ part, items, onPreview }: SwimlaneColumnProps) 
                             status={proc.key}
                             items={items.filter(i => i.status === proc.key)}
                             isLast={index === PROCESSES.length - 1}
+                            selectedIds={selectedIds}
+                            onToggleSelect={onToggleSelect}
                             onPreview={onPreview}
                         />
                     ))}

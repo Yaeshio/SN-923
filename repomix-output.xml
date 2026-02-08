@@ -80,9 +80,17 @@ firebase-data/firebase-export-metadata.json
 firebase-data/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
 firebase-data/firestore_export/all_namespaces/all_kinds/output-0
 firebase-data/firestore_export/firestore_export.overall_export_metadata
-firebase-data/storage_export/blobs/c1d7252b-1305-4383-9da9-a63e7e9b12ec
+firebase-data/storage_export/blobs/07329d3c-7ade-4d04-878b-cba2ed959f4f
+firebase-data/storage_export/blobs/2299a94e-5a1b-4750-87a0-8d2887f35a28
+firebase-data/storage_export/blobs/30adc946-cbad-412f-aed8-904867ee12ef
+firebase-data/storage_export/blobs/4fa0f39a-bcd1-472f-a1ef-92bd3a120904
+firebase-data/storage_export/blobs/8a1ed49f-88fe-4c0e-a2a0-dd168182efe6
 firebase-data/storage_export/buckets.json
-firebase-data/storage_export/metadata/c1d7252b-1305-4383-9da9-a63e7e9b12ec.json
+firebase-data/storage_export/metadata/07329d3c-7ade-4d04-878b-cba2ed959f4f.json
+firebase-data/storage_export/metadata/2299a94e-5a1b-4750-87a0-8d2887f35a28.json
+firebase-data/storage_export/metadata/30adc946-cbad-412f-aed8-904867ee12ef.json
+firebase-data/storage_export/metadata/4fa0f39a-bcd1-472f-a1ef-92bd3a120904.json
+firebase-data/storage_export/metadata/8a1ed49f-88fe-4c0e-a2a0-dd168182efe6.json
 firebase-export-1770456349158PyqgDy/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
 firebase-export-1770456349158PyqgDy/firestore_export/all_namespaces/all_kinds/output-0
 firebase-export-1770456349158PyqgDy/firestore_export/firestore_export.overall_export_metadata
@@ -106,7 +114,7 @@ tsconfig.node.json
 <files>
 This section contains the contents of the repository's files.
 
-<file path="firebase-data/storage_export/metadata/c1d7252b-1305-4383-9da9-a63e7e9b12ec.json">
+<file path="firebase-data/storage_export/metadata/07329d3c-7ade-4d04-878b-cba2ed959f4f.json">
 {
   "name": "projects/1/stl/ボディ187_1770448719111.stl",
   "bucket": "demo-bom3d-sn923.appspot.com",
@@ -125,6 +133,94 @@ This section contains the contents of the repository's files.
   "size": 39684,
   "md5Hash": "jZtKIN6hQiBgTaoJmooYZg==",
   "crc32c": "166781100"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/2299a94e-5a1b-4750-87a0-8d2887f35a28.json">
+{
+  "name": "projects/1/stl/ボディ179_1770529445795.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529445803,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "c8356d83-1b71-492e-ad9e-1e08a7059152"
+  ],
+  "etag": "G7O4LY1yNWn2fz3aAjD0WA4xnlE",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:05.803Z",
+  "updated": "2026-02-08T05:44:05.803Z",
+  "size": 35684,
+  "md5Hash": "r+kYllHl14flvVDvPfPe6A==",
+  "crc32c": "1892013277"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/30adc946-cbad-412f-aed8-904867ee12ef.json">
+{
+  "name": "projects/1/stl/ボディ180_1770529445567.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529445576,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "b9e90764-c8ed-4ed1-9e5b-aea9489bee1a"
+  ],
+  "etag": "LBOEOOSnr8Nd2AocdQ224yyApQ8",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:05.576Z",
+  "updated": "2026-02-08T05:44:05.576Z",
+  "size": 25284,
+  "md5Hash": "bc0DrlnmuANN4871E26lxw==",
+  "crc32c": "694601673"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/4fa0f39a-bcd1-472f-a1ef-92bd3a120904.json">
+{
+  "name": "projects/1/stl/ボディ186_1770529445301.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529445312,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "22f50b40-1c42-486a-a476-ad04f0ce8618"
+  ],
+  "etag": "ivhmcEfZc6mELCYhaybXm8I2Mo8",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:05.312Z",
+  "updated": "2026-02-08T05:44:05.312Z",
+  "size": 22884,
+  "md5Hash": "o4PfDl24x7AjTrkMvz7cQQ==",
+  "crc32c": "2880207178"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/8a1ed49f-88fe-4c0e-a2a0-dd168182efe6.json">
+{
+  "name": "projects/1/stl/ボディ183_1770529444757.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529444789,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "b24bc10e-e721-4980-b3b5-d8bdca2345f0"
+  ],
+  "etag": "g12pRYleuMn2JZKWrge4QO4vElQ",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:04.789Z",
+  "updated": "2026-02-08T05:44:04.789Z",
+  "size": 29384,
+  "md5Hash": "OEi71t0ezdb9aZB3RXtkcw==",
+  "crc32c": "115996729"
 }
 </file>
 
@@ -478,13 +574,13 @@ export async function POST(request: NextRequest) {
 </file>
 
 <file path="app/components/CartModal.tsx">
-'use client';
-
-import React from 'react';
+import { ProcessStatus } from '../types';
+import { PROCESSES } from '../constants';
 
 interface CartItem {
     id: number;
     part_number: string;
+    status: ProcessStatus;
     count: number;
 }
 
@@ -499,45 +595,62 @@ export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-800">プリント用カート</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh]">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <span className="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">
+                                {items.length}
+                            </span>
+                            Selected Items
+                        </h2>
+                        <p className="text-xs text-gray-500 mt-1">Ready for batch download</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
 
-                <div className="p-6 max-h-[60vh] overflow-y-auto">
+                <div className="p-0 overflow-y-auto flex-1">
                     {items.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">カートに部品が入っていません。</p>
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <p>No items selected</p>
+                        </div>
                     ) : (
-                        <table className="w-full">
-                            <thead className="text-xs text-gray-400 uppercase border-b">
+                        <table className="w-full text-sm">
+                            <thead className="text-xs text-gray-400 uppercase bg-gray-50/50 sticky top-0 z-10">
                                 <tr>
-                                    <th className="text-left pb-2">部品番号</th>
-                                    <th className="text-right pb-2">ダウンロード数量</th>
-                                    <th className="text-right pb-2">ファイル名</th>
+                                    <th className="text-left py-3 px-6 font-medium">Part Number</th>
+                                    <th className="text-left py-3 px-6 font-medium">Current Status</th>
+                                    <th className="text-right py-3 px-6 font-medium">Format</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {items.map((item) => (
-                                    <tr key={item.id}>
-                                        <td className="py-4 font-semibold text-gray-800">{item.part_number}</td>
-                                        <td className="py-4 text-right">
-                                            <input
-                                                type="number"
-                                                defaultValue={item.count}
-                                                className="w-16 border rounded p-1 text-right"
-                                            />
-                                        </td>
-                                        <td className="py-4 text-right text-sm text-gray-500 font-mono">
-                                            {item.part_number}.stl
-                                        </td>
-                                    </tr>
-                                ))}
+                                {items.map((item) => {
+                                    const processName = PROCESSES.find(p => p.key === item.status)?.name || item.status;
+                                    return (
+                                        <tr key={item.id} className="group hover:bg-blue-50/30 transition-colors">
+                                            <td className="py-3 px-6 font-bold text-gray-800">
+                                                {item.part_number}
+                                                <div className="text-[10px] text-gray-400 font-normal">ID: {item.id}</div>
+                                            </td>
+                                            <td className="py-3 px-6">
+                                                <span className="px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs font-medium border border-gray-200">
+                                                    {processName}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-6 text-right text-gray-500 font-mono text-xs">
+                                                .stl
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     )}
@@ -1023,222 +1136,6 @@ export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: Summ
       </div>
     </div>
   );
-}
-</file>
-
-<file path="app/components/swimlane/SwimlaneCell.tsx">
-import React from 'react';
-import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { PartItem, ProcessStatus } from '@/app/types';
-import { SwimlaneItem } from './SwimlaneItem';
-
-interface SwimlaneCellProps {
-    partId: number;
-    status: ProcessStatus;
-    items: PartItem[];
-    isLast: boolean;
-    onPreview: (item: any) => void;
-}
-
-export function SwimlaneCell({ partId, status, items, isLast, onPreview }: SwimlaneCellProps) {
-    const droppableId = `container-${partId}-${status}`;
-    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
-
-    return (
-        <div
-            ref={setNodeRef}
-            className={`
-        relative w-full min-h-[140px] border-b border-gray-100 p-2 transition-colors
-        ${isOver ? 'bg-blue-50/50' : 'bg-white'}
-        ${isLast ? 'border-b-0' : ''}
-      `}
-        >
-            <SortableContext
-                items={items.map(i => `item-${i.id}`)}
-                strategy={verticalListSortingStrategy}
-            >
-                <div className="flex flex-col gap-2 h-full">
-                    {items.map(item => (
-                        <SwimlaneItem key={item.id} item={item} onPreview={onPreview} />
-                    ))}
-
-                    {/* Placeholder when empty */}
-                    {items.length === 0 && (
-                        <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-[10px] text-gray-300 font-medium border border-dashed border-gray-200 rounded px-2 py-1">
-                                Drop
-                            </span>
-                        </div>
-                    )}
-                </div>
-            </SortableContext>
-        </div>
-    );
-}
-</file>
-
-<file path="app/components/swimlane/SwimlaneColumn.tsx">
-import React from 'react';
-import { Part, PartItem } from '@/app/types';
-import { PROCESSES } from '@/app/constants';
-import { SwimlaneCell } from './SwimlaneCell';
-import FileDownloadButton from '@/app/components/common/FileDownloadButton';
-
-interface SwimlaneColumnProps {
-    part: Part;
-    items: PartItem[];
-    onPreview: (item: any) => void;
-}
-
-export function SwimlaneColumn({ part, items, onPreview }: SwimlaneColumnProps) {
-    // Find the "furthest" process index that has items
-    const lastActiveIndex = items.reduce((max, item) => {
-        const idx = PROCESSES.findIndex(p => p.key === item.status);
-        return Math.max(max, idx);
-    }, -1);
-
-    return (
-        <div className="
-      relative flex flex-col
-      w-[85vw] md:w-64 shrink-0 snap-center
-      border-r border-gray-200 bg-white
-    ">
-            {/* Column Header - Part Info */}
-            <div className="sticky top-0 z-20 h-24 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200 p-3 flex flex-col justify-between">
-                <div className="min-w-0">
-                    <h3 className="font-bold text-gray-800 text-sm leading-tight truncate" title={part.part_number}>
-                        {part.part_number}
-                    </h3>
-                    <p className="text-[10px] text-gray-500 font-medium">
-                        {items.length} units
-                    </p>
-                </div>
-
-                <FileDownloadButton
-                    storagePath={`models/${part.part_number}.stl`}
-                    fileName={`${part.part_number}_model.stl`}
-                    label="STL"
-                    variant="outline"
-                />
-            </div>
-
-            {/* Cells with Progress Line Overlay */}
-            <div className="relative">
-                {/* Vertical Progress Line (Connector) */}
-                {lastActiveIndex >= 0 && (
-                    <div
-                        className="absolute left-1/2 -translate-x-1/2 top-0 w-1 bg-blue-100 -z-0"
-                        style={{
-                            height: `${(lastActiveIndex + 0.5) * 140}px`,
-                            transition: 'height 0.3s ease-in-out'
-                        }}
-                    >
-                        <div className="h-full w-full bg-blue-500/20 rounded-full" />
-                    </div>
-                )}
-
-                {/* Status Cells */}
-                <div className="flex flex-col">
-                    {PROCESSES.map((proc, index) => (
-                        <SwimlaneCell
-                            key={proc.key}
-                            partId={part.id}
-                            status={proc.key}
-                            items={items.filter(i => i.status === proc.key)}
-                            isLast={index === PROCESSES.length - 1}
-                            onPreview={onPreview}
-                        />
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="app/components/swimlane/SwimlaneItem.tsx">
-import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Eye } from 'lucide-react';
-import { PartItem } from '@/app/types';
-
-interface SwimlaneItemProps {
-    item: PartItem & { part_number?: string };
-    isOverlay?: boolean;
-    onPreview: (item: any) => void;
-}
-
-export function SwimlaneItem({ item, isOverlay, onPreview }: SwimlaneItemProps) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: `item-${item.id}` });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.3 : 1,
-        zIndex: isDragging || isOverlay ? 999 : 'auto',
-    };
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            className={`
-        bg-white rounded-lg shadow-sm border border-gray-200 p-2 mb-2 select-none group relative
-        ${isOverlay ? 'shadow-xl scale-105 border-blue-500 ring-2 ring-blue-200' : 'hover:border-blue-400'}
-      `}
-        >
-            <div className="flex items-center justify-between gap-2">
-                {/* Drag Handle - Mobile/Touch Target */}
-                <div
-                    {...attributes}
-                    {...listeners}
-                    className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-gray-400 hover:text-gray-600 touch-none"
-                >
-                    <GripVertical size={16} />
-                </div>
-
-                {/* Item Content */}
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-gray-700">#{item.id}</span>
-                        {item.storage_case && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 truncate max-w-[80px]">
-                                {item.storage_case}
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Action Buttons */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onPreview(item);
-                    }}
-                    className="text-gray-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50 transition-colors"
-                    title="詳細を見る"
-                >
-                    <Eye size={14} />
-                </button>
-            </div>
-
-            {/* Date or extra info if needed */}
-            {item.updated_at && (
-                <div className="text-[10px] text-gray-400 mt-1 pl-6">
-                    {new Date(item.updated_at).toLocaleDateString()}
-                </div>
-            )}
-        </div>
-    );
 }
 </file>
 
@@ -2062,6 +1959,253 @@ export function ModelViewer({ url }: { url: string }) {
                 </Suspense>
                 <OrbitControls autoRotate />
             </Canvas>
+        </div>
+    );
+}
+</file>
+
+<file path="app/components/swimlane/SwimlaneCell.tsx">
+import React from 'react';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { PartItem, ProcessStatus } from '@/app/types';
+import { SwimlaneItem } from './SwimlaneItem';
+
+interface SwimlaneCellProps {
+    partId: number;
+    status: ProcessStatus;
+    items: PartItem[];
+    isLast: boolean;
+    selectedIds: number[];
+    onToggleSelect: (itemId: number) => void;
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneCell({ partId, status, items, isLast, selectedIds, onToggleSelect, onPreview }: SwimlaneCellProps) {
+    const droppableId = `container-${partId}-${status}`;
+    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={`
+        relative w-full h-[80px] border-b border-gray-100 p-2.5 transition-colors
+        ${isOver ? 'bg-blue-50/50' : 'bg-white'}
+        ${isLast ? 'border-b-0' : ''}
+      `}
+        >
+            <SortableContext
+                items={items.map(i => `item-${i.id}`)}
+                strategy={verticalListSortingStrategy}
+            >
+                <div className="flex flex-col gap-2 h-full">
+                    {items.map(item => (
+                        <SwimlaneItem
+                            key={item.id}
+                            item={item}
+                            isSelected={selectedIds.includes(item.id)}
+                            onToggleSelect={onToggleSelect}
+                            onPreview={onPreview}
+                        />
+                    ))}
+
+                    {/* Placeholder when empty */}
+                    {items.length === 0 && (
+                        <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[10px] text-gray-300 font-medium border border-dashed border-gray-200 rounded px-2 py-1">
+                                Drop
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </SortableContext>
+        </div>
+    );
+}
+</file>
+
+<file path="app/components/swimlane/SwimlaneColumn.tsx">
+import React from 'react';
+import { Part, PartItem } from '@/app/types';
+import { PROCESSES } from '@/app/constants';
+import { SwimlaneCell } from './SwimlaneCell';
+import FileDownloadButton from '@/app/components/common/FileDownloadButton';
+
+interface SwimlaneColumnProps {
+    part: Part;
+    items: PartItem[];
+    selectedIds: number[];
+    onToggleSelect: (itemId: number) => void;
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPreview }: SwimlaneColumnProps) {
+    // Find the "furthest" process index that has items
+    const lastActiveIndex = items.reduce((max, item) => {
+        const idx = PROCESSES.findIndex(p => p.key === item.status);
+        return Math.max(max, idx);
+    }, -1);
+
+    return (
+        <div className="
+      relative flex flex-col
+      w-[85vw] md:w-64 shrink-0 snap-center
+      border-r border-gray-200 bg-white
+    ">
+            {/* Column Header - Part Info */}
+            <div className="sticky top-0 z-20 h-24 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex flex-col justify-between group-hover:bg-white transition-colors">
+                <div className="min-w-0">
+                    <h3 className="font-black text-gray-900 text-xs tracking-tight truncate uppercase" title={part.part_number}>
+                        {part.part_number}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                            Active
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 mt-2">
+                    <div className="text-[10px] text-gray-400 font-medium">
+                        {items.length} units
+                    </div>
+                </div>
+            </div>
+
+            {/* Cells with Progress Line Overlay */}
+            <div className="relative flex-1 bg-gray-50/30">
+                {/* Vertical Progress Line (Connector) */}
+                {lastActiveIndex >= 0 && (
+                    <div
+                        className="absolute left-1/2 -translate-x-1/2 top-0 w-[3px] -z-0"
+                        style={{
+                            height: `${(lastActiveIndex + 0.5) * 80}px`,
+                            transition: 'height 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
+                    >
+                        <div className="h-full w-full bg-gradient-to-b from-blue-100 via-blue-200 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
+                    </div>
+                )}
+
+                {/* Status Cells */}
+                <div className="flex flex-col">
+                    {PROCESSES.map((proc, index) => (
+                        <SwimlaneCell
+                            key={proc.key}
+                            partId={part.id}
+                            status={proc.key}
+                            items={items.filter(i => i.status === proc.key)}
+                            isLast={index === PROCESSES.length - 1}
+                            selectedIds={selectedIds}
+                            onToggleSelect={onToggleSelect}
+                            onPreview={onPreview}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="app/components/swimlane/SwimlaneItem.tsx">
+import React from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Eye } from 'lucide-react';
+import { PartItem } from '@/app/types';
+
+interface SwimlaneItemProps {
+    item: PartItem & { part_number?: string };
+    isOverlay?: boolean;
+    isSelected?: boolean;
+    onToggleSelect: (itemId: number) => void;
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneItem({ item, isOverlay, isSelected, onToggleSelect, onPreview }: SwimlaneItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: `item-${item.id}` });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+        zIndex: isDragging || isOverlay ? 999 : 'auto',
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`
+        bg-white rounded-xl shadow-sm border p-2 select-none group relative
+        ${isOverlay ? 'shadow-2xl scale-105 border-blue-500 ring-4 ring-blue-50' : 'hover:border-blue-400 hover:shadow-md'}
+        ${isSelected ? 'border-blue-500 bg-blue-50/30 ring-2 ring-blue-100' : 'border-gray-200'}
+        transition-all duration-200
+      `}
+        >
+            <div className="flex items-center justify-between gap-3">
+                {/* Drag Handle */}
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors touch-none"
+                >
+                    <GripVertical size={16} />
+                </div>
+
+                {/* Item Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="font-black text-xs text-gray-900 tracking-tight">#{item.id}</span>
+                            {item.storage_case && (
+                                <span className="text-[9px] px-2 py-0.5 bg-blue-50 text-blue-600 font-bold rounded-full truncate">
+                                    {item.storage_case}
+                                </span>
+                            )}
+                        </div>
+                        {item.updated_at && (
+                            <div className="text-[9px] text-gray-400 font-medium">
+                                Last: {new Date(item.updated_at).toLocaleDateString()}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Selection Checkbox */}
+                <div className="flex items-center">
+                    <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                            e.stopPropagation();
+                            onToggleSelect(item.id);
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                </div>
+
+                {/* Action Buttons */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPreview(item);
+                    }}
+                    className="text-gray-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition-colors shadow-sm bg-gray-50/50"
+                    title="詳細を見る"
+                >
+                    <Eye size={16} />
+                </button>
+            </div>
         </div>
     );
 }
@@ -3388,7 +3532,25 @@ export default function ProjectClientContent({
     partItems: PartItem[],
     projectId: number
 }) {
-    const [items, setItems] = useState<PartItem[]>(initialItems);
+    // --- Deduplicate items to ensure 1 part = 1 item in 1 status ---
+    const [items, setItems] = useState<PartItem[]>(() => {
+        const latestItemsMap = new Map<number, PartItem>();
+        initialItems.forEach(item => {
+            const currentLatest = latestItemsMap.get(item.part_id);
+            if (!currentLatest) {
+                latestItemsMap.set(item.part_id, item);
+            } else {
+                const currentIdx = PROCESSES.findIndex(p => p.key === currentLatest.status);
+                const newIdx = PROCESSES.findIndex(p => p.key === item.status);
+                // Keep the one furthest along in the process chain
+                if (newIdx > currentIdx) {
+                    latestItemsMap.set(item.part_id, item);
+                }
+            }
+        });
+        return Array.from(latestItemsMap.values());
+    });
+
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -3417,36 +3579,56 @@ export default function ProjectClientContent({
 
         const activeIdStr = active.id as string;
         const itemId = parseInt(activeIdStr.split('-')[1], 10);
+        const activeItem = items.find(i => i.id === itemId);
+        if (!activeItem) return;
+
         let targetStatus: string | undefined;
         const overIdStr = over.id as string;
 
         if (overIdStr.startsWith('container-')) {
             const parts = overIdStr.split('-');
+            const targetPartId = parseInt(parts[1], 10);
+
+            // STRICT DND: Only allow movement within the same part column
+            if (targetPartId !== activeItem.part_id) return;
+
             targetStatus = parts.slice(2).join('-');
         } else if (overIdStr.startsWith('item-')) {
             const overItemId = parseInt(overIdStr.split('-')[1], 10);
             const overItem = items.find(i => i.id === overItemId);
+
+            // STRICT DND: Only allow movement within the same part column
+            if (overItem && overItem.part_id !== activeItem.part_id) return;
+
             if (overItem) {
                 targetStatus = overItem.status;
             }
         }
 
-        if (targetStatus) {
-            const item = items.find(i => i.id === itemId);
-            if (item && item.status !== targetStatus) {
-                setItems(prev => prev.map(i =>
-                    i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
-                ));
+        if (targetStatus && targetStatus !== activeItem.status) {
+            const originalStatus = activeItem.status;
 
-                const result = await updateItemStatus(itemId, targetStatus);
-                if (!result.success) {
-                    setItems(prev => prev.map(i =>
-                        i.id === itemId ? { ...i, status: item.status } : i
-                    ));
-                    alert(`Failed to update status: ${result.error}`);
-                }
+            // Optimistic update
+            setItems(prev => prev.map(i =>
+                i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
+            ));
+
+            const result = await updateItemStatus(itemId, targetStatus);
+            if (!result.success) {
+                // Rollback
+                setItems(prev => prev.map(i =>
+                    i.id === itemId ? { ...i, status: originalStatus } : i
+                ));
+                alert(`Failed to update status: ${result.error}`);
             }
         }
+    };
+
+    const handleToggleSelect = (itemId: number) => {
+        setSelectedIds(prev => prev.includes(itemId)
+            ? prev.filter(id => id !== itemId)
+            : [...prev, itemId]
+        );
     };
 
     const activeItem = activeId
@@ -3460,6 +3642,7 @@ export default function ProjectClientContent({
             return {
                 id: i.id,
                 part_number: part?.part_number || `Part-${i.part_id}`,
+                status: i.status,
                 count: 1
             };
         });
@@ -3476,19 +3659,28 @@ export default function ProjectClientContent({
                     <div className="flex w-max min-w-full">
 
                         {/* Legend Column */}
-                        <div className="sticky left-0 z-30 w-24 md:w-40 shrink-0 bg-gray-50 border-r border-gray-200 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                            <div className="h-24 border-b border-gray-200 flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
-                                <span className="text-[10px] uppercase tracking-widest font-black text-gray-400">Step</span>
+                        <div className="sticky left-0 z-30 w-32 md:w-44 shrink-0 bg-white border-r border-gray-200 shadow-[4px_0_12px_rgba(0,0,0,0.03)]">
+                            <div className="h-24 border-b border-gray-200 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-md">
+                                <div className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-300 mb-1">Process</div>
+                                <div className="text-[10px] font-bold text-gray-400">Step Master</div>
                             </div>
                             <div className="flex flex-col">
                                 {PROCESSES.map((proc, index) => (
                                     <div
                                         key={proc.key}
-                                        className="h-[140px] border-b border-gray-100 p-3 flex flex-col justify-center bg-gray-50/50"
+                                        className="h-[80px] border-b border-gray-100 p-3 flex flex-col justify-center bg-white"
                                     >
-                                        <div className="text-[10px] font-bold text-blue-500 mb-0.5">Step 0{index + 1}</div>
-                                        <div className="text-xs font-extrabold text-gray-800 leading-tight uppercase">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 text-[10px] font-black flex items-center justify-center border border-blue-100">
+                                                {index + 1}
+                                            </span>
+                                            <div className="h-[1px] flex-1 bg-gray-100" />
+                                        </div>
+                                        <div className="text-[11px] font-black text-gray-900 leading-tight uppercase tracking-tight group-hover:text-blue-600 transition-colors">
                                             {proc.name}
+                                        </div>
+                                        <div className="text-[9px] font-bold text-gray-300 mt-1 uppercase tracking-wider">
+                                            Stage 0{index + 1}
                                         </div>
                                     </div>
                                 ))}
@@ -3502,6 +3694,8 @@ export default function ProjectClientContent({
                                     key={part.id}
                                     part={part}
                                     items={items.filter(i => i.part_id === part.id)}
+                                    selectedIds={selectedIds}
+                                    onToggleSelect={handleToggleSelect}
                                     onPreview={(item) => {
                                         const part = parts.find(p => p.id === item.part_id);
                                         setPreviewItem({
@@ -3524,6 +3718,8 @@ export default function ProjectClientContent({
                                     part_number: parts.find(p => p.id === activeItem.part_id)?.part_number
                                 }}
                                 isOverlay
+                                isSelected={selectedIds.includes(activeItem.id)}
+                                onToggleSelect={() => { }}
                                 onPreview={() => { }}
                             />
                         </div>
@@ -3531,23 +3727,31 @@ export default function ProjectClientContent({
                 </DragOverlay>
             </DndContext>
 
-            {selectedIds.length > 0 && (
-                <div className="fixed bottom-8 right-8 z-50">
-                    <button
-                        onClick={() => setIsCartOpen(true)}
-                        className="bg-black text-white px-6 py-3 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                    >
-                        <span className="font-bold">{selectedIds.length}</span>
-                        <span>Items Selected</span>
-                    </button>
-                </div>
-            )}
+            {/* Floating Cart Button */}
+            <div className="fixed bottom-8 right-8 z-50">
+                <button
+                    onClick={() => setIsCartOpen(true)}
+                    className="relative bg-black text-white p-4 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all group"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    {selectedIds.length > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                            {selectedIds.length}
+                        </span>
+                    )}
+                </button>
+            </div>
 
             <CartModal
                 isOpen={isCartOpen}
                 onClose={() => setIsCartOpen(false)}
                 items={cartItems}
-                onDownload={() => alert("Zipダウンロードを開始します")}
+                onDownload={() => {
+                    console.log('Downloading Zip for items:', selectedIds);
+                    alert("Zipダウンロードを開始します");
+                }}
             />
 
             <PreviewModal
