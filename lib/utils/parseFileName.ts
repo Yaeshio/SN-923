@@ -13,6 +13,8 @@ export interface ParsedFileInfo {
     isValid: boolean;
     /** エラーメッセージ（解析失敗時） */
     errorMessage?: string;
+    /** 割り当てられる保管ボックスのリスト */
+    storageBoxes?: string[];
 }
 
 /**

@@ -40,7 +40,14 @@ export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPre
                 </div>
 
                 <div className="flex items-center justify-between gap-2 mt-2">
-                    <div className="text-[10px] text-gray-400 font-medium">
+                    <div className="flex flex-wrap gap-1">
+                        {Array.from(new Set(items.map(i => i.storage_case).filter(Boolean))).map(sc => (
+                            <span key={sc} className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-600 font-bold rounded-md border border-blue-100">
+                                {sc}
+                            </span>
+                        ))}
+                    </div>
+                    <div className="text-[10px] text-gray-400 font-medium shrink-0">
                         {items.length} units
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { parseFileNames } from '@/lib/utils/parseFileName';
+import { previewFileNames } from '@/app/actions/importStl';
 
 export async function POST(request: NextRequest) {
     try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const results = parseFileNames(fileNames);
+        const results = await previewFileNames(fileNames);
         return NextResponse.json(results);
     } catch (error) {
         console.error('Error in preview-filenames API:', error);

@@ -96,11 +96,35 @@ export async function importSingleStl(
         const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
         let nextItemId = existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
 
+        // 使用中のボックス番号を取得
+        const usedBoxes = new Set<string>();
+        allItemsSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.storage_case && data.storage_case.trim() !== '') {
+                usedBoxes.add(data.storage_case);
+            }
+        });
+
+        // 空きボックス番号を探す関数
+        const findNextAvailableBox = (): string => {
+            let boxNumber = 1;
+            while (true) {
+                const boxId = `BOX-${String(boxNumber).padStart(3, '0')}`;
+                if (!usedBoxes.has(boxId)) {
+                    usedBoxes.add(boxId); // 次の検索で重複しないように追加
+                    return boxId;
+                }
+                boxNumber++;
+            }
+        };
+
         for (let i = 0; i < quantity; i++) {
+            const assignedBox = findNextAvailableBox();
+
             const newItem: PartItem = {
                 id: nextItemId,
                 part_id: partId,
-                storage_case: `AUTO-${partNumber}-${i + 1}`,
+                storage_case: assignedBox,
                 status: defaultStatus,
                 completed_at: null,
                 updated_at: serverTimestamp()
@@ -169,5 +193,44 @@ export async function importMultipleStl(
  * @returns 解析結果の配列
  */
 export async function previewFileNames(fileNames: string[]): Promise<ParsedFileInfo[]> {
-    return fileNames.map(parseFileName);
+    // 1. 各ファイル名を解析
+    const parsedResults = fileNames.map(parseFileName);
+
+    // 2. 現在の保管ケースの使用状況を取得
+    const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
+    const usedBoxes = new Set<string>();
+    allItemsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.storage_case && data.storage_case.trim() !== '') {
+            usedBoxes.add(data.storage_case);
+        }
+    });
+
+    // 3. 空きボックス番号を探す関数
+    const findNextAvailableBox = (): string => {
+        let boxNumber = 1;
+        while (true) {
+            const boxId = `BOX-${String(boxNumber).padStart(3, '0')}`;
+            if (!usedBoxes.has(boxId)) {
+                usedBoxes.add(boxId); // プレビュー中に重複しないように追加
+                return boxId;
+            }
+            boxNumber++;
+        }
+    };
+
+    // 4. 解析結果ごとにボックスを割り当て
+    return parsedResults.map(parsed => {
+        if (!parsed.isValid) return parsed;
+
+        const storageBoxes: string[] = [];
+        for (let i = 0; i < parsed.quantity; i++) {
+            storageBoxes.push(findNextAvailableBox());
+        }
+
+        return {
+            ...parsed,
+            storageBoxes
+        };
+    });
 }

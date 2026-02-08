@@ -9,6 +9,7 @@ interface PageProps {
     params: Promise<{
         id: string;
     }>;
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 /**
@@ -55,6 +56,11 @@ export default async function ProjectDetailPage(props: PageProps) {
                     <p className="text-gray-600 mt-1">{project.description}</p>
                 </div>
                 <div className="flex gap-3">
+                    <Link href="/storage">
+                        <span className="bg-white text-gray-700 font-bold py-3 px-6 rounded-lg shadow-sm border border-gray-300 hover:bg-gray-50 transition-all cursor-pointer inline-block">
+                            保管ボックス管理
+                        </span>
+                    </Link>
                     <Link href={`/print?project_id=${projectId}`}>
                         <span className="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-all cursor-pointer inline-block">
                             3Dプリント登録

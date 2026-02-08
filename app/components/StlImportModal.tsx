@@ -186,8 +186,8 @@ export function StlImportModal({ isOpen, onClose, projectId, onImportComplete }:
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                         className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${isDragging
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 bg-gray-50 hover:border-blue-400 hover:bg-blue-50/50'
                             }`}
                     >
                         <svg
@@ -253,6 +253,7 @@ export function StlImportModal({ isOpen, onClose, projectId, onImportComplete }:
                                         <th className="text-left p-3">ファイル名</th>
                                         <th className="text-left p-3">部品番号</th>
                                         <th className="text-center p-3">個数</th>
+                                        <th className="text-left p-3">保管ボックス</th>
                                         <th className="text-left p-3">状態</th>
                                         <th className="text-center p-3">操作</th>
                                     </tr>
@@ -268,6 +269,15 @@ export function StlImportModal({ isOpen, onClose, projectId, onImportComplete }:
                                             </td>
                                             <td className="p-3 text-center font-bold text-blue-600">
                                                 {fileWithPreview.parsed.quantity}
+                                            </td>
+                                            <td className="p-3">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                    {fileWithPreview.parsed.storageBoxes?.map((box, i) => (
+                                                        <span key={i} className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-600 font-bold rounded border border-blue-100">
+                                                            {box}
+                                                        </span>
+                                                    )) || '-'}
+                                                </div>
                                             </td>
                                             <td className="p-3">
                                                 {fileWithPreview.parsed.isValid ? (

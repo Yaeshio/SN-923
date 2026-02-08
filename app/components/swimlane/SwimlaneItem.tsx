@@ -55,11 +55,6 @@ export function SwimlaneItem({ item, isOverlay, isSelected, onToggleSelect, onPr
                     <div className="flex flex-col">
                         <div className="flex items-center gap-2 mb-1">
                             <span className="font-black text-xs text-gray-900 tracking-tight">#{item.id}</span>
-                            {item.storage_case && (
-                                <span className="text-[9px] px-2 py-0.5 bg-blue-50 text-blue-600 font-bold rounded-full truncate">
-                                    {item.storage_case}
-                                </span>
-                            )}
                         </div>
                         {item.updated_at && (
                             <div className="text-[9px] text-gray-400 font-medium">
