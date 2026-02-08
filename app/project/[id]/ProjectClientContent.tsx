@@ -36,7 +36,25 @@ export default function ProjectClientContent({
     partItems: PartItem[],
     projectId: number
 }) {
-    const [items, setItems] = useState<PartItem[]>(initialItems);
+    // --- Deduplicate items to ensure 1 part = 1 item in 1 status ---
+    const [items, setItems] = useState<PartItem[]>(() => {
+        const latestItemsMap = new Map<number, PartItem>();
+        initialItems.forEach(item => {
+            const currentLatest = latestItemsMap.get(item.part_id);
+            if (!currentLatest) {
+                latestItemsMap.set(item.part_id, item);
+            } else {
+                const currentIdx = PROCESSES.findIndex(p => p.key === currentLatest.status);
+                const newIdx = PROCESSES.findIndex(p => p.key === item.status);
+                // Keep the one furthest along in the process chain
+                if (newIdx > currentIdx) {
+                    latestItemsMap.set(item.part_id, item);
+                }
+            }
+        });
+        return Array.from(latestItemsMap.values());
+    });
+
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
@@ -65,34 +83,47 @@ export default function ProjectClientContent({
 
         const activeIdStr = active.id as string;
         const itemId = parseInt(activeIdStr.split('-')[1], 10);
+        const activeItem = items.find(i => i.id === itemId);
+        if (!activeItem) return;
+
         let targetStatus: string | undefined;
         const overIdStr = over.id as string;
 
         if (overIdStr.startsWith('container-')) {
             const parts = overIdStr.split('-');
+            const targetPartId = parseInt(parts[1], 10);
+
+            // STRICT DND: Only allow movement within the same part column
+            if (targetPartId !== activeItem.part_id) return;
+
             targetStatus = parts.slice(2).join('-');
         } else if (overIdStr.startsWith('item-')) {
             const overItemId = parseInt(overIdStr.split('-')[1], 10);
             const overItem = items.find(i => i.id === overItemId);
+
+            // STRICT DND: Only allow movement within the same part column
+            if (overItem && overItem.part_id !== activeItem.part_id) return;
+
             if (overItem) {
                 targetStatus = overItem.status;
             }
         }
 
-        if (targetStatus) {
-            const item = items.find(i => i.id === itemId);
-            if (item && item.status !== targetStatus) {
-                setItems(prev => prev.map(i =>
-                    i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
-                ));
+        if (targetStatus && targetStatus !== activeItem.status) {
+            const originalStatus = activeItem.status;
 
-                const result = await updateItemStatus(itemId, targetStatus);
-                if (!result.success) {
-                    setItems(prev => prev.map(i =>
-                        i.id === itemId ? { ...i, status: item.status } : i
-                    ));
-                    alert(`Failed to update status: ${result.error}`);
-                }
+            // Optimistic update
+            setItems(prev => prev.map(i =>
+                i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
+            ));
+
+            const result = await updateItemStatus(itemId, targetStatus);
+            if (!result.success) {
+                // Rollback
+                setItems(prev => prev.map(i =>
+                    i.id === itemId ? { ...i, status: originalStatus } : i
+                ));
+                alert(`Failed to update status: ${result.error}`);
             }
         }
     };
@@ -124,19 +155,28 @@ export default function ProjectClientContent({
                     <div className="flex w-max min-w-full">
 
                         {/* Legend Column */}
-                        <div className="sticky left-0 z-30 w-24 md:w-40 shrink-0 bg-gray-50 border-r border-gray-200 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
-                            <div className="h-24 border-b border-gray-200 flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
-                                <span className="text-[10px] uppercase tracking-widest font-black text-gray-400">Step</span>
+                        <div className="sticky left-0 z-30 w-32 md:w-44 shrink-0 bg-white border-r border-gray-200 shadow-[4px_0_12px_rgba(0,0,0,0.03)]">
+                            <div className="h-24 border-b border-gray-200 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-md">
+                                <div className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-300 mb-1">Process</div>
+                                <div className="text-[10px] font-bold text-gray-400">Step Master</div>
                             </div>
                             <div className="flex flex-col">
                                 {PROCESSES.map((proc, index) => (
                                     <div
                                         key={proc.key}
-                                        className="h-[140px] border-b border-gray-100 p-3 flex flex-col justify-center bg-gray-50/50"
+                                        className="h-[80px] border-b border-gray-100 p-3 flex flex-col justify-center bg-white"
                                     >
-                                        <div className="text-[10px] font-bold text-blue-500 mb-0.5">Step 0{index + 1}</div>
-                                        <div className="text-xs font-extrabold text-gray-800 leading-tight uppercase">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 text-[10px] font-black flex items-center justify-center border border-blue-100">
+                                                {index + 1}
+                                            </span>
+                                            <div className="h-[1px] flex-1 bg-gray-100" />
+                                        </div>
+                                        <div className="text-[11px] font-black text-gray-900 leading-tight uppercase tracking-tight group-hover:text-blue-600 transition-colors">
                                             {proc.name}
+                                        </div>
+                                        <div className="text-[9px] font-bold text-gray-300 mt-1 uppercase tracking-wider">
+                                            Stage 0{index + 1}
                                         </div>
                                     </div>
                                 ))}

@@ -59,8 +59,8 @@ app/components/PreviewModal.tsx
 app/components/StlImportModal.tsx
 app/components/SummaryCard.tsx
 app/components/swimlane/SwimlaneCell.tsx
+app/components/swimlane/SwimlaneColumn.tsx
 app/components/swimlane/SwimlaneItem.tsx
-app/components/swimlane/SwimlaneRow.tsx
 app/constants.ts
 app/data.ts
 app/globals.css
@@ -80,9 +80,12 @@ firebase-data/firebase-export-metadata.json
 firebase-data/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
 firebase-data/firestore_export/all_namespaces/all_kinds/output-0
 firebase-data/firestore_export/firestore_export.overall_export_metadata
-firebase-data/storage_export/blobs/962b3f69-c119-415e-9e0b-7214764838df
+firebase-data/storage_export/blobs/c1d7252b-1305-4383-9da9-a63e7e9b12ec
 firebase-data/storage_export/buckets.json
-firebase-data/storage_export/metadata/962b3f69-c119-415e-9e0b-7214764838df.json
+firebase-data/storage_export/metadata/c1d7252b-1305-4383-9da9-a63e7e9b12ec.json
+firebase-export-1770456349158PyqgDy/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
+firebase-export-1770456349158PyqgDy/firestore_export/all_namespaces/all_kinds/output-0
+firebase-export-1770456349158PyqgDy/firestore_export/firestore_export.overall_export_metadata
 firebase.json
 firestore.indexes.json
 firestore.rules
@@ -103,291 +106,7 @@ tsconfig.node.json
 <files>
 This section contains the contents of the repository's files.
 
-<file path="app/components/swimlane/SwimlaneCell.tsx">
-import React from 'react';
-import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { PartItem, ProcessStatus } from '@/app/types';
-import { SwimlaneItem } from './SwimlaneItem';
-import { Check, Circle } from 'lucide-react';
-
-interface SwimlaneCellProps {
-    partId: number;
-    status: ProcessStatus;
-    statusName: string;
-    items: PartItem[];
-    isLast: boolean;
-    statusState: 'active' | 'completed' | 'pending';
-    onPreview: (item: any) => void;
-}
-
-export function SwimlaneCell({ partId, status, statusName, items, isLast, statusState, onPreview }: SwimlaneCellProps) {
-    const droppableId = `container-${partId}-${status}`;
-    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
-
-    // Status-specific styling
-    const getStatusColor = (s: string) => {
-        switch (s) {
-            case 'ASSEMBLED': return 'text-green-600 bg-green-50 border-green-200';
-            case 'DEFECTIVE': return 'text-red-600 bg-red-50 border-red-200';
-            case 'UNPRINTED': return 'text-gray-400 bg-gray-50 border-gray-200';
-            default: return 'text-blue-600 bg-blue-50 border-blue-200';
-        }
-    };
-
-    const isActive = statusState === 'active';
-    const isCompleted = statusState === 'completed';
-    const statusColor = getStatusColor(status);
-
-    return (
-        <div className="flex gap-3 relative">
-            {/* Timeline Column */}
-            <div className="flex flex-col items-center min-w-[24px]">
-                {/* Connector Line */}
-                {!isLast && (
-                    <div className={`absolute top-6 bottom-0 w-0.5 -z-10 ${isCompleted ? 'bg-blue-300' : 'bg-gray-200'}`} />
-                )}
-
-                {/* Status Check/Dot */}
-                <div className={`
-          w-6 h-6 rounded-full flex items-center justify-center border-2 z-10 bg-white transition-colors
-          ${isActive ? 'border-blue-500 text-blue-500 shadow-md scale-110' : ''}
-          ${isCompleted ? 'border-blue-500 bg-blue-500 text-white' : ''}
-          ${!isActive && !isCompleted ? 'border-gray-200 text-gray-300' : ''}
-        `}>
-                    {isCompleted ? (
-                        <Check size={14} strokeWidth={3} />
-                    ) : isActive ? (
-                        <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
-                    ) : (
-                        <div className="w-2 h-2 bg-gray-200 rounded-full" />
-                    )}
-                </div>
-            </div>
-
-            {/* Content Column */}
-            <div className="flex-1 pb-6 w-full min-w-0"> {/* Padding bottom for spacing between steps */}
-                <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${isActive ? 'text-blue-700' : 'text-gray-400'}`}>
-                        {statusName}
-                    </span>
-                    <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 rounded-full">
-                        {items.length}
-                    </span>
-                </div>
-
-                <div
-                    ref={setNodeRef}
-                    className={`
-            min-h-[60px] rounded-lg border-2 border-dashed transition-colors p-2
-            ${isOver ? 'bg-blue-50 border-blue-300' : 'border-gray-100 bg-gray-50/30'}
-            ${items.length === 0 && !isOver ? 'hover:border-gray-200' : ''}
-          `}
-                >
-                    <SortableContext
-                        items={items.map(i => `item-${i.id}`)}
-                        strategy={verticalListSortingStrategy}
-                    >
-                        {items.length > 0 ? (
-                            <div className="flex flex-col gap-2">
-                                {items.map(item => (
-                                    <SwimlaneItem key={item.id} item={item} onPreview={onPreview} />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="h-full flex items-center justify-center">
-                                <span className="text-[10px] text-gray-300 font-medium select-none">
-                                    Drop Here
-                                </span>
-                            </div>
-                        )}
-                    </SortableContext>
-                </div>
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="app/components/swimlane/SwimlaneItem.tsx">
-import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Eye } from 'lucide-react';
-import { PartItem } from '@/app/types';
-
-interface SwimlaneItemProps {
-    item: PartItem & { part_number?: string };
-    isOverlay?: boolean;
-    onPreview: (item: any) => void;
-}
-
-export function SwimlaneItem({ item, isOverlay, onPreview }: SwimlaneItemProps) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: `item-${item.id}` });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.3 : 1,
-        zIndex: isDragging || isOverlay ? 999 : 'auto',
-    };
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            className={`
-        bg-white rounded-lg shadow-sm border border-gray-200 p-2 mb-2 select-none group relative
-        ${isOverlay ? 'shadow-xl scale-105 border-blue-500 ring-2 ring-blue-200' : 'hover:border-blue-400'}
-      `}
-        >
-            <div className="flex items-center justify-between gap-2">
-                {/* Drag Handle - Mobile/Touch Target */}
-                <div
-                    {...attributes}
-                    {...listeners}
-                    className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-gray-400 hover:text-gray-600 touch-none"
-                >
-                    <GripVertical size={16} />
-                </div>
-
-                {/* Item Content */}
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-gray-700">#{item.id}</span>
-                        {item.storage_case && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 truncate max-w-[80px]">
-                                {item.storage_case}
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Action Buttons */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onPreview(item);
-                    }}
-                    className="text-gray-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50 transition-colors"
-                    title="詳細を見る"
-                >
-                    <Eye size={14} />
-                </button>
-            </div>
-
-            {/* Date or extra info if needed */}
-            {item.updated_at && (
-                <div className="text-[10px] text-gray-400 mt-1 pl-6">
-                    {new Date(item.updated_at).toLocaleDateString()}
-                </div>
-            )}
-        </div>
-    );
-}
-</file>
-
-<file path="app/components/swimlane/SwimlaneRow.tsx">
-import React from 'react';
-import { Download } from 'lucide-react';
-import { Part, PartItem } from '@/app/types';
-import { PROCESSES } from '@/app/constants';
-import { SwimlaneCell } from './SwimlaneCell';
-import FileDownloadButton from '@/app/components/common/FileDownloadButton';
-
-interface SwimlaneRowProps {
-    part: Part;
-    items: PartItem[];
-    onPreview: (item: any) => void;
-}
-
-export function SwimlaneRow({ part, items, onPreview }: SwimlaneRowProps) {
-    // Sort processes based on the constant order
-    const sortedProcesses = PROCESSES;
-
-    return (
-        <div className="
-      group relative flex flex-col
-      w-[85vw] md:w-80 shrink-0 snap-center
-      bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden
-      transition-shadow hover:shadow-md
-    ">
-            {/* Sticky Header */}
-            <div className="sticky top-0 z-20 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200 p-4">
-                <div className="flex justify-between items-start mb-2">
-                    <div>
-                        <h3 className="font-bold text-gray-800 text-lg leading-tight truncate" title={part.part_number}>
-                            {part.part_number}
-                        </h3>
-                        <span className="text-xs text-gray-500 font-medium bg-gray-200 px-2 py-0.5 rounded-full inline-block mt-1">
-                            Total: {items.length} unit{items.length !== 1 ? 's' : ''}
-                        </span>
-                    </div>
-                    <FileDownloadButton
-                        storagePath={`models/${part.part_number}.stl`}
-                        fileName={`${part.part_number}_model.stl`}
-                        label="STL"
-                        variant="outline"
-                    />
-                </div>
-
-                {/* Progress Bar (Optional Visual Flair) */}
-                <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden mt-2">
-                    <div
-                        className="h-full bg-blue-500 transition-all duration-500"
-                        style={{
-                            width: `${(items.filter(i => i.status === 'ASSEMBLED').length / (items.length || 1)) * 100}%`
-                        }}
-                    />
-                </div>
-            </div>
-
-            {/* Vertical Timeline Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-0 bg-white">
-                {sortedProcesses.map((proc, index) => {
-                    const itemsHere = items.filter(i => i.status === proc.key).length;
-
-                    // Check if any items are ahead of this process
-                    const itemsAhead = items.filter(i => {
-                        const itemStatusIndex = sortedProcesses.findIndex(p => p.key === i.status);
-                        // If status not found (e.g. DEFECTIVE), treat as not ahead
-                        return itemStatusIndex > index;
-                    }).length;
-
-                    let statusState: 'active' | 'completed' | 'pending' = 'pending';
-                    if (itemsHere > 0) {
-                        statusState = 'active';
-                    } else if (itemsAhead > 0) {
-                        statusState = 'completed';
-                    }
-
-                    return (
-                        <SwimlaneCell
-                            key={proc.key}
-                            partId={part.id}
-                            status={proc.key}
-                            statusName={proc.name}
-                            items={items.filter(i => i.status === proc.key)}
-                            isLast={index === sortedProcesses.length - 1}
-                            statusState={statusState}
-                            onPreview={onPreview}
-                        />
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/962b3f69-c119-415e-9e0b-7214764838df.json">
+<file path="firebase-data/storage_export/metadata/c1d7252b-1305-4383-9da9-a63e7e9b12ec.json">
 {
   "name": "projects/1/stl/ボディ187_1770448719111.stl",
   "bucket": "demo-bom3d-sn923.appspot.com",
@@ -1307,6 +1026,222 @@ export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: Summ
 }
 </file>
 
+<file path="app/components/swimlane/SwimlaneCell.tsx">
+import React from 'react';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { PartItem, ProcessStatus } from '@/app/types';
+import { SwimlaneItem } from './SwimlaneItem';
+
+interface SwimlaneCellProps {
+    partId: number;
+    status: ProcessStatus;
+    items: PartItem[];
+    isLast: boolean;
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneCell({ partId, status, items, isLast, onPreview }: SwimlaneCellProps) {
+    const droppableId = `container-${partId}-${status}`;
+    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={`
+        relative w-full min-h-[140px] border-b border-gray-100 p-2 transition-colors
+        ${isOver ? 'bg-blue-50/50' : 'bg-white'}
+        ${isLast ? 'border-b-0' : ''}
+      `}
+        >
+            <SortableContext
+                items={items.map(i => `item-${i.id}`)}
+                strategy={verticalListSortingStrategy}
+            >
+                <div className="flex flex-col gap-2 h-full">
+                    {items.map(item => (
+                        <SwimlaneItem key={item.id} item={item} onPreview={onPreview} />
+                    ))}
+
+                    {/* Placeholder when empty */}
+                    {items.length === 0 && (
+                        <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[10px] text-gray-300 font-medium border border-dashed border-gray-200 rounded px-2 py-1">
+                                Drop
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </SortableContext>
+        </div>
+    );
+}
+</file>
+
+<file path="app/components/swimlane/SwimlaneColumn.tsx">
+import React from 'react';
+import { Part, PartItem } from '@/app/types';
+import { PROCESSES } from '@/app/constants';
+import { SwimlaneCell } from './SwimlaneCell';
+import FileDownloadButton from '@/app/components/common/FileDownloadButton';
+
+interface SwimlaneColumnProps {
+    part: Part;
+    items: PartItem[];
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneColumn({ part, items, onPreview }: SwimlaneColumnProps) {
+    // Find the "furthest" process index that has items
+    const lastActiveIndex = items.reduce((max, item) => {
+        const idx = PROCESSES.findIndex(p => p.key === item.status);
+        return Math.max(max, idx);
+    }, -1);
+
+    return (
+        <div className="
+      relative flex flex-col
+      w-[85vw] md:w-64 shrink-0 snap-center
+      border-r border-gray-200 bg-white
+    ">
+            {/* Column Header - Part Info */}
+            <div className="sticky top-0 z-20 h-24 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200 p-3 flex flex-col justify-between">
+                <div className="min-w-0">
+                    <h3 className="font-bold text-gray-800 text-sm leading-tight truncate" title={part.part_number}>
+                        {part.part_number}
+                    </h3>
+                    <p className="text-[10px] text-gray-500 font-medium">
+                        {items.length} units
+                    </p>
+                </div>
+
+                <FileDownloadButton
+                    storagePath={`models/${part.part_number}.stl`}
+                    fileName={`${part.part_number}_model.stl`}
+                    label="STL"
+                    variant="outline"
+                />
+            </div>
+
+            {/* Cells with Progress Line Overlay */}
+            <div className="relative">
+                {/* Vertical Progress Line (Connector) */}
+                {lastActiveIndex >= 0 && (
+                    <div
+                        className="absolute left-1/2 -translate-x-1/2 top-0 w-1 bg-blue-100 -z-0"
+                        style={{
+                            height: `${(lastActiveIndex + 0.5) * 140}px`,
+                            transition: 'height 0.3s ease-in-out'
+                        }}
+                    >
+                        <div className="h-full w-full bg-blue-500/20 rounded-full" />
+                    </div>
+                )}
+
+                {/* Status Cells */}
+                <div className="flex flex-col">
+                    {PROCESSES.map((proc, index) => (
+                        <SwimlaneCell
+                            key={proc.key}
+                            partId={part.id}
+                            status={proc.key}
+                            items={items.filter(i => i.status === proc.key)}
+                            isLast={index === PROCESSES.length - 1}
+                            onPreview={onPreview}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="app/components/swimlane/SwimlaneItem.tsx">
+import React from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Eye } from 'lucide-react';
+import { PartItem } from '@/app/types';
+
+interface SwimlaneItemProps {
+    item: PartItem & { part_number?: string };
+    isOverlay?: boolean;
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneItem({ item, isOverlay, onPreview }: SwimlaneItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: `item-${item.id}` });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+        zIndex: isDragging || isOverlay ? 999 : 'auto',
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`
+        bg-white rounded-lg shadow-sm border border-gray-200 p-2 mb-2 select-none group relative
+        ${isOverlay ? 'shadow-xl scale-105 border-blue-500 ring-2 ring-blue-200' : 'hover:border-blue-400'}
+      `}
+        >
+            <div className="flex items-center justify-between gap-2">
+                {/* Drag Handle - Mobile/Touch Target */}
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-1 -ml-1 text-gray-400 hover:text-gray-600 touch-none"
+                >
+                    <GripVertical size={16} />
+                </div>
+
+                {/* Item Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs text-gray-700">#{item.id}</span>
+                        {item.storage_case && (
+                            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 truncate max-w-[80px]">
+                                {item.storage_case}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Action Buttons */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPreview(item);
+                    }}
+                    className="text-gray-400 hover:text-blue-600 p-1 rounded hover:bg-blue-50 transition-colors"
+                    title="詳細を見る"
+                >
+                    <Eye size={14} />
+                </button>
+            </div>
+
+            {/* Date or extra info if needed */}
+            {item.updated_at && (
+                <div className="text-[10px] text-gray-400 mt-1 pl-6">
+                    {new Date(item.updated_at).toLocaleDateString()}
+                </div>
+            )}
+        </div>
+    );
+}
+</file>
+
 <file path="docs/INTEGRATION_EXAMPLE.md">
 # プロジェクトページへのSTLインポート機能統合例
 
@@ -2132,19 +2067,6 @@ export function ModelViewer({ url }: { url: string }) {
 }
 </file>
 
-<file path="app/constants.ts">
-import { ProcessStatus } from './types';
-
-export const PROCESSES: { key: ProcessStatus; name: string }[] = [
-  { key: 'UNPRINTED', name: '未プリント' },
-  { key: 'PRINTED', name: 'プリント済' },
-  { key: 'CUTTING', name: '切削' },
-  { key: 'SURFACE_TREATMENT', name: '表面処理' },
-  { key: 'PAINTING', name: '塗装' },
-  { key: 'ASSEMBLED', name: '組付け済み' },
-];
-</file>
-
 <file path="app/globals.css">
 @import "tailwindcss";
 </file>
@@ -2425,6 +2347,19 @@ export function PreviewModal({
 }
 </file>
 
+<file path="app/constants.ts">
+import { ProcessStatus } from './types';
+
+export const PROCESSES: { key: ProcessStatus; name: string }[] = [
+  { key: 'UNPRINTED', name: '未プリント' },
+  { key: 'PRINTED', name: 'プリント済' },
+  { key: 'CUTTING', name: '切削' },
+  { key: 'SURFACE_TREATMENT', name: '表面処理' },
+  { key: 'PAINTING', name: '塗装' },
+  { key: 'ASSEMBLED', name: '組付け済み' },
+];
+</file>
+
 <file path="app/utils.ts">
 // app/utils.ts
 import { Part, PartItem, ProgressData, ProcessStatus } from './types';
@@ -2519,83 +2454,6 @@ export async function consumeItem(itemId: string | number) {
 
   revalidatePath('/');
   revalidatePath(`/item/${id}`);
-}
-</file>
-
-<file path="app/data.ts">
-// app/data.ts
-import { Part, PartItem, Project } from './types';
-
-export const projects: Project[] = [
-  { id: 1, name: '次世代ドローン開発', description: '高解像度カメラ搭載の新型ドローン開発プロジェクト', deadline: '2026-06-30' },
-  { id: 2, name: '搬送ロボット製作', description: '倉庫内自動配送を行う自律走行ロボットの試作', deadline: '2026-04-15' }
-];
-
-export const parts: Part[] = [
-  { id: 1, part_number: 'DRONE-ARM-01', project_id: 1 },
-  { id: 2, part_number: 'DRONE-BODY-01', project_id: 1 },
-  { id: 3, part_number: 'DRONE-PROP-01', project_id: 1 },
-  { id: 4, part_number: 'ROBO-WHEEL-X', project_id: 2 }
-];
-
-export const partItems: PartItem[] = [
-  // DRONE-ARM-01 (id: 1) - 分散配置
-  { id: 101, part_id: 1, storage_case: 'Case-A1', status: 'UNPRINTED', completed_at: null },
-  { id: 102, part_id: 1, storage_case: 'Case-A1', status: 'PRINTED', completed_at: null },
-  { id: 103, part_id: 1, storage_case: 'Case-A2', status: 'PRINTED', completed_at: null },
-  { id: 104, part_id: 1, storage_case: 'Case-A3', status: 'SURFACE_TREATMENT', completed_at: null },
-  { id: 105, part_id: 1, storage_case: 'Case-A4', status: 'ASSEMBLED', completed_at: new Date() },
-
-  // DRONE-BODY-01 (id: 2) - 特定工程に集中
-  { id: 201, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
-  { id: 202, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
-  { id: 203, part_id: 2, storage_case: 'Case-B2', status: 'PAINTING', completed_at: null },
-
-  // DRONE-PROP-01 (id: 3) - 少ないアイテム、不良あり
-  { id: 301, part_id: 3, storage_case: 'Case-C1', status: 'UNPRINTED', completed_at: null },
-  { id: 302, part_id: 3, storage_case: 'Case-C2', status: 'DEFECTIVE', completed_at: null },
-
-  // ROBO-WHEEL-X (id: 4) - 別プロジェクト
-  { id: 401, part_id: 4, storage_case: 'Case-R1', status: 'ASSEMBLED', completed_at: new Date(new Date().setDate(new Date().getDate() - 2)) }
-];
-</file>
-
-<file path="app/types.ts">
-export type ProcessStatus =
-  | 'UNPRINTED'
-  | 'PRINTED'
-  | 'CUTTING'
-  | 'SURFACE_TREATMENT'
-  | 'PAINTING'
-  | 'ASSEMBLED'
-  | 'DEFECTIVE';
-
-export interface Project {
-  id: number;
-  name: string;
-  description: string;
-  deadline: string;
-}
-
-export interface Part {
-  id: number;
-  part_number: string;
-  project_id: number;
-}
-
-export interface PartItem {
-  id: number;
-  part_id: number;
-  storage_case: string;
-  status: ProcessStatus;
-  completed_at: Date | null;
-  updated_at?: any;
-}
-
-export interface ProgressData {
-  part_number: string;
-  storage_cases: string[];
-  counts: Record<ProcessStatus, number>;
 }
 </file>
 
@@ -2901,6 +2759,83 @@ export async function updateProcess(
 }
 </file>
 
+<file path="app/data.ts">
+// app/data.ts
+import { Part, PartItem, Project } from './types';
+
+export const projects: Project[] = [
+  { id: 1, name: '次世代ドローン開発', description: '高解像度カメラ搭載の新型ドローン開発プロジェクト', deadline: '2026-06-30' },
+  { id: 2, name: '搬送ロボット製作', description: '倉庫内自動配送を行う自律走行ロボットの試作', deadline: '2026-04-15' }
+];
+
+export const parts: Part[] = [
+  { id: 1, part_number: 'DRONE-ARM-01', project_id: 1 },
+  { id: 2, part_number: 'DRONE-BODY-01', project_id: 1 },
+  { id: 3, part_number: 'DRONE-PROP-01', project_id: 1 },
+  { id: 4, part_number: 'ROBO-WHEEL-X', project_id: 2 }
+];
+
+export const partItems: PartItem[] = [
+  // DRONE-ARM-01 (id: 1) - 分散配置
+  { id: 101, part_id: 1, storage_case: 'Case-A1', status: 'UNPRINTED', completed_at: null },
+  { id: 102, part_id: 1, storage_case: 'Case-A1', status: 'PRINTED', completed_at: null },
+  { id: 103, part_id: 1, storage_case: 'Case-A2', status: 'PRINTED', completed_at: null },
+  { id: 104, part_id: 1, storage_case: 'Case-A3', status: 'SURFACE_TREATMENT', completed_at: null },
+  { id: 105, part_id: 1, storage_case: 'Case-A4', status: 'ASSEMBLED', completed_at: new Date() },
+
+  // DRONE-BODY-01 (id: 2) - 特定工程に集中
+  { id: 201, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
+  { id: 202, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
+  { id: 203, part_id: 2, storage_case: 'Case-B2', status: 'PAINTING', completed_at: null },
+
+  // DRONE-PROP-01 (id: 3) - 少ないアイテム、不良あり
+  { id: 301, part_id: 3, storage_case: 'Case-C1', status: 'UNPRINTED', completed_at: null },
+  { id: 302, part_id: 3, storage_case: 'Case-C2', status: 'DEFECTIVE', completed_at: null },
+
+  // ROBO-WHEEL-X (id: 4) - 別プロジェクト
+  { id: 401, part_id: 4, storage_case: 'Case-R1', status: 'ASSEMBLED', completed_at: new Date(new Date().setDate(new Date().getDate() - 2)) }
+];
+</file>
+
+<file path="app/types.ts">
+export type ProcessStatus =
+  | 'UNPRINTED'
+  | 'PRINTED'
+  | 'CUTTING'
+  | 'SURFACE_TREATMENT'
+  | 'PAINTING'
+  | 'ASSEMBLED'
+  | 'DEFECTIVE';
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  deadline: string;
+}
+
+export interface Part {
+  id: number;
+  part_number: string;
+  project_id: number;
+}
+
+export interface PartItem {
+  id: number;
+  part_id: number;
+  storage_case: string;
+  status: ProcessStatus;
+  completed_at: Date | null;
+  updated_at?: any;
+}
+
+export interface ProgressData {
+  part_number: string;
+  storage_cases: string[];
+  counts: Record<ProcessStatus, number>;
+}
+</file>
+
 <file path="app/page.tsx">
 import Link from 'next/link';
 import { mockStore } from '@/lib/mockStore';
@@ -2969,6 +2904,104 @@ export default async function ProjectsDashboardPage() {
       </div>
     </div>
   );
+}
+</file>
+
+<file path="app/item/[id]/page.tsx">
+import { mockStore } from '@/lib/mockStore'
+import { updateProcess } from '@/app/actions/updateProcess'
+import { consumeItem } from '@/app/actions/consumeItem'
+import { reportDefect } from '@/app/actions/reportDefect' // アクションをインポート
+import { PROCESSES } from '@/app/constants'
+import Link from 'next/link'
+
+export default async function ItemPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const id = parseInt(params.id, 10);
+  const data = await mockStore.getPartItem(id);
+
+  if (!data) {
+    return <div className="p-8">アイテムが見つかりませんでした</div>;
+  }
+
+  return (
+    <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10 border border-gray-100">
+      <Link href={`/project/${data.parts.project_id}`} className="text-sm text-blue-600 hover:underline mb-6 inline-block font-bold">
+        ← プロジェクト進捗に戻る
+      </Link>
+
+      <div className="flex justify-between items-start mb-6">
+        <h1 className="text-3xl font-black text-gray-900">{data.parts.part_number}</h1>
+        <span className={`px-3 py-1 rounded-full text-xs font-bold ${data.status === 'DEFECTIVE' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+          ID: {id}
+        </span>
+      </div>
+
+      {/* ステータス表示 */}
+      <div className={`p-4 rounded-lg mb-8 border ${data.status === 'DEFECTIVE' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
+        <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Current Status</p>
+        <p className={`text-2xl font-black ${data.status === 'DEFECTIVE' ? 'text-red-700' : 'text-blue-800'}`}>
+          {PROCESSES.find(p => p.key === data.status)?.name || data.status}
+        </p>
+      </div>
+
+      <div className="space-y-10">
+        {/* 1. 通常の工程更新 */}
+        <section>
+          <h2 className="text-sm font-bold text-gray-400 uppercase mb-3">工程を進める</h2>
+          <form action={async (formData) => {
+            'use server'
+            const next = formData.get('next') as string;
+            await updateProcess(id, next, data.parts.project_id);
+          }} className="flex gap-2">
+            <select name="next" defaultValue={data.status} className="flex-1 p-3 border rounded-lg font-bold">
+              {PROCESSES.map(proc => <option key={proc.key} value={proc.key}>{proc.name}</option>)}
+            </select>
+            <button className="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition-colors">更新</button>
+          </form>
+        </section>
+
+        {/* 2. 不良報告セクション（ここが重要） */}
+        {data.status !== 'DEFECTIVE' && (
+          <section className="p-6 border-2 border-red-200 rounded-2xl bg-red-50/50">
+            <h2 className="text-lg font-black text-red-700 mb-2 flex items-center gap-2">
+              ⚠️ 不良・再製作の報告
+            </h2>
+            <p className="text-sm text-red-600 mb-4 font-medium">
+              この個体に欠陥がある場合、ここで報告します。この個体は「不良」として記録され、自動的に「未プリント」の新しいジョブが作成されます。
+            </p>
+            <form action={async (formData) => {
+              'use server'
+              const reason = formData.get('reason') as string;
+              await reportDefect(id, reason);
+            }} className="space-y-3">
+              <input
+                name="reason"
+                placeholder="不良理由（例：積層剥離、寸法誤差）"
+                className="w-full p-3 border-2 border-red-100 rounded-xl focus:border-red-500 outline-none bg-white font-medium"
+                required
+              />
+              <button className="w-full bg-red-600 text-white font-black py-4 rounded-xl hover:bg-red-700 transition-all shadow-lg active:scale-[0.98]">
+                不良を確定し、再製作を依頼
+              </button>
+            </form>
+          </section>
+        )}
+
+        {/* 3. 完了処理 */}
+        <section>
+          <form action={async () => {
+            'use server'
+            await consumeItem(id);
+          }}>
+            <button className="w-full border-2 border-green-600 text-green-600 font-black py-4 rounded-xl hover:bg-green-50 transition-colors">
+              組み込み完了（ストックから除外）
+            </button>
+          </form>
+        </section>
+      </div>
+    </div>
+  )
 }
 </file>
 
@@ -3092,313 +3125,6 @@ export default async function ProjectDetailPage(props: PageProps) {
     "tailwindcss": "^4.1.18",
     "typescript": "^5.3.0"
   }
-}
-</file>
-
-<file path="app/item/[id]/page.tsx">
-import { mockStore } from '@/lib/mockStore'
-import { updateProcess } from '@/app/actions/updateProcess'
-import { consumeItem } from '@/app/actions/consumeItem'
-import { reportDefect } from '@/app/actions/reportDefect' // アクションをインポート
-import { PROCESSES } from '@/app/constants'
-import Link from 'next/link'
-
-export default async function ItemPage(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const id = parseInt(params.id, 10);
-  const data = await mockStore.getPartItem(id);
-
-  if (!data) {
-    return <div className="p-8">アイテムが見つかりませんでした</div>;
-  }
-
-  return (
-    <div className="p-8 max-w-2xl mx-auto bg-white shadow-lg rounded-xl mt-10 border border-gray-100">
-      <Link href={`/project/${data.parts.project_id}`} className="text-sm text-blue-600 hover:underline mb-6 inline-block font-bold">
-        ← プロジェクト進捗に戻る
-      </Link>
-
-      <div className="flex justify-between items-start mb-6">
-        <h1 className="text-3xl font-black text-gray-900">{data.parts.part_number}</h1>
-        <span className={`px-3 py-1 rounded-full text-xs font-bold ${data.status === 'DEFECTIVE' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-          ID: {id}
-        </span>
-      </div>
-
-      {/* ステータス表示 */}
-      <div className={`p-4 rounded-lg mb-8 border ${data.status === 'DEFECTIVE' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-100'}`}>
-        <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Current Status</p>
-        <p className={`text-2xl font-black ${data.status === 'DEFECTIVE' ? 'text-red-700' : 'text-blue-800'}`}>
-          {PROCESSES.find(p => p.key === data.status)?.name || data.status}
-        </p>
-      </div>
-
-      <div className="space-y-10">
-        {/* 1. 通常の工程更新 */}
-        <section>
-          <h2 className="text-sm font-bold text-gray-400 uppercase mb-3">工程を進める</h2>
-          <form action={async (formData) => {
-            'use server'
-            const next = formData.get('next') as string;
-            await updateProcess(id, next, data.parts.project_id);
-          }} className="flex gap-2">
-            <select name="next" defaultValue={data.status} className="flex-1 p-3 border rounded-lg font-bold">
-              {PROCESSES.map(proc => <option key={proc.key} value={proc.key}>{proc.name}</option>)}
-            </select>
-            <button className="bg-gray-800 text-white px-6 py-3 rounded-lg font-bold hover:bg-black transition-colors">更新</button>
-          </form>
-        </section>
-
-        {/* 2. 不良報告セクション（ここが重要） */}
-        {data.status !== 'DEFECTIVE' && (
-          <section className="p-6 border-2 border-red-200 rounded-2xl bg-red-50/50">
-            <h2 className="text-lg font-black text-red-700 mb-2 flex items-center gap-2">
-              ⚠️ 不良・再製作の報告
-            </h2>
-            <p className="text-sm text-red-600 mb-4 font-medium">
-              この個体に欠陥がある場合、ここで報告します。この個体は「不良」として記録され、自動的に「未プリント」の新しいジョブが作成されます。
-            </p>
-            <form action={async (formData) => {
-              'use server'
-              const reason = formData.get('reason') as string;
-              await reportDefect(id, reason);
-            }} className="space-y-3">
-              <input
-                name="reason"
-                placeholder="不良理由（例：積層剥離、寸法誤差）"
-                className="w-full p-3 border-2 border-red-100 rounded-xl focus:border-red-500 outline-none bg-white font-medium"
-                required
-              />
-              <button className="w-full bg-red-600 text-white font-black py-4 rounded-xl hover:bg-red-700 transition-all shadow-lg active:scale-[0.98]">
-                不良を確定し、再製作を依頼
-              </button>
-            </form>
-          </section>
-        )}
-
-        {/* 3. 完了処理 */}
-        <section>
-          <form action={async () => {
-            'use server'
-            await consumeItem(id);
-          }}>
-            <button className="w-full border-2 border-green-600 text-green-600 font-black py-4 rounded-xl hover:bg-green-50 transition-colors">
-              組み込み完了（ストックから除外）
-            </button>
-          </form>
-        </section>
-      </div>
-    </div>
-  )
-}
-</file>
-
-<file path="app/project/[id]/ProjectClientContent.tsx">
-'use client';
-
-import React, { useState } from 'react';
-import {
-    DndContext,
-    DragOverlay,
-    closestCorners,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-    DragEndEvent,
-    DragStartEvent,
-} from '@dnd-kit/core';
-import {
-    sortableKeyboardCoordinates,
-} from '@dnd-kit/sortable';
-import { CartModal } from '@/app/components/CartModal';
-import { PreviewModal } from '@/app/components/PreviewModal';
-import { Part, PartItem, ProcessStatus } from '@/app/types';
-import { updateItemStatus } from '@/app/actions/updateItemStatus';
-import { SwimlaneRow } from '@/app/components/swimlane/SwimlaneRow';
-import { SwimlaneItem } from '@/app/components/swimlane/SwimlaneItem';
-
-// --- Main Component ---
-
-export default function ProjectClientContent({
-    progressData,
-    parts,
-    partItems: initialItems,
-    projectId
-}: {
-    progressData: any[],
-    parts: Part[],
-    partItems: PartItem[],
-    projectId: number
-}) {
-    const [items, setItems] = useState<PartItem[]>(initialItems);
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [activeId, setActiveId] = useState<string | null>(null);
-    const [previewItem, setPreviewItem] = useState<any | null>(null);
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 5, // Requires slight movement to start, helps preventing accidental clicks
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
-    );
-
-    const handleDragStart = (event: DragStartEvent) => {
-        setActiveId(event.active.id as string);
-    };
-
-    const handleDragEnd = async (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveId(null);
-
-        if (!over) return;
-
-        // Parse IDs
-        const activeIdStr = active.id as string;
-        const itemId = parseInt(activeIdStr.split('-')[1], 10);
-
-        let targetStatus: string | undefined;
-
-        const overIdStr = over.id as string;
-
-        if (overIdStr.startsWith('container-')) {
-            // Dropped on a container (SwimlaneCell)
-            const parts = overIdStr.split('-');
-            // container-{partId}-{status}
-            // If status has hyphens, we need to join the rest
-            targetStatus = parts.slice(2).join('-');
-        } else if (overIdStr.startsWith('item-')) {
-            // Dropped on another item
-            const overItemId = parseInt(overIdStr.split('-')[1], 10);
-            const overItem = items.find(i => i.id === overItemId);
-            if (overItem) {
-                targetStatus = overItem.status;
-            }
-        }
-
-        if (targetStatus) {
-            const item = items.find(i => i.id === itemId);
-
-            // Only update if status changed
-            if (item && item.status !== targetStatus) {
-                // Optimistic UI update
-                setItems(prev => prev.map(i =>
-                    i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
-                ));
-
-                // Call Server Action
-                const result = await updateItemStatus(itemId, targetStatus);
-                if (!result.success) {
-                    // Rollback on failure
-                    setItems(prev => prev.map(i =>
-                        i.id === itemId ? { ...i, status: item.status } : i
-                    ));
-                    alert(`Failed to update status: ${result.error}`);
-                }
-            }
-        }
-    };
-
-    const activeItem = activeId
-        ? items.find(i => `item-${i.id}` === activeId)
-        : null;
-
-    // Cart Logic
-    const cartItems = items
-        .filter(i => selectedIds.includes(i.id))
-        .map(i => {
-            const part = parts.find(p => p.id === i.part_id);
-            return {
-                id: i.id,
-                part_number: part?.part_number || `Part-${i.part_id}`,
-                count: 1
-            };
-        });
-
-    return (
-        <div className="h-[calc(100vh-100px)] w-full flex flex-col bg-gray-50/50">
-            {/* Main Content Area - Horizontal Scroll */}
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCorners}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-            >
-                <div className="
-                    flex-1 flex overflow-x-auto overflow-y-hidden gap-4 p-4 md:p-6
-                    snap-x snap-mandatory md:snap-none
-                    scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent
-                ">
-                    {parts.map(part => (
-                        <SwimlaneRow
-                            key={part.id}
-                            part={part}
-                            items={items.filter(i => i.part_id === part.id)}
-                            onPreview={(item) => {
-                                const part = parts.find(p => p.id === item.part_id);
-                                setPreviewItem({
-                                    ...item,
-                                    part_number: part?.part_number
-                                });
-                            }}
-                        />
-                    ))}
-
-                    {/* Spacer for last item to be fully visible on mobile */}
-                    <div className="w-4 shrink-0 md:hidden" />
-                </div>
-
-                <DragOverlay>
-                    {activeItem ? (
-                        <div className="w-64"> {/* Constrain width of overlay */}
-                            <SwimlaneItem
-                                item={{
-                                    ...activeItem,
-                                    part_number: parts.find(p => p.id === activeItem.part_id)?.part_number
-                                }}
-                                isOverlay
-                                onPreview={() => { }}
-                            />
-                        </div>
-                    ) : null}
-                </DragOverlay>
-            </DndContext>
-
-            {/* Cart UI - Floating Action Button Style */}
-            {selectedIds.length > 0 && (
-                <div className="fixed bottom-8 right-8 z-50">
-                    <button
-                        onClick={() => setIsCartOpen(true)}
-                        className="bg-gray-900 text-white px-6 py-3 rounded-full shadow-xl hover:bg-black transition-transform hover:scale-105 flex items-center gap-2"
-                    >
-                        <span className="font-bold">{selectedIds.length}</span>
-                        <span>items selected</span>
-                    </button>
-                </div>
-            )}
-
-            <CartModal
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                items={cartItems}
-                onDownload={() => alert("Zipダウンロードを開始します")}
-            />
-
-            <PreviewModal
-                isOpen={!!previewItem}
-                onClose={() => setPreviewItem(null)}
-                partNumber={previewItem?.part_number || ''}
-                itemId={previewItem?.id}
-                status={previewItem?.status}
-                projectId={projectId}
-            />
-        </div>
-    );
 }
 </file>
 
@@ -3620,6 +3346,220 @@ export default function PrintRegistrationPage() {
       <PrintRegistrationContent />
     </Suspense>
   );
+}
+</file>
+
+<file path="app/project/[id]/ProjectClientContent.tsx">
+'use client';
+
+import React, { useState } from 'react';
+import {
+    DndContext,
+    DragOverlay,
+    closestCorners,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+    DragStartEvent,
+} from '@dnd-kit/core';
+import {
+    sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import { CartModal } from '@/app/components/CartModal';
+import { PreviewModal } from '@/app/components/PreviewModal';
+import { Part, PartItem, ProcessStatus } from '@/app/types';
+import { updateItemStatus } from '@/app/actions/updateItemStatus';
+import { SwimlaneColumn } from '@/app/components/swimlane/SwimlaneColumn';
+import { SwimlaneItem } from '@/app/components/swimlane/SwimlaneItem';
+import { PROCESSES } from '@/app/constants';
+
+// --- Main Component ---
+
+export default function ProjectClientContent({
+    progressData,
+    parts,
+    partItems: initialItems,
+    projectId
+}: {
+    progressData: any[],
+    parts: Part[],
+    partItems: PartItem[],
+    projectId: number
+}) {
+    const [items, setItems] = useState<PartItem[]>(initialItems);
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [activeId, setActiveId] = useState<string | null>(null);
+    const [previewItem, setPreviewItem] = useState<any | null>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as string);
+    };
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveId(null);
+
+        if (!over) return;
+
+        const activeIdStr = active.id as string;
+        const itemId = parseInt(activeIdStr.split('-')[1], 10);
+        let targetStatus: string | undefined;
+        const overIdStr = over.id as string;
+
+        if (overIdStr.startsWith('container-')) {
+            const parts = overIdStr.split('-');
+            targetStatus = parts.slice(2).join('-');
+        } else if (overIdStr.startsWith('item-')) {
+            const overItemId = parseInt(overIdStr.split('-')[1], 10);
+            const overItem = items.find(i => i.id === overItemId);
+            if (overItem) {
+                targetStatus = overItem.status;
+            }
+        }
+
+        if (targetStatus) {
+            const item = items.find(i => i.id === itemId);
+            if (item && item.status !== targetStatus) {
+                setItems(prev => prev.map(i =>
+                    i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
+                ));
+
+                const result = await updateItemStatus(itemId, targetStatus);
+                if (!result.success) {
+                    setItems(prev => prev.map(i =>
+                        i.id === itemId ? { ...i, status: item.status } : i
+                    ));
+                    alert(`Failed to update status: ${result.error}`);
+                }
+            }
+        }
+    };
+
+    const activeItem = activeId
+        ? items.find(i => `item-${i.id}` === activeId)
+        : null;
+
+    const cartItems = items
+        .filter(i => selectedIds.includes(i.id))
+        .map(i => {
+            const part = parts.find(p => p.id === i.part_id);
+            return {
+                id: i.id,
+                part_number: part?.part_number || `Part-${i.part_id}`,
+                count: 1
+            };
+        });
+
+    return (
+        <div className="relative flex flex-col h-[75vh] bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCorners}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            >
+                <div className="flex-1 overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+                    <div className="flex w-max min-w-full">
+
+                        {/* Legend Column */}
+                        <div className="sticky left-0 z-30 w-24 md:w-40 shrink-0 bg-gray-50 border-r border-gray-200 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                            <div className="h-24 border-b border-gray-200 flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
+                                <span className="text-[10px] uppercase tracking-widest font-black text-gray-400">Step</span>
+                            </div>
+                            <div className="flex flex-col">
+                                {PROCESSES.map((proc, index) => (
+                                    <div
+                                        key={proc.key}
+                                        className="h-[140px] border-b border-gray-100 p-3 flex flex-col justify-center bg-gray-50/50"
+                                    >
+                                        <div className="text-[10px] font-bold text-blue-500 mb-0.5">Step 0{index + 1}</div>
+                                        <div className="text-xs font-extrabold text-gray-800 leading-tight uppercase">
+                                            {proc.name}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Parts Columns Grid */}
+                        <div className="flex divide-x divide-gray-100 snap-x snap-mandatory md:snap-none">
+                            {parts.map(part => (
+                                <SwimlaneColumn
+                                    key={part.id}
+                                    part={part}
+                                    items={items.filter(i => i.part_id === part.id)}
+                                    onPreview={(item) => {
+                                        const part = parts.find(p => p.id === item.part_id);
+                                        setPreviewItem({
+                                            ...item,
+                                            part_number: part?.part_number
+                                        });
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                <DragOverlay>
+                    {activeItem ? (
+                        <div className="w-48 shadow-2xl">
+                            <SwimlaneItem
+                                item={{
+                                    ...activeItem,
+                                    part_number: parts.find(p => p.id === activeItem.part_id)?.part_number
+                                }}
+                                isOverlay
+                                onPreview={() => { }}
+                            />
+                        </div>
+                    ) : null}
+                </DragOverlay>
+            </DndContext>
+
+            {selectedIds.length > 0 && (
+                <div className="fixed bottom-8 right-8 z-50">
+                    <button
+                        onClick={() => setIsCartOpen(true)}
+                        className="bg-black text-white px-6 py-3 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                    >
+                        <span className="font-bold">{selectedIds.length}</span>
+                        <span>Items Selected</span>
+                    </button>
+                </div>
+            )}
+
+            <CartModal
+                isOpen={isCartOpen}
+                onClose={() => setIsCartOpen(false)}
+                items={cartItems}
+                onDownload={() => alert("Zipダウンロードを開始します")}
+            />
+
+            <PreviewModal
+                isOpen={!!previewItem}
+                onClose={() => setPreviewItem(null)}
+                partNumber={previewItem?.part_number || ''}
+                itemId={previewItem?.id}
+                status={previewItem?.status}
+                projectId={projectId}
+            />
+        </div>
+    );
 }
 </file>
 

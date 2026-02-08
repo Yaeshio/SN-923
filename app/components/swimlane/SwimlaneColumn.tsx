@@ -24,36 +24,41 @@ export function SwimlaneColumn({ part, items, onPreview }: SwimlaneColumnProps) 
       border-r border-gray-200 bg-white
     ">
             {/* Column Header - Part Info */}
-            <div className="sticky top-0 z-20 h-24 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200 p-3 flex flex-col justify-between">
+            <div className="sticky top-0 z-20 h-24 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex flex-col justify-between group-hover:bg-white transition-colors">
                 <div className="min-w-0">
-                    <h3 className="font-bold text-gray-800 text-sm leading-tight truncate" title={part.part_number}>
+                    <h3 className="font-black text-gray-900 text-xs tracking-tight truncate uppercase" title={part.part_number}>
                         {part.part_number}
                     </h3>
-                    <p className="text-[10px] text-gray-500 font-medium">
-                        {items.length} units
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                            Active
+                        </p>
+                    </div>
                 </div>
 
-                <FileDownloadButton
-                    storagePath={`models/${part.part_number}.stl`}
-                    fileName={`${part.part_number}_model.stl`}
-                    label="STL"
-                    variant="outline"
-                />
+                <div className="flex items-center justify-between gap-2 mt-2">
+                    <FileDownloadButton
+                        storagePath={`models/${part.part_number}.stl`}
+                        fileName={`${part.part_number}_model.stl`}
+                        label="STL"
+                        variant="outline"
+                    />
+                </div>
             </div>
 
             {/* Cells with Progress Line Overlay */}
-            <div className="relative">
+            <div className="relative flex-1 bg-gray-50/30">
                 {/* Vertical Progress Line (Connector) */}
                 {lastActiveIndex >= 0 && (
                     <div
-                        className="absolute left-1/2 -translate-x-1/2 top-0 w-1 bg-blue-100 -z-0"
+                        className="absolute left-1/2 -translate-x-1/2 top-0 w-[3px] -z-0"
                         style={{
-                            height: `${(lastActiveIndex + 0.5) * 140}px`,
-                            transition: 'height 0.3s ease-in-out'
+                            height: `${(lastActiveIndex + 0.5) * 80}px`,
+                            transition: 'height 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
                         }}
                     >
-                        <div className="h-full w-full bg-blue-500/20 rounded-full" />
+                        <div className="h-full w-full bg-gradient-to-b from-blue-100 via-blue-200 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
                     </div>
                 )}
 

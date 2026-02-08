@@ -20,7 +20,7 @@ export function SwimlaneCell({ partId, status, items, isLast, onPreview }: Swiml
         <div
             ref={setNodeRef}
             className={`
-        relative w-full min-h-[140px] border-b border-gray-100 p-2 transition-colors
+        relative w-full h-[80px] border-b border-gray-100 p-2.5 transition-colors
         ${isOver ? 'bg-blue-50/50' : 'bg-white'}
         ${isLast ? 'border-b-0' : ''}
       `}
