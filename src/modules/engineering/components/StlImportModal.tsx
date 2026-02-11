@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { ParsedFileInfo } from '@/lib/utils/parseFileName';
-import { ProcessStatus } from '@/app/types';
+import { ParsedFileInfo } from '@/src/modules/inventory/types';
+import { ProcessStatus } from '@/src/shared/types';
 
 interface StlImportModalProps {
     isOpen: boolean;

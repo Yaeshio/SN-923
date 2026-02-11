@@ -1,7 +1,8 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { PartItem, ProcessStatus } from '@/app/types';
+import { PartItem } from '@/src/modules/production/types';
+import { ProcessStatus } from '@/src/shared/types';
 import { SwimlaneItem } from './SwimlaneItem';
 
 interface SwimlaneCellProps {

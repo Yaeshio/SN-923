@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { ModelViewer } from './ModelViewer'
+import { ModelViewer } from '@/src/shared/components/ModelViewer'
 import { PROCESSES } from '@/app/constants'
-import { updateProcess } from '@/app/actions/updateProcess'
-import { reportDefect } from '@/app/actions/reportDefect'
+import { updateProcess } from '@/src/modules/production/actions/updateProcess'
+import { reportDefect } from '@/src/modules/production/actions/reportDefect'
 
 interface PreviewModalProps {
     isOpen: boolean

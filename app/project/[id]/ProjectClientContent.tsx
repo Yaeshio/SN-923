@@ -15,12 +15,14 @@ import {
 import {
     sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { CartModal } from '@/app/components/CartModal';
-import { PreviewModal } from '@/app/components/PreviewModal';
-import { Part, PartItem, ProcessStatus } from '@/app/types';
-import { updateItemStatus } from '@/app/actions/updateItemStatus';
-import { SwimlaneColumn } from '@/app/components/swimlane/SwimlaneColumn';
-import { SwimlaneItem } from '@/app/components/swimlane/SwimlaneItem';
+import { CartModal } from '@/src/modules/logistics/components/CartModal';
+import { PreviewModal } from '@/src/modules/production/components/PreviewModal';
+import { Part } from '@/src/modules/inventory/types';
+import { PartItem } from '@/src/modules/production/types';
+import { ProcessStatus } from '@/src/shared/types';
+import { updateItemStatus } from '@/src/modules/production/actions/updateItemStatus';
+import { SwimlaneColumn } from '@/src/modules/production/components/swimlane/SwimlaneColumn';
+import { SwimlaneItem } from '@/src/modules/production/components/swimlane/SwimlaneItem';
 import { PROCESSES } from '@/app/constants';
 
 // --- Main Component ---

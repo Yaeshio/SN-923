@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { previewFileNames } from '@/app/actions/importStl';
+import { previewFileNames } from '@/src/modules/engineering/actions/importStl';
 
 export async function POST(request: NextRequest) {
     try {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { importMultipleStl } from '@/app/actions/importStl';
-import { ProcessStatus } from '@/app/types';
+import { importMultipleStl } from '@/src/modules/engineering/actions/importStl';
+import { ProcessStatus } from '@/src/shared/types';
 
 export async function POST(request: NextRequest) {
     try {

@@ -2,7 +2,7 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Eye } from 'lucide-react';
-import { PartItem } from '@/app/types';
+import { PartItem } from '@/src/modules/production/types';
 
 interface SwimlaneItemProps {
     item: PartItem & { part_number?: string };

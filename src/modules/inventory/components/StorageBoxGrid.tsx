@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react';
-import { releaseStorageCase } from '@/app/actions/storageActions';
+import { releaseStorageCase } from '@/src/modules/inventory/actions/storageActions';
 
 interface Box {
     boxId: string;

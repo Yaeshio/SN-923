@@ -1,5 +1,5 @@
-import { getStorageBoxStatus } from '@/app/actions/storageActions';
-import StorageBoxGrid from './StorageBoxGrid';
+import { getStorageBoxStatus } from '@/src/modules/inventory/actions/storageActions';
+import StorageBoxGrid from '@/src/modules/inventory/components/StorageBoxGrid';
 
 export const dynamic = 'force-dynamic';
 

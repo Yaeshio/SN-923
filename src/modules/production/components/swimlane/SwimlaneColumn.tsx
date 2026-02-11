@@ -1,8 +1,8 @@
-import React from 'react';
-import { Part, PartItem } from '@/app/types';
+import { Part } from '@/src/modules/inventory/types';
+import { PartItem } from '@/src/modules/production/types';
 import { PROCESSES } from '@/app/constants';
 import { SwimlaneCell } from './SwimlaneCell';
-import FileDownloadButton from '@/app/components/common/FileDownloadButton';
+import FileDownloadButton from '@/src/shared/components/FileDownloadButton';
 
 interface SwimlaneColumnProps {
     part: Part;

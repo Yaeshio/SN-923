@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { aggregateProgress } from '@/app/utils';
-import { SummaryCard } from '@/app/components/SummaryCard';
+import { aggregateProgress } from '@/src/modules/production/services/itemService';
+import { SummaryCard } from '@/src/shared/components/SummaryCard';
 import { mockStore } from '@/lib/mockStore';
 import ProjectClientContent from './ProjectClientContent';
 

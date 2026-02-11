@@ -1,5 +1,5 @@
-import { ProcessStatus } from '../types';
-import { PROCESSES } from '../constants';
+import { ProcessStatus } from '@/src/shared/types';
+import { PROCESSES } from '@/app/constants';
 
 interface CartItem {
     id: number;
