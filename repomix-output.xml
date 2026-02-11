@@ -53,15 +53,6 @@ app/actions/updateItemStatus.ts
 app/actions/updateProcess.ts
 app/api/import-stl/route.ts
 app/api/preview-filenames/route.ts
-app/components/CartModal.tsx
-app/components/common/FileDownloadButton.tsx
-app/components/ModelViewer.tsx
-app/components/PreviewModal.tsx
-app/components/StlImportModal.tsx
-app/components/SummaryCard.tsx
-app/components/swimlane/SwimlaneCell.tsx
-app/components/swimlane/SwimlaneColumn.tsx
-app/components/swimlane/SwimlaneItem.tsx
 app/constants.ts
 app/data.ts
 app/globals.css
@@ -72,7 +63,6 @@ app/print/page.tsx
 app/project/[id]/page.tsx
 app/project/[id]/ProjectClientContent.tsx
 app/storage/page.tsx
-app/storage/StorageBoxGrid.tsx
 app/types.ts
 app/utils.ts
 docs/INTEGRATION_EXAMPLE.md
@@ -112,6 +102,32 @@ postcss.config.js
 public/models/PART-A.stl
 README.md
 scripts/seed-emulator.ts
+src/modules/engineering/actions/importStl.ts
+src/modules/engineering/components/StlImportModal.tsx
+src/modules/engineering/services/stlService.ts
+src/modules/inventory/actions/storageActions.ts
+src/modules/inventory/components/StorageBoxGrid.tsx
+src/modules/inventory/services/boxService.ts
+src/modules/inventory/services/partService.ts
+src/modules/inventory/types/index.ts
+src/modules/logistics/components/CartModal.tsx
+src/modules/production/actions/consumeItem.ts
+src/modules/production/actions/createPrinted.ts
+src/modules/production/actions/reportDefect.ts
+src/modules/production/actions/updateItemStatus.ts
+src/modules/production/actions/updateProcess.ts
+src/modules/production/components/PreviewModal.tsx
+src/modules/production/components/swimlane/SwimlaneCell.tsx
+src/modules/production/components/swimlane/SwimlaneColumn.tsx
+src/modules/production/components/swimlane/SwimlaneItem.tsx
+src/modules/production/services/itemService.ts
+src/modules/production/services/productionService.ts
+src/modules/production/types/index.ts
+src/shared/components/FileDownloadButton.tsx
+src/shared/components/ModelViewer.tsx
+src/shared/components/SummaryCard.tsx
+src/shared/lib/firebase.ts
+src/shared/types/index.ts
 tailwind.config.js
 tsconfig.json
 tsconfig.node.json
@@ -199,402 +215,6 @@ next-env.d.ts
 
 # OS
 Thumbs.db
-</file>
-
-<file path="app/actions/storageActions.ts">
-'use server'
-
-import { mockStore } from '@/lib/mockStore'
-import { revalidatePath } from 'next/cache'
-
-/**
- * 特定のアイテムの保管ボックスを強制的に解放するサーバーアクション
- * @param itemId - 部品アイテムのID
- */
-export async function releaseStorageCase(itemId: number) {
-    try {
-        await mockStore.updatePartItem(itemId, {
-            storage_case: ''
-        });
-
-        console.log(`Forcefully released storage box for item ${itemId}`);
-
-        // キャッシュを更新してUIに反映
-        revalidatePath('/');
-        revalidatePath('/storage');
-
-        return { success: true };
-    } catch (error) {
-        console.error('Failed to release storage case:', error);
-        return { success: false, error: (error as Error).message };
-    }
-}
-
-/**
- * 保管ボックスの使用状況を取得するサーバーアクション
- * @param maxBoxNumber - 最大ボックス番号（デフォルト: 100）
- */
-export async function getStorageBoxStatus(maxBoxNumber: number = 100) {
-    try {
-        const allItems = await mockStore.getPartItems();
-
-        // ボックス番号ごとに使用状況をマッピング
-        const boxMap = new Map<string, { itemId: number; partNumber: string; status: string }>();
-
-        // Partsデータも取得して部品番号を解決
-        const parts = await mockStore.getParts();
-        const partMap = new Map(parts.map(p => [p.id, p.part_number]));
-
-        allItems.forEach(item => {
-            if (item.storage_case && item.storage_case.trim() !== '') {
-                const partNumber = partMap.get(item.part_id) || 'Unknown';
-                boxMap.set(item.storage_case, {
-                    itemId: item.id,
-                    partNumber,
-                    status: item.status
-                });
-            }
-        });
-
-        // BOX-001 から BOX-{maxBoxNumber} までの状態を生成
-        const boxes = [];
-        for (let i = 1; i <= maxBoxNumber; i++) {
-            const boxId = `BOX-${String(i).padStart(3, '0')}`;
-            const usage = boxMap.get(boxId);
-
-            boxes.push({
-                boxId,
-                isUsed: !!usage,
-                itemId: usage?.itemId || null,
-                partNumber: usage?.partNumber || null,
-                status: usage?.status || null
-            });
-        }
-
-        return { success: true, boxes };
-    } catch (error) {
-        console.error('Failed to get storage box status:', error);
-        return { success: false, error: (error as Error).message, boxes: [] };
-    }
-}
-</file>
-
-<file path="app/api/import-stl/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { importMultipleStl } from '@/app/actions/importStl';
-import { ProcessStatus } from '@/app/types';
-
-export async function POST(request: NextRequest) {
-    try {
-        const { projectId, defaultStatus, filesData } = await request.json();
-
-        if (!projectId || !filesData || !Array.isArray(filesData)) {
-            return NextResponse.json(
-                { error: 'Invalid request parameters' },
-                { status: 400 }
-            );
-        }
-
-        // Uint8Array を ArrayBuffer に変換
-        const convertedFilesData = filesData.map((fd: any) => ({
-            name: fd.name,
-            buffer: new Uint8Array(fd.buffer).buffer
-        }));
-
-        const results = await importMultipleStl(
-            convertedFilesData,
-            projectId,
-            (defaultStatus as ProcessStatus) || 'CUTTING'
-        );
-
-        return NextResponse.json(results);
-    } catch (error) {
-        console.error('Error in import-stl API:', error);
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Internal server error' },
-            { status: 500 }
-        );
-    }
-}
-</file>
-
-<file path="app/components/common/FileDownloadButton.tsx">
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { ref, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
-
-interface FileDownloadButtonProps {
-    storagePath: string;
-    fileName: string;
-    label?: string;
-    variant?: 'primary' | 'outline' | 'ghost';
-    icon?: React.ReactNode;
-}
-
-export default function FileDownloadButton({
-    storagePath,
-    fileName,
-    label,
-    variant = 'outline',
-    icon
-}: FileDownloadButtonProps) {
-    const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isError, setIsError] = useState(false);
-
-    useEffect(() => {
-        const fetchUrl = async () => {
-            setIsLoading(true);
-            setIsError(false);
-            try {
-                const fileRef = ref(storage, storagePath);
-                const url = await getDownloadURL(fileRef);
-                setDownloadUrl(url);
-            } catch (error: any) {
-                console.error(`Error fetching download URL for ${storagePath}:`, error);
-                if (error.code === 'storage/object-not-found') {
-                    setIsError(true);
-                } else {
-                    setIsError(true);
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (storagePath) {
-            fetchUrl();
-        }
-    }, [storagePath]);
-
-    const handleDownload = () => {
-        if (!downloadUrl) return;
-
-        // Use a hidden anchor tag to trigger download with fileName
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = fileName;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const baseStyles = "inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
-
-    const variants = {
-        primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
-        outline: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50",
-        ghost: "bg-transparent text-gray-600 hover:bg-gray-100"
-    };
-
-    const defaultIcon = (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-    );
-
-    if (isLoading) {
-        return (
-            <button disabled className={`${baseStyles} ${variants[variant]}`}>
-                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></span>
-                {label || 'Loading...'}
-            </button>
-        );
-    }
-
-    if (isError) {
-        return (
-            <button disabled title="ファイルが登録されていません" className={`${baseStyles} ${variants[variant]} opacity-40`}>
-                {icon || defaultIcon}
-                {label ? `${label} (未登録)` : '未登録'}
-            </button>
-        );
-    }
-
-    return (
-        <button
-            onClick={handleDownload}
-            className={`${baseStyles} ${variants[variant]}`}
-        >
-            {icon || defaultIcon}
-            {label}
-        </button>
-    );
-}
-</file>
-
-<file path="app/components/SummaryCard.tsx">
-// app/dashboard/components/SummaryCard.tsx
-import React from 'react';
-
-interface SummaryCardProps {
-  title: string;
-  value: number | string;
-  valueColor?: string;
-}
-
-export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: SummaryCardProps) {
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-lg flex items-center">
-      <div>
-        <p className="text-lg text-gray-500">{title}</p>
-        <p className={`text-5xl font-extrabold ${valueColor}`}>{value}</p>
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="app/storage/page.tsx">
-import { getStorageBoxStatus } from '@/app/actions/storageActions';
-import StorageBoxGrid from './StorageBoxGrid';
-
-export const dynamic = 'force-dynamic';
-
-export default async function StoragePage() {
-    const result = await getStorageBoxStatus(100);
-
-    if (!result.success) {
-        return (
-            <div className="min-h-screen bg-gray-50 p-8">
-                <div className="max-w-7xl mx-auto">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-6">保管ボックス管理</h1>
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p className="text-red-800">エラーが発生しました: {result.error}</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">保管ボックス管理</h1>
-                    <p className="text-gray-600">
-                        保管ボックスの使用状況を確認し、必要に応じて強制解放できます。
-                    </p>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                    <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                            <span className="text-sm text-gray-700">使用中</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-gray-200 rounded"></div>
-                            <span className="text-sm text-gray-700">空き</span>
-                        </div>
-                    </div>
-                </div>
-
-                <StorageBoxGrid boxes={result.boxes} />
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="app/storage/StorageBoxGrid.tsx">
-'use client'
-
-import { useState } from 'react';
-import { releaseStorageCase } from '@/app/actions/storageActions';
-
-interface Box {
-    boxId: string;
-    isUsed: boolean;
-    itemId: number | null;
-    partNumber: string | null;
-    status: string | null;
-}
-
-interface StorageBoxGridProps {
-    boxes: Box[];
-}
-
-export default function StorageBoxGrid({ boxes }: StorageBoxGridProps) {
-    const [releasing, setReleasing] = useState<string | null>(null);
-
-    const handleRelease = async (boxId: string, itemId: number) => {
-        if (!confirm(`ボックス ${boxId} を強制解放しますか？`)) {
-            return;
-        }
-
-        setReleasing(boxId);
-        try {
-            const result = await releaseStorageCase(itemId);
-            if (result.success) {
-                // revalidatePathによって自動的にページが更新される
-            } else {
-                alert(`解放に失敗しました: ${result.error}`);
-            }
-        } catch (error) {
-            alert(`エラーが発生しました: ${error}`);
-        } finally {
-            setReleasing(null);
-        }
-    };
-
-    return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {boxes.map((box) => (
-                <div
-                    key={box.boxId}
-                    className={`
-                        rounded-lg border-2 p-4 transition-all
-                        ${box.isUsed
-                            ? 'bg-blue-50 border-blue-300 shadow-sm'
-                            : 'bg-gray-50 border-gray-200'
-                        }
-                    `}
-                >
-                    <div className="text-center">
-                        <div className="font-bold text-lg mb-2 text-gray-800">
-                            {box.boxId}
-                        </div>
-
-                        {box.isUsed ? (
-                            <div className="space-y-2">
-                                <div className="text-sm">
-                                    <div className="text-gray-600 font-medium">
-                                        {box.partNumber}
-                                    </div>
-                                    <div className="text-xs text-gray-500 mt-1">
-                                        {box.status}
-                                    </div>
-                                </div>
-
-                                <button
-                                    onClick={() => handleRelease(box.boxId, box.itemId!)}
-                                    disabled={releasing === box.boxId}
-                                    className="
-                                        w-full px-3 py-1.5 text-xs font-medium
-                                        bg-red-500 text-white rounded
-                                        hover:bg-red-600 
-                                        disabled:bg-gray-400 disabled:cursor-not-allowed
-                                        transition-colors
-                                    "
-                                >
-                                    {releasing === box.boxId ? '解放中...' : '強制解放'}
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="text-sm text-gray-400 py-2">
-                                空き
-                            </div>
-                        )}
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
 </file>
 
 <file path="docs/INTEGRATION_EXAMPLE.md">
@@ -1278,59 +898,33 @@ module.exports = {
 # SN-923
 </file>
 
-<file path="tailwind.config.js">
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-</file>
-
-<file path="tsconfig.node.json">
-{
-  "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["vite.config.ts"]
-}
-</file>
-
-<file path=".firebaserc">
-{
-  "projects": {
-    "default": "demo-bom3d-sn923"
-  }
-}
-</file>
-
-<file path="app/actions/importStl.ts">
+<file path="src/modules/engineering/actions/importStl.ts">
 'use server'
 
-import { storage, db } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import {
-    collection,
-    getDocs,
-    doc,
-    setDoc,
-    query,
-    where,
-    serverTimestamp
-} from 'firebase/firestore';
+/**
+ * Engineering Module - Import STL Action
+ * STLファイルのインポートを統括するオーケストレーター
+ */
+
 import { revalidatePath } from 'next/cache';
-import { parseFileName, ParsedFileInfo } from '@/lib/utils/parseFileName';
-import { Part, PartItem, ProcessStatus } from '@/app/types';
+import { ProcessStatus } from '@/src/shared/types';
+import { ParsedFileInfo } from '@/src/modules/inventory/types';
+
+// Engineering Services
+import {
+    parseFileName,
+    uploadStlFile
+} from '@/src/modules/engineering/services/stlService';
+
+// Inventory Services
+import { ensurePartExists } from '@/src/modules/inventory/services/partService';
+import {
+    allocateBoxes,
+    previewBoxAllocation
+} from '@/src/modules/inventory/services/boxService';
+
+// Production Services
+import { createItems } from '@/src/modules/production/services/itemService';
 
 export interface ImportResult {
     success: boolean;
@@ -1344,7 +938,8 @@ export interface ImportResult {
 /**
  * 単一のSTLファイルをインポートする
  * 
- * @param file - アップロードするファイル（FormData経由）
+ * @param fileBuffer - アップロードするファイル（ArrayBuffer）
+ * @param fileName - ファイル名
  * @param projectId - プロジェクトID
  * @param defaultStatus - 初期ステータス（デフォルト: 'CUTTING'）
  * @returns インポート結果
@@ -1356,7 +951,7 @@ export async function importSingleStl(
     defaultStatus: ProcessStatus = 'CUTTING'
 ): Promise<ImportResult> {
     try {
-        // 1. ファイル名を解析
+        // 1. Engineering: ファイル名を解析
         const parsed = parseFileName(fileName);
 
         if (!parsed.isValid) {
@@ -1369,89 +964,18 @@ export async function importSingleStl(
 
         const { partNumber, quantity } = parsed;
 
-        // 2. Firebase Storage にアップロード
-        const timestamp = Date.now();
-        const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
-        const storageRef = ref(storage, storagePath);
+        // 2. Engineering: Firebase Storage にアップロード
+        const downloadUrl = await uploadStlFile(fileBuffer, partNumber, projectId);
+        console.log(`[ImportSTL] Uploaded file: ${downloadUrl}`);
 
-        await uploadBytes(storageRef, fileBuffer);
-        const downloadUrl = await getDownloadURL(storageRef);
+        // 3. Inventory: 部品マスタの確認・作成
+        const part = await ensurePartExists(partNumber, projectId);
 
-        // 3. Firestore で該当する part_number を検索
-        const partsRef = collection(db, 'parts');
-        const q = query(
-            partsRef,
-            where('part_number', '==', partNumber),
-            where('project_id', '==', projectId)
-        );
-        const snapshot = await getDocs(q);
+        // 4. Inventory: ボックスの確保（空き箱を探す）
+        const boxes = await allocateBoxes(quantity);
 
-        let partId: number;
-
-        if (snapshot.empty) {
-            // 4a. 該当する Part がなければ新規作成
-            const allPartsSnapshot = await getDocs(collection(db, 'parts'));
-            const existingIds = allPartsSnapshot.docs.map(d => Number(d.id));
-            partId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
-
-            const newPart: Part = {
-                id: partId,
-                part_number: partNumber,
-                project_id: projectId
-            };
-
-            await setDoc(doc(db, 'parts', String(partId)), newPart);
-            console.log(`Created new Part: ${partNumber} (ID: ${partId})`);
-        } else {
-            // 4b. 既存の Part を使用
-            partId = Number(snapshot.docs[0].id);
-            console.log(`Using existing Part: ${partNumber} (ID: ${partId})`);
-        }
-
-        // 5. 指定された個数分の PartItem を作成
-        const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
-        const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
-        let nextItemId = existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
-
-        // 使用中のボックス番号を取得
-        const usedBoxes = new Set<string>();
-        allItemsSnapshot.docs.forEach(doc => {
-            const data = doc.data();
-            if (data.storage_case && data.storage_case.trim() !== '') {
-                usedBoxes.add(data.storage_case);
-            }
-        });
-
-        // 空きボックス番号を探す関数
-        const findNextAvailableBox = (): string => {
-            let boxNumber = 1;
-            while (true) {
-                const boxId = `BOX-${String(boxNumber).padStart(3, '0')}`;
-                if (!usedBoxes.has(boxId)) {
-                    usedBoxes.add(boxId); // 次の検索で重複しないように追加
-                    return boxId;
-                }
-                boxNumber++;
-            }
-        };
-
-        for (let i = 0; i < quantity; i++) {
-            const assignedBox = findNextAvailableBox();
-
-            const newItem: PartItem = {
-                id: nextItemId,
-                part_id: partId,
-                storage_case: assignedBox,
-                status: defaultStatus,
-                completed_at: null,
-                updated_at: serverTimestamp()
-            };
-
-            await setDoc(doc(db, 'partItems', String(nextItemId)), newItem);
-            nextItemId++;
-        }
-
-        console.log(`Created ${quantity} PartItems for Part ${partId}`);
+        // 5. Production: アイテムの生成とステータス初期化
+        await createItems(part.id, quantity, boxes, defaultStatus);
 
         // 6. キャッシュを再検証
         revalidatePath('/');
@@ -1461,12 +985,12 @@ export async function importSingleStl(
             success: true,
             fileName,
             partNumber,
-            partId,
+            partId: part.id,
             itemsCreated: quantity
         };
 
     } catch (error) {
-        console.error('Error importing STL:', error);
+        console.error('[ImportSTL] Error importing STL:', error);
         return {
             success: false,
             fileName,
@@ -1478,7 +1002,7 @@ export async function importSingleStl(
 /**
  * 複数のSTLファイルを一括インポートする
  * 
- * @param files - アップロードするファイルの配列
+ * @param filesData - アップロードするファイルの配列
  * @param projectId - プロジェクトID
  * @param defaultStatus - 初期ステータス
  * @returns インポート結果の配列
@@ -1507,43 +1031,28 @@ export async function importMultipleStl(
  * ファイル名のプレビュー解析（実際のインポートは行わない）
  * 
  * @param fileNames - ファイル名の配列
- * @returns 解析結果の配列
+ * @returns 解析結果の配列（ボックス割り当て情報付き）
  */
 export async function previewFileNames(fileNames: string[]): Promise<ParsedFileInfo[]> {
     // 1. 各ファイル名を解析
     const parsedResults = fileNames.map(parseFileName);
 
-    // 2. 現在の保管ケースの使用状況を取得
-    const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
-    const usedBoxes = new Set<string>();
-    allItemsSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.storage_case && data.storage_case.trim() !== '') {
-            usedBoxes.add(data.storage_case);
-        }
-    });
+    // 2. 有効な解析結果のみを抽出
+    const validResults = parsedResults.filter(r => r.isValid);
+    const quantities = validResults.map(r => r.quantity);
 
-    // 3. 空きボックス番号を探す関数
-    const findNextAvailableBox = (): string => {
-        let boxNumber = 1;
-        while (true) {
-            const boxId = `BOX-${String(boxNumber).padStart(3, '0')}`;
-            if (!usedBoxes.has(boxId)) {
-                usedBoxes.add(boxId); // プレビュー中に重複しないように追加
-                return boxId;
-            }
-            boxNumber++;
-        }
-    };
+    // 3. ボックス割り当てをシミュレート
+    const boxAllocations = await previewBoxAllocation(quantities);
 
-    // 4. 解析結果ごとにボックスを割り当て
+    // 4. 解析結果にボックス情報を追加
+    let validIndex = 0;
     return parsedResults.map(parsed => {
-        if (!parsed.isValid) return parsed;
-
-        const storageBoxes: string[] = [];
-        for (let i = 0; i < parsed.quantity; i++) {
-            storageBoxes.push(findNextAvailableBox());
+        if (!parsed.isValid) {
+            return parsed;
         }
+
+        const storageBoxes = boxAllocations[validIndex];
+        validIndex++;
 
         return {
             ...parsed,
@@ -1553,275 +1062,12 @@ export async function previewFileNames(fileNames: string[]): Promise<ParsedFileI
 }
 </file>
 
-<file path="app/actions/reportDefect.ts">
-'use server'
-
-import { mockStore } from '@/lib/mockStore'
-import { revalidatePath } from 'next/cache'
-
-/**
- * 不良を報告し、再製作ジョブを生成するサーバーアクション
- * @param itemId - 不良が発生したアイテムのID
- * @param reason - 不良の理由
- */
-export async function reportDefect(itemId: number | string, reason: string) {
-    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-
-    const item = await mockStore.getPartItem(id);
-    if (!item) {
-        console.error(`Item ${id} not found`);
-        return;
-    }
-
-    // 1. 現状のアイテムを「不良(DEFECTIVE)」にする
-    await mockStore.updatePartItem(id, {
-        status: 'DEFECTIVE'
-    });
-
-    // 2. 新しいジョブ（再製作）を生成する
-    // 元のアイテムの情報を引き継ぎつつ、工程を「未プリント」に戻す
-    await mockStore.addPartItem({
-        part_id: item.part_id,
-        storage_case: `${item.storage_case} (RE)`, // 再製作であることを示す
-        status: 'UNPRINTED',
-        completed_at: null
-    });
-
-    console.log(`Reported defect for item ${id}: ${reason}`);
-
-    // キャッシュを更新
-    revalidatePath('/');
-    revalidatePath(`/item/${id}`);
-    revalidatePath(`/project/${item.parts.project_id}`);
-}
-</file>
-
-<file path="app/actions/updateItemStatus.ts">
-'use server'
-
-import { mockStore } from '@/lib/mockStore'
-import { revalidatePath } from 'next/cache'
-
-/**
- * 部品アイテムのステータスを更新するサーバーアクション
- * @param itemId - 部品アイテムのID
- * @param newStatus - 新しいステータス（工程）
- */
-export async function updateItemStatus(itemId: string | number, newStatus: string) {
-    try {
-        // ステータスを更新
-        await mockStore.updatePartItemStatus(itemId, newStatus);
-
-        // ステータスがASSEMBLED（完成）の場合、保管ボックスを解放
-        if (newStatus === 'ASSEMBLED') {
-            await mockStore.updatePartItem(Number(itemId), {
-                storage_case: ''
-            });
-            console.log(`Released storage box for item ${itemId}`);
-        }
-
-        // キャッシュを更新してUIに反映
-        revalidatePath('/');
-        revalidatePath('/storage');
-
-        return { success: true };
-    } catch (error) {
-        console.error('Failed to update item status:', error);
-        return { success: false, error: (error as Error).message };
-    }
-}
-</file>
-
-<file path="app/api/preview-filenames/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { previewFileNames } from '@/app/actions/importStl';
-
-export async function POST(request: NextRequest) {
-    try {
-        const { fileNames } = await request.json();
-
-        if (!Array.isArray(fileNames)) {
-            return NextResponse.json(
-                { error: 'fileNames must be an array' },
-                { status: 400 }
-            );
-        }
-
-        const results = await previewFileNames(fileNames);
-        return NextResponse.json(results);
-    } catch (error) {
-        console.error('Error in preview-filenames API:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
-    }
-}
-</file>
-
-<file path="app/components/CartModal.tsx">
-import { ProcessStatus } from '../types';
-import { PROCESSES } from '../constants';
-
-interface CartItem {
-    id: number;
-    part_number: string;
-    status: ProcessStatus;
-    count: number;
-}
-
-interface CartModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    items: CartItem[];
-    onDownload: () => void;
-}
-
-export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps) {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh]">
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <div>
-                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <span className="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">
-                                {items.length}
-                            </span>
-                            Selected Items
-                        </h2>
-                        <p className="text-xs text-gray-500 mt-1">Ready for batch download</p>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <div className="p-0 overflow-y-auto flex-1">
-                    {items.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            <p>No items selected</p>
-                        </div>
-                    ) : (
-                        <table className="w-full text-sm">
-                            <thead className="text-xs text-gray-400 uppercase bg-gray-50/50 sticky top-0 z-10">
-                                <tr>
-                                    <th className="text-left py-3 px-6 font-medium">Part Number</th>
-                                    <th className="text-left py-3 px-6 font-medium">Current Status</th>
-                                    <th className="text-right py-3 px-6 font-medium">Format</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {items.map((item) => {
-                                    const processName = PROCESSES.find(p => p.key === item.status)?.name || item.status;
-                                    return (
-                                        <tr key={item.id} className="group hover:bg-blue-50/30 transition-colors">
-                                            <td className="py-3 px-6 font-bold text-gray-800">
-                                                {item.part_number}
-                                                <div className="text-[10px] text-gray-400 font-normal">ID: {item.id}</div>
-                                            </td>
-                                            <td className="py-3 px-6">
-                                                <span className="px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs font-medium border border-gray-200">
-                                                    {processName}
-                                                </span>
-                                            </td>
-                                            <td className="py-3 px-6 text-right text-gray-500 font-mono text-xs">
-                                                .stl
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
-
-                <div className="p-6 bg-gray-50 flex gap-4">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 px-6 py-3 rounded-xl border border-gray-300 font-bold text-gray-600 hover:bg-white transition-colors"
-                    >
-                        戻る
-                    </button>
-                    <button
-                        onClick={onDownload}
-                        disabled={items.length === 0}
-                        className="flex-1 px-6 py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors shadow-lg disabled:bg-gray-300"
-                    >
-                        Zipで一括ダウンロード
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="app/components/ModelViewer.tsx">
-'use client';
-
-import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, Stage } from '@react-three/drei';
-import { useState, useEffect, Suspense } from 'react';
-import { STLLoader } from 'three-stdlib';
-
-function STLModel({ url }: { url: string }) {
-    if (!url) return null;
-
-    const geom = useLoader(STLLoader, url);
-
-    return (
-        /* rotation: [x, y, z] 
-           Math.PI / 2 は 90度です。
-           CADのZ上をThree.jsのY上に合わせるため、X軸を軸にマイナス90度回転させます。
-        */
-        <mesh
-            geometry={geom}
-            rotation={[-Math.PI / 2, 0, 0]}
-        >
-            <meshStandardMaterial color="#3b82f6" />
-        </mesh>
-    );
-}
-
-export function ModelViewer({ url }: { url: string }) {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) {
-        return <div className="w-full h-[400px] bg-gray-900 rounded-lg" />;
-    }
-
-    return (
-        <div className="w-full h-[400px] bg-gray-900 rounded-lg">
-            <Canvas shadows camera={{ position: [0, 0, 20], fov: 50 }}>
-                <Suspense fallback={null}>
-                    <Stage environment="city" intensity={0.5}>
-                        <STLModel url={url} />
-                    </Stage>
-                </Suspense>
-                <OrbitControls autoRotate />
-            </Canvas>
-        </div>
-    );
-}
-</file>
-
-<file path="app/components/StlImportModal.tsx">
+<file path="src/modules/engineering/components/StlImportModal.tsx">
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { ParsedFileInfo } from '@/lib/utils/parseFileName';
-import { ProcessStatus } from '@/app/types';
+import { ParsedFileInfo } from '@/src/modules/inventory/types';
+import { ProcessStatus } from '@/src/shared/types';
 
 interface StlImportModalProps {
     isOpen: boolean;
@@ -2158,6 +1404,1868 @@ export function StlImportModal({ isOpen, onClose, projectId, onImportComplete }:
 }
 </file>
 
+<file path="src/modules/engineering/services/stlService.ts">
+/**
+ * Engineering Module - STL Service
+ * STLファイルの解析とアップロード処理
+ */
+
+import { storage } from '@/src/shared/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ParsedFileInfo } from '@/src/modules/inventory/types';
+
+/**
+ * ファイル名から部品番号と個数を抽出する
+ * 
+ * 対応フォーマット:
+ * - PART123.stl → 部品番号: PART123, 個数: 1
+ * - PART123_x5.stl → 部品番号: PART123, 個数: 5
+ * - PART123_X10.stl → 部品番号: PART123, 個数: 10
+ * - ABC-456_x3.stl → 部品番号: ABC-456, 個数: 3
+ * 
+ * @param fileName - 解析するファイル名（拡張子含む）
+ * @returns 解析結果
+ */
+export function parseFileName(fileName: string): ParsedFileInfo {
+    // 拡張子を除去
+    const nameWithoutExt = fileName.replace(/\.(stl|STL)$/, '');
+
+    if (!nameWithoutExt) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: 'ファイル名が空です'
+        };
+    }
+
+    // パターン1: 部品番号_x個数 または 部品番号_X個数
+    const quantityPattern = /^(.+?)_[xX](\d+)$/;
+    const match = nameWithoutExt.match(quantityPattern);
+
+    if (match) {
+        const partNumber = match[1].trim();
+        const quantity = parseInt(match[2], 10);
+
+        if (!partNumber) {
+            return {
+                originalFileName: fileName,
+                partNumber: '',
+                quantity: 1,
+                isValid: false,
+                errorMessage: '部品番号が空です'
+            };
+        }
+
+        if (quantity <= 0 || quantity > 1000) {
+            return {
+                originalFileName: fileName,
+                partNumber,
+                quantity: 1,
+                isValid: false,
+                errorMessage: `個数が範囲外です（1-1000）: ${quantity}`
+            };
+        }
+
+        return {
+            originalFileName: fileName,
+            partNumber,
+            quantity,
+            isValid: true
+        };
+    }
+
+    // パターン2: 部品番号のみ（個数指定なし）
+    const partNumber = nameWithoutExt.trim();
+
+    if (!partNumber) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: '部品番号が空です'
+        };
+    }
+
+    return {
+        originalFileName: fileName,
+        partNumber,
+        quantity: 1,
+        isValid: true
+    };
+}
+
+/**
+ * 複数のファイル名を一括解析する
+ * 
+ * @param fileNames - ファイル名の配列
+ * @returns 解析結果の配列
+ */
+export function parseFileNames(fileNames: string[]): ParsedFileInfo[] {
+    return fileNames.map(parseFileName);
+}
+
+/**
+ * 解析結果から有効なもののみをフィルタリング
+ * 
+ * @param parsedInfos - 解析結果の配列
+ * @returns 有効な解析結果のみの配列
+ */
+export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFileInfo[] {
+    return parsedInfos.filter(info => info.isValid);
+}
+
+/**
+ * STLファイルをFirebase Storageにアップロードする
+ * 
+ * @param fileBuffer - ファイルのArrayBuffer
+ * @param partNumber - 部品番号
+ * @param projectId - プロジェクトID
+ * @returns アップロードされたファイルのダウンロードURL
+ */
+export async function uploadStlFile(
+    fileBuffer: ArrayBuffer,
+    partNumber: string,
+    projectId: number
+): Promise<string> {
+    const timestamp = Date.now();
+    const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
+    const storageRef = ref(storage, storagePath);
+
+    await uploadBytes(storageRef, fileBuffer);
+    const downloadUrl = await getDownloadURL(storageRef);
+
+    return downloadUrl;
+}
+</file>
+
+<file path="src/modules/inventory/actions/storageActions.ts">
+'use server'
+
+/**
+ * Inventory Module - Storage Actions
+ * 保管箱の管理に関するアクション
+ */
+
+import { db } from '@/src/shared/lib/firebase';
+import { doc, updateDoc, collection, getDocs, serverTimestamp, query, where } from 'firebase/firestore';
+import { revalidatePath } from 'next/cache';
+
+/**
+ * 特定のアイテムの保管ボックスを強制的に解放する
+ * @param itemId - 部品アイテムのID
+ */
+export async function releaseStorageCase(itemId: number) {
+    try {
+        const itemRef = doc(db, 'partItems', String(itemId));
+        await updateDoc(itemRef, {
+            storage_case: '',
+            updated_at: serverTimestamp()
+        });
+
+        console.log(`[StorageActions] Released storage box for item ${itemId}`);
+
+        revalidatePath('/');
+        revalidatePath('/storage');
+
+        return { success: true };
+    } catch (error) {
+        console.error('[StorageActions] Failed to release case:', error);
+        return { success: false, error: (error as Error).message };
+    }
+}
+
+/**
+ * 保管ボックスの使用状況を取得する
+ * @param maxBoxNumber - 最大ボックス番号
+ */
+export async function getStorageBoxStatus(maxBoxNumber: number = 100) {
+    try {
+        // 全アイテムと全部品を取得
+        const itemsSnap = await getDocs(collection(db, 'partItems'));
+        const partsSnap = await getDocs(collection(db, 'parts'));
+
+        const partMap = new Map();
+        partsSnap.forEach(doc => {
+            const data = doc.data();
+            partMap.set(data.id, data.part_number);
+        });
+
+        const boxMap = new Map();
+        itemsSnap.forEach(doc => {
+            const data = doc.data();
+            if (data.storage_case && data.storage_case.trim() !== '') {
+                boxMap.set(data.storage_case, {
+                    itemId: data.id,
+                    partNumber: partMap.get(data.part_id) || 'Unknown',
+                    status: data.status
+                });
+            }
+        });
+
+        const boxes = [];
+        for (let i = 1; i <= maxBoxNumber; i++) {
+            const boxId = `BOX-${String(i).padStart(3, '0')}`;
+            const usage = boxMap.get(boxId);
+
+            boxes.push({
+                boxId,
+                isUsed: !!usage,
+                itemId: usage?.itemId || null,
+                partNumber: usage?.partNumber || null,
+                status: usage?.status || null
+            });
+        }
+
+        return { success: true, boxes };
+    } catch (error) {
+        console.error('[StorageActions] Failed to get status:', error);
+        return { success: false, error: (error as Error).message, boxes: [] };
+    }
+}
+</file>
+
+<file path="src/modules/inventory/components/StorageBoxGrid.tsx">
+'use client'
+
+import { useState } from 'react';
+import { releaseStorageCase } from '@/src/modules/inventory/actions/storageActions';
+
+interface Box {
+    boxId: string;
+    isUsed: boolean;
+    itemId: number | null;
+    partNumber: string | null;
+    status: string | null;
+}
+
+interface StorageBoxGridProps {
+    boxes: Box[];
+}
+
+export default function StorageBoxGrid({ boxes }: StorageBoxGridProps) {
+    const [releasing, setReleasing] = useState<string | null>(null);
+
+    const handleRelease = async (boxId: string, itemId: number) => {
+        if (!confirm(`ボックス ${boxId} を強制解放しますか？`)) {
+            return;
+        }
+
+        setReleasing(boxId);
+        try {
+            const result = await releaseStorageCase(itemId);
+            if (result.success) {
+                // revalidatePathによって自動的にページが更新される
+            } else {
+                alert(`解放に失敗しました: ${result.error}`);
+            }
+        } catch (error) {
+            alert(`エラーが発生しました: ${error}`);
+        } finally {
+            setReleasing(null);
+        }
+    };
+
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {boxes.map((box) => (
+                <div
+                    key={box.boxId}
+                    className={`
+                        rounded-lg border-2 p-4 transition-all
+                        ${box.isUsed
+                            ? 'bg-blue-50 border-blue-300 shadow-sm'
+                            : 'bg-gray-50 border-gray-200'
+                        }
+                    `}
+                >
+                    <div className="text-center">
+                        <div className="font-bold text-lg mb-2 text-gray-800">
+                            {box.boxId}
+                        </div>
+
+                        {box.isUsed ? (
+                            <div className="space-y-2">
+                                <div className="text-sm">
+                                    <div className="text-gray-600 font-medium">
+                                        {box.partNumber}
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                        {box.status}
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => handleRelease(box.boxId, box.itemId!)}
+                                    disabled={releasing === box.boxId}
+                                    className="
+                                        w-full px-3 py-1.5 text-xs font-medium
+                                        bg-red-500 text-white rounded
+                                        hover:bg-red-600 
+                                        disabled:bg-gray-400 disabled:cursor-not-allowed
+                                        transition-colors
+                                    "
+                                >
+                                    {releasing === box.boxId ? '解放中...' : '強制解放'}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="text-sm text-gray-400 py-2">
+                                空き
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+</file>
+
+<file path="src/modules/inventory/services/boxService.ts">
+/**
+ * Inventory Module - Box Service
+ * 保管ケース（ボックス）の採番と管理
+ */
+
+import { db } from '@/src/shared/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+
+/**
+ * 使用中のボックスIDを取得する
+ * 
+ * @returns 使用中のボックスIDのSet
+ */
+export async function getUsedBoxes(): Promise<Set<string>> {
+    const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
+    const usedBoxes = new Set<string>();
+
+    allItemsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.storage_case && data.storage_case.trim() !== '') {
+            usedBoxes.add(data.storage_case);
+        }
+    });
+
+    return usedBoxes;
+}
+
+/**
+ * 次に利用可能なボックスIDを探す
+ * 
+ * @param usedBoxes - 使用中のボックスIDのSet
+ * @returns 次に利用可能なボックスID
+ */
+export function findNextAvailableBox(usedBoxes: Set<string>): string {
+    let boxNumber = 1;
+    while (true) {
+        const boxId = `BOX-${String(boxNumber).padStart(3, '0')}`;
+        if (!usedBoxes.has(boxId)) {
+            return boxId;
+        }
+        boxNumber++;
+    }
+}
+
+/**
+ * 指定された個数分のボックスを確保する
+ * 
+ * @param quantity - 必要なボックスの個数
+ * @returns 確保されたボックスIDの配列
+ */
+export async function allocateBoxes(quantity: number): Promise<string[]> {
+    const usedBoxes = await getUsedBoxes();
+    const allocatedBoxes: string[] = [];
+
+    for (let i = 0; i < quantity; i++) {
+        const boxId = findNextAvailableBox(usedBoxes);
+        usedBoxes.add(boxId); // 次の検索で重複しないように追加
+        allocatedBoxes.push(boxId);
+    }
+
+    console.log(`[BoxService] Allocated ${quantity} boxes: ${allocatedBoxes.join(', ')}`);
+    return allocatedBoxes;
+}
+
+/**
+ * プレビュー用：ボックス割り当てをシミュレートする（DB更新なし）
+ * 
+ * @param quantities - 各ファイルに必要なボックス数の配列
+ * @returns 各ファイルに割り当てられるボックスIDの2次元配列
+ */
+export async function previewBoxAllocation(quantities: number[]): Promise<string[][]> {
+    const usedBoxes = await getUsedBoxes();
+    const allAllocations: string[][] = [];
+
+    for (const quantity of quantities) {
+        const allocation: string[] = [];
+        for (let i = 0; i < quantity; i++) {
+            const boxId = findNextAvailableBox(usedBoxes);
+            usedBoxes.add(boxId);
+            allocation.push(boxId);
+        }
+        allAllocations.push(allocation);
+    }
+
+    return allAllocations;
+}
+</file>
+
+<file path="src/modules/inventory/services/partService.ts">
+/**
+ * Inventory Module - Part Service
+ * 部品マスタの管理（取得・作成）
+ */
+
+import { db } from '@/src/shared/lib/firebase';
+import {
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    query,
+    where
+} from 'firebase/firestore';
+import { Part } from '@/src/modules/inventory/types';
+
+/**
+ * 部品番号とプロジェクトIDから部品を検索する
+ * 
+ * @param partNumber - 部品番号
+ * @param projectId - プロジェクトID
+ * @returns 見つかった部品、または null
+ */
+export async function findPartByNumber(
+    partNumber: string,
+    projectId: number
+): Promise<Part | null> {
+    const partsRef = collection(db, 'parts');
+    const q = query(
+        partsRef,
+        where('part_number', '==', partNumber),
+        where('project_id', '==', projectId)
+    );
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+        return null;
+    }
+
+    const partDoc = snapshot.docs[0];
+    return {
+        id: Number(partDoc.id),
+        ...partDoc.data()
+    } as Part;
+}
+
+/**
+ * 新しい部品を作成する
+ * 
+ * @param partNumber - 部品番号
+ * @param projectId - プロジェクトID
+ * @returns 作成された部品
+ */
+export async function createPart(
+    partNumber: string,
+    projectId: number
+): Promise<Part> {
+    // 新しいIDを生成（既存の最大ID + 1）
+    const allPartsSnapshot = await getDocs(collection(db, 'parts'));
+    const existingIds = allPartsSnapshot.docs.map(d => Number(d.id));
+    const newPartId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+
+    const newPart: Part = {
+        id: newPartId,
+        part_number: partNumber,
+        project_id: projectId
+    };
+
+    await setDoc(doc(db, 'parts', String(newPartId)), newPart);
+    console.log(`[PartService] Created new Part: ${partNumber} (ID: ${newPartId})`);
+
+    return newPart;
+}
+
+/**
+ * 部品が存在することを保証する（なければ作成）
+ * 
+ * @param partNumber - 部品番号
+ * @param projectId - プロジェクトID
+ * @returns 既存または新規作成された部品
+ */
+export async function ensurePartExists(
+    partNumber: string,
+    projectId: number
+): Promise<Part> {
+    const existingPart = await findPartByNumber(partNumber, projectId);
+
+    if (existingPart) {
+        console.log(`[PartService] Using existing Part: ${partNumber} (ID: ${existingPart.id})`);
+        return existingPart;
+    }
+
+    return await createPart(partNumber, projectId);
+}
+</file>
+
+<file path="src/modules/inventory/types/index.ts">
+/**
+ * Inventory Module - 型定義
+ * 部品マスタと在庫に関する型
+ */
+
+export interface Part {
+    id: number;
+    part_number: string;
+    project_id: number;
+}
+
+export interface ParsedFileInfo {
+    /** 元のファイル名 */
+    originalFileName: string;
+    /** 抽出された部品番号 */
+    partNumber: string;
+    /** 個数（デフォルト: 1） */
+    quantity: number;
+    /** 解析が成功したか */
+    isValid: boolean;
+    /** エラーメッセージ（解析失敗時） */
+    errorMessage?: string;
+    /** 割り当てられる保管ボックスのリスト */
+    storageBoxes?: string[];
+}
+</file>
+
+<file path="src/modules/logistics/components/CartModal.tsx">
+import { ProcessStatus } from '@/src/shared/types';
+import { PROCESSES } from '@/app/constants';
+
+interface CartItem {
+    id: number;
+    part_number: string;
+    status: ProcessStatus;
+    count: number;
+}
+
+interface CartModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    items: CartItem[];
+    onDownload: () => void;
+}
+
+export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[85vh]">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <span className="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">
+                                {items.length}
+                            </span>
+                            Selected Items
+                        </h2>
+                        <p className="text-xs text-gray-500 mt-1">Ready for batch download</p>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div className="p-0 overflow-y-auto flex-1">
+                    {items.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <p>No items selected</p>
+                        </div>
+                    ) : (
+                        <table className="w-full text-sm">
+                            <thead className="text-xs text-gray-400 uppercase bg-gray-50/50 sticky top-0 z-10">
+                                <tr>
+                                    <th className="text-left py-3 px-6 font-medium">Part Number</th>
+                                    <th className="text-left py-3 px-6 font-medium">Current Status</th>
+                                    <th className="text-right py-3 px-6 font-medium">Format</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {items.map((item) => {
+                                    const processName = PROCESSES.find(p => p.key === item.status)?.name || item.status;
+                                    return (
+                                        <tr key={item.id} className="group hover:bg-blue-50/30 transition-colors">
+                                            <td className="py-3 px-6 font-bold text-gray-800">
+                                                {item.part_number}
+                                                <div className="text-[10px] text-gray-400 font-normal">ID: {item.id}</div>
+                                            </td>
+                                            <td className="py-3 px-6">
+                                                <span className="px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs font-medium border border-gray-200">
+                                                    {processName}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-6 text-right text-gray-500 font-mono text-xs">
+                                                .stl
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+
+                <div className="p-6 bg-gray-50 flex gap-4">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 px-6 py-3 rounded-xl border border-gray-300 font-bold text-gray-600 hover:bg-white transition-colors"
+                    >
+                        戻る
+                    </button>
+                    <button
+                        onClick={onDownload}
+                        disabled={items.length === 0}
+                        className="flex-1 px-6 py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors shadow-lg disabled:bg-gray-300"
+                    >
+                        Zipで一括ダウンロード
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/modules/production/actions/consumeItem.ts">
+'use server'
+
+/**
+ * Production Module - Consume Item Action
+ * 部品アイテムを消費済みにする
+ */
+
+import { revalidatePath } from 'next/cache';
+import { updateItemStatus } from '@/src/modules/production/services/itemService';
+
+/**
+ * 部品アイテムを消費済みにするサーバーアクション
+ * @param itemId - 消費する部品アイテムのID
+ */
+export async function consumeItem(itemId: string | number) {
+    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+    // READY（または消費済みを意味するステータス）に更新
+    // ここでは既存ロジックに合わせてステータスを更新し、保管ボックスを実質的に空にする
+    await updateItemStatus(id, 'ASSEMBLED'); // 完成＝消費とみなす
+
+    console.log(`[ConsumeItem] Consumed item ${id}`);
+
+    revalidatePath('/');
+    revalidatePath(`/item/${id}`);
+}
+</file>
+
+<file path="src/modules/production/actions/createPrinted.ts">
+'use server'
+
+/**
+ * Production Module - Create Printed Action
+ * 3Dプリントされたアイテムの登録
+ */
+
+import { revalidatePath } from 'next/cache';
+import { ProcessStatus } from '@/src/shared/types';
+import { registerPrintedItems } from '@/src/modules/production/services/productionService';
+import { parseFileName } from '@/src/modules/engineering/services/stlService';
+
+/**
+ * 3Dプリントされた新しい部品アイテムを作成するサーバーアクション
+ * 
+ * @param fileBuffer - STLファイルのArrayBuffer
+ * @param fileName - ファイル名
+ * @param projectId - プロジェクトID
+ * @param qty - 数量
+ * @param targetStatus - 初期ステータス（デフォルト: 'PRINTED'）
+ */
+export async function createPrinted(
+    fileBuffer: ArrayBuffer,
+    fileName: string,
+    projectId: number,
+    qty: number,
+    targetStatus: ProcessStatus = 'PRINTED'
+): Promise<{ success: boolean; partNumber: string }> {
+    try {
+        // 1. Engineering: ファイル名を解析して部品番号を取得
+        const parsed = parseFileName(fileName);
+        if (!parsed.isValid) {
+            throw new Error(parsed.errorMessage || 'ファイル名の解析に失敗しました');
+        }
+        const partNumber = parsed.partNumber;
+
+        // 2. Production: 印刷済みアイテムとして登録（トランザクション）
+        const result = await registerPrintedItems(
+            fileBuffer,
+            partNumber,
+            projectId,
+            qty,
+            targetStatus
+        );
+
+        console.log(`[CreatePrinted] Successfully created ${qty} items for part ${partNumber}`);
+        revalidatePath('/');
+        if (projectId) revalidatePath(`/project/${projectId}`);
+
+        return { success: true, partNumber: result.partNumber };
+
+    } catch (error) {
+        console.error('[CreatePrinted] Error:', error);
+        throw error;
+    }
+}
+</file>
+
+<file path="src/modules/production/actions/reportDefect.ts">
+'use server'
+
+/**
+ * Production Module - Report Defect Action
+ * 不良を報告し、再製作ジョブを生成する
+ */
+
+import { db } from '@/src/shared/lib/firebase';
+import { doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { revalidatePath } from 'next/cache';
+import { updateItemStatus, createItems } from '@/src/modules/production/services/itemService';
+
+/**
+ * 不良を報告し、再製作ジョブを生成するサーバーアクション
+ * @param itemId - 不良が発生したアイテムのID
+ * @param reason - 不良の理由
+ */
+export async function reportDefect(itemId: number | string, reason: string) {
+    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+    // 1. 元のアイテム情報を取得
+    const itemRef = doc(db, 'partItems', String(id));
+    const itemSnap = await getDoc(itemRef);
+
+    if (!itemSnap.exists()) {
+        console.error(`[ReportDefect] Item ${id} not found`);
+        return { success: false, error: 'Item not found' };
+    }
+
+    const itemData = itemSnap.data();
+
+    // 2. 現状のアイテムを「不良(DEFECTIVE)」にする
+    await updateItemStatus(id, 'DEFECTIVE');
+
+    // 3. 新しいジョブ（再製作）を生成する
+    // 元のアイテムの情報を引き継ぎつつ、工程を「未プリント」に戻す
+    // ボックス名は (RE) を付与
+    await createItems(
+        itemData.part_id,
+        1,
+        [`${itemData.storage_case} (RE)`],
+        'UNPRINTED'
+    );
+
+    console.log(`[ReportDefect] Reported defect for item ${id}: ${reason}`);
+
+    // キャッシュを更新
+    revalidatePath('/');
+    revalidatePath(`/item/${id}`);
+
+    return { success: true };
+}
+</file>
+
+<file path="src/modules/production/actions/updateItemStatus.ts">
+'use server'
+
+/**
+ * Production Module - Update Item Status Action
+ * ステータス更新と付随するロジック（ボックス解放など）
+ */
+
+import { revalidatePath } from 'next/cache';
+import { updateItemStatus as updateStatus } from '@/src/modules/production/services/itemService';
+import { db } from '@/src/shared/lib/firebase';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+
+/**
+ * 部品アイテムのステータスを更新するサーバーアクション
+ * @param itemId - 部品アイテムのID
+ * @param newStatus - 新しいステータス
+ */
+export async function updateItemStatus(itemId: string | number, newStatus: string) {
+    try {
+        const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+        // ステータスを更新
+        await updateStatus(id, newStatus as any);
+
+        // ステータスがASSEMBLED（完成）の場合、保管ボックスを解放
+        if (newStatus === 'ASSEMBLED') {
+            const itemRef = doc(db, 'partItems', String(id));
+            await updateDoc(itemRef, {
+                storage_case: '',
+                updated_at: serverTimestamp()
+            });
+            console.log(`[UpdateItemStatus] Released storage box for item ${id}`);
+        }
+
+        revalidatePath('/');
+        revalidatePath('/storage');
+
+        return { success: true };
+    } catch (error) {
+        console.error('[UpdateItemStatus] Failed:', error);
+        return { success: false, error: (error as Error).message };
+    }
+}
+</file>
+
+<file path="src/modules/production/actions/updateProcess.ts">
+'use server'
+
+/**
+ * Production Module - Update Process Action
+ * 工程アイテムのステータス更新
+ */
+
+import { revalidatePath } from 'next/cache';
+import { ProcessStatus } from '@/src/shared/types';
+import { updateItemStatus } from '@/src/modules/production/services/itemService';
+
+/**
+ * 部品アイテムの工程を更新するサーバーアクション
+ * 
+ * @param itemId - 更新する部品アイテムのID
+ * @param nextProcess - 次の工程ステータス
+ * @param projectId - プロジェクトID（オプション）
+ */
+export async function updateProcess(
+    itemId: string | number,
+    nextProcess: string,
+    projectId?: number
+) {
+    // 文字列IDを数値に変換
+    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+    // Production Service を使用してステータスを更新
+    await updateItemStatus(id, nextProcess as ProcessStatus);
+
+    console.log(`[UpdateProcess] Updated item ${id} to status ${nextProcess}`);
+
+    // キャッシュを更新してUIに反映
+    revalidatePath('/');
+    revalidatePath(`/item/${id}`);
+    if (projectId) {
+        revalidatePath(`/project/${projectId}`);
+    }
+}
+</file>
+
+<file path="src/modules/production/components/PreviewModal.tsx">
+'use client'
+
+import { useState, useTransition } from 'react'
+import { ModelViewer } from '@/src/shared/components/ModelViewer'
+import { PROCESSES } from '@/app/constants'
+import { updateProcess } from '@/src/modules/production/actions/updateProcess'
+import { reportDefect } from '@/src/modules/production/actions/reportDefect'
+
+interface PreviewModalProps {
+    isOpen: boolean
+    onClose: () => void
+    partNumber: string
+    itemId?: number
+    status?: string
+    projectId?: number
+}
+
+export function PreviewModal({
+    isOpen,
+    onClose,
+    partNumber,
+    itemId,
+    status,
+    projectId
+}: PreviewModalProps) {
+    const [isPending, startTransition] = useTransition()
+    const [defectReason, setDefectReason] = useState('')
+
+    if (!isOpen) return null
+
+    // 現在の工程より「前」の工程を抽出（差し戻し用）
+    const currentIndex = PROCESSES.findIndex(p => p.key === status)
+    const previousProcesses = PROCESSES.slice(0, currentIndex)
+
+    const handleUpdateStatus = (statusKey: string) => {
+        if (!itemId || !projectId) return
+        startTransition(async () => {
+            await updateProcess(itemId, statusKey, projectId)
+            onClose()
+        })
+    }
+
+    const handleReportDefect = () => {
+        if (!itemId || !defectReason) return
+        startTransition(async () => {
+            await reportDefect(itemId, defectReason)
+            setDefectReason('')
+            onClose()
+        })
+    }
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+            <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+
+                {/* ヘッダー */}
+                <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+                    <div>
+                        <h3 className="text-2xl font-black text-gray-900">{partNumber}</h3>
+                        <p className="text-sm text-gray-500 font-bold">ITEM ID: {itemId} / CURRENT: {status}</p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors text-2xl font-bold"
+                    >
+                        &times;
+                    </button>
+                </div>
+
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                    {/* 左側：3Dプレビュー */}
+                    <div className="flex-[2] bg-gray-100 relative min-h-[300px]">
+                        <ModelViewer url={`/models/${partNumber}.stl`} />
+                        <div className="absolute bottom-4 left-4 bg-white/80 px-3 py-1 rounded text-xs font-bold text-gray-500">
+                            3D PREVIEW MODE
+                        </div>
+                    </div>
+
+                    {/* 右側：操作パネル */}
+                    <div className="flex-1 border-l bg-white p-6 overflow-y-auto space-y-8">
+
+                        {/* 1. 工程の差し戻し */}
+                        <section>
+                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">工程を差し戻す (手戻り)</h4>
+                            <div className="grid grid-cols-1 gap-2">
+                                {previousProcesses.length > 0 ? (
+                                    previousProcesses.map((proc) => (
+                                        <button
+                                            key={proc.key}
+                                            onClick={() => handleUpdateStatus(proc.key)}
+                                            disabled={isPending}
+                                            className="text-left px-4 py-3 border-2 border-orange-100 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all group"
+                                        >
+                                            <span className="text-xs font-bold text-orange-400 block uppercase">{proc.key}へ戻す</span>
+                                            <span className="font-bold text-gray-700 group-hover:text-orange-700">{proc.name}</span>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">差し戻せる前の工程はありません</p>
+                                )}
+                            </div>
+                        </section>
+
+                        <hr className="border-gray-100" />
+
+                        {/* 2. 不良報告 */}
+                        <section className="p-5 border-2 border-red-100 rounded-2xl bg-red-50/30">
+                            <h4 className="text-lg font-black text-red-700 mb-2">不良を報告する</h4>
+                            <p className="text-xs text-red-600 mb-4 leading-relaxed font-medium">
+                                個体に欠陥がある場合、不良として確定させます。実行すると自動的に再製作ジョブが生成されます。
+                            </p>
+                            <div className="space-y-3">
+                                <textarea
+                                    value={defectReason}
+                                    onChange={(e) => setDefectReason(e.target.value)}
+                                    placeholder="不良の理由を入力してください..."
+                                    className="w-full p-3 border-2 border-red-100 rounded-xl text-sm focus:border-red-500 outline-none resize-none h-24 font-medium"
+                                />
+                                <button
+                                    onClick={handleReportDefect}
+                                    disabled={isPending || !defectReason}
+                                    className={`w-full py-4 rounded-xl font-black transition-all shadow-md ${isPending || !defectReason
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : 'bg-red-600 text-white hover:bg-red-700 active:scale-95'
+                                        }`}
+                                >
+                                    {isPending ? '処理中...' : '不良確定 & 再製作依頼'}
+                                </button>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+</file>
+
+<file path="src/modules/production/components/swimlane/SwimlaneCell.tsx">
+import React from 'react';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { PartItem } from '@/src/modules/production/types';
+import { ProcessStatus } from '@/src/shared/types';
+import { SwimlaneItem } from './SwimlaneItem';
+
+interface SwimlaneCellProps {
+    partId: number;
+    status: ProcessStatus;
+    items: PartItem[];
+    isLast: boolean;
+    selectedIds: number[];
+    onToggleSelect: (itemId: number) => void;
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneCell({ partId, status, items, isLast, selectedIds, onToggleSelect, onPreview }: SwimlaneCellProps) {
+    const droppableId = `container-${partId}-${status}`;
+    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={`
+        relative w-full h-[80px] border-b border-gray-100 p-2.5 transition-colors
+        ${isOver ? 'bg-blue-50/50' : 'bg-white'}
+        ${isLast ? 'border-b-0' : ''}
+      `}
+        >
+            <SortableContext
+                items={items.map(i => `item-${i.id}`)}
+                strategy={verticalListSortingStrategy}
+            >
+                <div className="flex flex-col gap-2 h-full">
+                    {items.map(item => (
+                        <SwimlaneItem
+                            key={item.id}
+                            item={item}
+                            isSelected={selectedIds.includes(item.id)}
+                            onToggleSelect={onToggleSelect}
+                            onPreview={onPreview}
+                        />
+                    ))}
+
+                    {/* Placeholder when empty */}
+                    {items.length === 0 && (
+                        <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[10px] text-gray-300 font-medium border border-dashed border-gray-200 rounded px-2 py-1">
+                                Drop
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </SortableContext>
+        </div>
+    );
+}
+</file>
+
+<file path="src/modules/production/components/swimlane/SwimlaneColumn.tsx">
+import { Part } from '@/src/modules/inventory/types';
+import { PartItem } from '@/src/modules/production/types';
+import { PROCESSES } from '@/app/constants';
+import { SwimlaneCell } from './SwimlaneCell';
+import FileDownloadButton from '@/src/shared/components/FileDownloadButton';
+
+interface SwimlaneColumnProps {
+    part: Part;
+    items: PartItem[];
+    selectedIds: number[];
+    onToggleSelect: (itemId: number) => void;
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPreview }: SwimlaneColumnProps) {
+    // Find the "furthest" process index that has items
+    const lastActiveIndex = items.reduce((max, item) => {
+        const idx = PROCESSES.findIndex(p => p.key === item.status);
+        return Math.max(max, idx);
+    }, -1);
+
+    return (
+        <div className="
+      relative flex flex-col
+      w-[85vw] md:w-64 shrink-0 snap-center
+      border-r border-gray-200 bg-white
+    ">
+            {/* Column Header - Part Info */}
+            <div className="sticky top-0 z-20 h-24 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex flex-col justify-between group-hover:bg-white transition-colors">
+                <div className="min-w-0">
+                    <h3 className="font-black text-gray-900 text-xs tracking-tight truncate uppercase" title={part.part_number}>
+                        {part.part_number}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mt-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                            Active
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 mt-2">
+                    <div className="flex flex-wrap gap-1">
+                        {Array.from(new Set(items.map(i => i.storage_case).filter(Boolean))).map(sc => (
+                            <span key={sc} className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-600 font-bold rounded-md border border-blue-100">
+                                {sc}
+                            </span>
+                        ))}
+                    </div>
+                    <div className="text-[10px] text-gray-400 font-medium shrink-0">
+                        {items.length} units
+                    </div>
+                </div>
+            </div>
+
+            {/* Cells with Progress Line Overlay */}
+            <div className="relative flex-1 bg-gray-50/30">
+                {/* Vertical Progress Line (Connector) */}
+                {lastActiveIndex >= 0 && (
+                    <div
+                        className="absolute left-1/2 -translate-x-1/2 top-0 w-[3px] -z-0"
+                        style={{
+                            height: `${(lastActiveIndex + 0.5) * 80}px`,
+                            transition: 'height 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
+                    >
+                        <div className="h-full w-full bg-gradient-to-b from-blue-100 via-blue-200 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
+                    </div>
+                )}
+
+                {/* Status Cells */}
+                <div className="flex flex-col">
+                    {PROCESSES.map((proc, index) => (
+                        <SwimlaneCell
+                            key={proc.key}
+                            partId={part.id}
+                            status={proc.key}
+                            items={items.filter(i => i.status === proc.key)}
+                            isLast={index === PROCESSES.length - 1}
+                            selectedIds={selectedIds}
+                            onToggleSelect={onToggleSelect}
+                            onPreview={onPreview}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/modules/production/components/swimlane/SwimlaneItem.tsx">
+import React from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Eye } from 'lucide-react';
+import { PartItem } from '@/src/modules/production/types';
+
+interface SwimlaneItemProps {
+    item: PartItem & { part_number?: string };
+    isOverlay?: boolean;
+    isSelected?: boolean;
+    onToggleSelect: (itemId: number) => void;
+    onPreview: (item: any) => void;
+}
+
+export function SwimlaneItem({ item, isOverlay, isSelected, onToggleSelect, onPreview }: SwimlaneItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: `item-${item.id}` });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.3 : 1,
+        zIndex: isDragging || isOverlay ? 999 : 'auto',
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`
+        bg-white rounded-xl shadow-sm border p-2 select-none group relative
+        ${isOverlay ? 'shadow-2xl scale-105 border-blue-500 ring-4 ring-blue-50' : 'hover:border-blue-400 hover:shadow-md'}
+        ${isSelected ? 'border-blue-500 bg-blue-50/30 ring-2 ring-blue-100' : 'border-gray-200'}
+        transition-all duration-200
+      `}
+        >
+            <div className="flex items-center justify-between gap-3">
+                {/* Drag Handle */}
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors touch-none"
+                >
+                    <GripVertical size={16} />
+                </div>
+
+                {/* Item Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex flex-col">
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="font-black text-xs text-gray-900 tracking-tight">#{item.id}</span>
+                        </div>
+                        {item.updated_at && (
+                            <div className="text-[9px] text-gray-400 font-medium">
+                                Last: {new Date(item.updated_at).toLocaleDateString()}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Selection Checkbox */}
+                <div className="flex items-center">
+                    <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={(e) => {
+                            e.stopPropagation();
+                            onToggleSelect(item.id);
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                </div>
+
+                {/* Action Buttons */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onPreview(item);
+                    }}
+                    className="text-gray-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition-colors shadow-sm bg-gray-50/50"
+                    title="詳細を見る"
+                >
+                    <Eye size={16} />
+                </button>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/modules/production/services/itemService.ts">
+/**
+ * Production Module - Item Service
+ * 工程アイテム（PartItem）の作成と管理
+ */
+
+import { db } from '@/src/shared/lib/firebase';
+import {
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    updateDoc,
+    serverTimestamp
+} from 'firebase/firestore';
+import { PartItem } from '@/src/modules/production/types';
+import { Part } from '@/src/modules/inventory/types';
+import { ProcessStatus } from '@/src/shared/types';
+import { PROCESSES } from '@/app/constants';
+
+/**
+ * 新しいアイテムIDを生成する
+ * 
+ * @returns 次に使用可能なアイテムID
+ */
+async function generateNextItemId(): Promise<number> {
+    const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
+    const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
+    return existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
+}
+
+/**
+ * 工程アイテムを作成する
+ * 
+ * @param partId - 部品ID
+ * @param quantity - 作成する個数
+ * @param storageBoxes - 割り当てられた保管ケースの配列
+ * @param initialStatus - 初期ステータス
+ * @returns 作成されたアイテムの配列
+ */
+export async function createItems(
+    partId: number,
+    quantity: number,
+    storageBoxes: string[],
+    initialStatus: ProcessStatus = 'CUTTING'
+): Promise<PartItem[]> {
+    if (storageBoxes.length !== quantity) {
+        throw new Error(`Storage boxes count (${storageBoxes.length}) does not match quantity (${quantity})`);
+    }
+
+    let nextItemId = await generateNextItemId();
+    const createdItems: PartItem[] = [];
+
+    for (let i = 0; i < quantity; i++) {
+        const newItem: PartItem = {
+            id: nextItemId,
+            part_id: partId,
+            storage_case: storageBoxes[i],
+            status: initialStatus,
+            completed_at: null,
+            updated_at: serverTimestamp()
+        };
+
+        await setDoc(doc(db, 'partItems', String(nextItemId)), newItem);
+        createdItems.push(newItem);
+        nextItemId++;
+    }
+
+    console.log(`[ItemService] Created ${quantity} PartItems for Part ${partId}`);
+    return createdItems;
+}
+
+/**
+ * アイテムのステータスを更新する
+ * 
+ * @param itemId - アイテムID
+ * @param newStatus - 新しいステータス
+ */
+export async function updateItemStatus(
+    itemId: number,
+    newStatus: ProcessStatus
+): Promise<void> {
+    const itemRef = doc(db, 'partItems', String(itemId));
+
+    await updateDoc(itemRef, {
+        status: newStatus,
+        updated_at: serverTimestamp(),
+        completed_at: newStatus === 'ASSEMBLED' ? serverTimestamp() : null
+    });
+
+    console.log(`[ItemService] Updated item ${itemId} status to ${newStatus}`);
+}
+
+/**
+ * 複数アイテムのステータスを一括更新する
+ * 
+ * @param itemIds - アイテムIDの配列
+ * @param newStatus - 新しいステータス
+ */
+export async function updateMultipleItemsStatus(
+    itemIds: number[],
+    newStatus: ProcessStatus
+): Promise<void> {
+    const updatePromises = itemIds.map(itemId => updateItemStatus(itemId, newStatus));
+    await Promise.all(updatePromises);
+
+    console.log(`[ItemService] Updated ${itemIds.length} items to status ${newStatus}`);
+}
+
+/**
+ * 部品とアイテムから進捗データを集計する
+ */
+export function aggregateProgress(parts: Part[], partItems: PartItem[]): any[] {
+    return parts.map(part => {
+        const items = partItems.filter(item => item.part_id === part.id);
+
+        const processOrder = PROCESSES.map(p => p.key);
+        const currentProcess = items.length > 0
+            ? items.reduce((earliest: ProcessStatus, item: PartItem) => {
+                const earliestIdx = processOrder.indexOf(earliest);
+                const currentIdx = processOrder.indexOf(item.status);
+                return currentIdx < earliestIdx ? item.status : earliest;
+            }, 'ASSEMBLED' as ProcessStatus)
+            : 'UNPRINTED';
+
+        return {
+            id: part.id,
+            part_number: part.part_number,
+            status: currentProcess,
+            storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
+            count: items.length
+        };
+    });
+}
+</file>
+
+<file path="src/modules/production/services/productionService.ts">
+/**
+ * Production Module - Production Service
+ * 複数のエンティティにまたがる製造関連のトランザクション処理
+ */
+
+import { db, storage } from '@/src/shared/lib/firebase';
+import {
+    collection,
+    getDocs,
+    doc,
+    runTransaction,
+    query,
+    where,
+    serverTimestamp
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ProcessStatus } from '@/src/shared/types';
+import { Part } from '@/src/modules/inventory/types';
+import { PartItem } from '@/src/modules/production/types';
+
+/**
+ * STLファイルをアップロードし、部品を作成（未存在時）し、指定個数のアイテムを作成する
+ * これらをアトミックなトランザクションとして実行する
+ */
+export async function registerPrintedItems(
+    fileBuffer: ArrayBuffer,
+    partNumber: string,
+    projectId: number,
+    quantity: number,
+    targetStatus: ProcessStatus = 'PRINTED'
+): Promise<{ success: boolean; partNumber: string; downloadUrl: string }> {
+
+    // 1. Storageへのアップロード（StorageはFirestoreトランザクション外）
+    const timestamp = Date.now();
+    const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
+    const storageRef = ref(storage, storagePath);
+    await uploadBytes(storageRef, fileBuffer);
+    const downloadUrl = await getDownloadURL(storageRef);
+
+    // 2. Firestoreトランザクション
+    await runTransaction(db, async (transaction) => {
+        // 2a. 部品(Part)の存在確認
+        const partsRef = collection(db, 'parts');
+        const q = query(
+            partsRef,
+            where('part_number', '==', partNumber),
+            where('project_id', '==', projectId)
+        );
+        // トランザクション内でのクエリ実行は制限があるため、ここでは簡易的に getDocs を使用
+        // 厳密な一貫性が必要な場合は、事前にIDを確定させるか、ID設計を見直す必要がある
+        const partQuerySnapshot = await getDocs(q);
+
+        let partId: number;
+
+        if (partQuerySnapshot.empty) {
+            // 新規作成: ID採番（競合のリスクがあるが、現行ロジックを踏襲）
+            const allPartsSnapshot = await getDocs(collection(db, 'parts'));
+            const existingIds = allPartsSnapshot.docs.map(d => Number(d.id));
+            partId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+
+            const newPart: Part = {
+                id: partId,
+                part_number: partNumber,
+                project_id: projectId
+            };
+
+            const partDocRef = doc(db, 'parts', String(partId));
+            transaction.set(partDocRef, newPart);
+        } else {
+            partId = Number(partQuerySnapshot.docs[0].id);
+        }
+
+        // 2b. PartItem の作成: ID採番
+        const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
+        const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
+        let nextItemId = existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
+
+        for (let i = 0; i < quantity; i++) {
+            // PartItemの型に準拠したオブジェクト作成
+            const newItemStub = {
+                id: nextItemId,
+                part_id: partId,
+                storage_case: `AUTO-${partNumber}-${i + 1}`,
+                status: targetStatus,
+                completed_at: null,
+                updated_at: serverTimestamp(),
+                stl_url: downloadUrl // 追加プロパティ
+            };
+
+            const itemDocRef = doc(db, 'partItems', String(nextItemId));
+            transaction.set(itemDocRef, newItemStub);
+            nextItemId++;
+        }
+    });
+
+    return { success: true, partNumber, downloadUrl };
+}
+</file>
+
+<file path="src/modules/production/types/index.ts">
+/**
+ * Production Module - 型定義
+ * 工程アイテムと進捗に関する型
+ */
+
+import { ProcessStatus } from '@/src/shared/types';
+
+export interface PartItem {
+    id: number;
+    part_id: number;
+    storage_case: string;
+    status: ProcessStatus;
+    completed_at: Date | null;
+    updated_at?: any;
+}
+
+export interface ProgressData {
+    part_number: string;
+    storage_cases: string[];
+    counts: Record<ProcessStatus, number>;
+}
+</file>
+
+<file path="src/shared/components/FileDownloadButton.tsx">
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { ref, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
+
+interface FileDownloadButtonProps {
+    storagePath: string;
+    fileName: string;
+    label?: string;
+    variant?: 'primary' | 'outline' | 'ghost';
+    icon?: React.ReactNode;
+}
+
+export default function FileDownloadButton({
+    storagePath,
+    fileName,
+    label,
+    variant = 'outline',
+    icon
+}: FileDownloadButtonProps) {
+    const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isError, setIsError] = useState(false);
+
+    useEffect(() => {
+        const fetchUrl = async () => {
+            setIsLoading(true);
+            setIsError(false);
+            try {
+                const fileRef = ref(storage, storagePath);
+                const url = await getDownloadURL(fileRef);
+                setDownloadUrl(url);
+            } catch (error: any) {
+                console.error(`Error fetching download URL for ${storagePath}:`, error);
+                if (error.code === 'storage/object-not-found') {
+                    setIsError(true);
+                } else {
+                    setIsError(true);
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (storagePath) {
+            fetchUrl();
+        }
+    }, [storagePath]);
+
+    const handleDownload = () => {
+        if (!downloadUrl) return;
+
+        // Use a hidden anchor tag to trigger download with fileName
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const baseStyles = "inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+
+    const variants = {
+        primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
+        outline: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50",
+        ghost: "bg-transparent text-gray-600 hover:bg-gray-100"
+    };
+
+    const defaultIcon = (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+    );
+
+    if (isLoading) {
+        return (
+            <button disabled className={`${baseStyles} ${variants[variant]}`}>
+                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></span>
+                {label || 'Loading...'}
+            </button>
+        );
+    }
+
+    if (isError) {
+        return (
+            <button disabled title="ファイルが登録されていません" className={`${baseStyles} ${variants[variant]} opacity-40`}>
+                {icon || defaultIcon}
+                {label ? `${label} (未登録)` : '未登録'}
+            </button>
+        );
+    }
+
+    return (
+        <button
+            onClick={handleDownload}
+            className={`${baseStyles} ${variants[variant]}`}
+        >
+            {icon || defaultIcon}
+            {label}
+        </button>
+    );
+}
+</file>
+
+<file path="src/shared/components/ModelViewer.tsx">
+'use client';
+
+import { Canvas, useLoader } from '@react-three/fiber';
+import { OrbitControls, Stage } from '@react-three/drei';
+import { useState, useEffect, Suspense } from 'react';
+import { STLLoader } from 'three-stdlib';
+
+function STLModel({ url }: { url: string }) {
+    if (!url) return null;
+
+    const geom = useLoader(STLLoader, url);
+
+    return (
+        /* rotation: [x, y, z] 
+           Math.PI / 2 は 90度です。
+           CADのZ上をThree.jsのY上に合わせるため、X軸を軸にマイナス90度回転させます。
+        */
+        <mesh
+            geometry={geom}
+            rotation={[-Math.PI / 2, 0, 0]}
+        >
+            <meshStandardMaterial color="#3b82f6" />
+        </mesh>
+    );
+}
+
+export function ModelViewer({ url }: { url: string }) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <div className="w-full h-[400px] bg-gray-900 rounded-lg" />;
+    }
+
+    return (
+        <div className="w-full h-[400px] bg-gray-900 rounded-lg">
+            <Canvas shadows camera={{ position: [0, 0, 20], fov: 50 }}>
+                <Suspense fallback={null}>
+                    <Stage environment="city" intensity={0.5}>
+                        <STLModel url={url} />
+                    </Stage>
+                </Suspense>
+                <OrbitControls autoRotate />
+            </Canvas>
+        </div>
+    );
+}
+</file>
+
+<file path="src/shared/components/SummaryCard.tsx">
+// app/dashboard/components/SummaryCard.tsx
+import React from 'react';
+
+interface SummaryCardProps {
+  title: string;
+  value: number | string;
+  valueColor?: string;
+}
+
+export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: SummaryCardProps) {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-lg flex items-center">
+      <div>
+        <p className="text-lg text-gray-500">{title}</p>
+        <p className={`text-5xl font-extrabold ${valueColor}`}>{value}</p>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/shared/lib/firebase.ts">
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
+
+const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-bom3d-sn923";
+
+const firebaseConfig = {
+    apiKey: "fake-api-key", // Emulator用ダミー
+    authDomain: `${projectId}.firebaseapp.com`,
+    projectId: projectId,
+    storageBucket: `${projectId}.appspot.com`,
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
+
+const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
+
+if (isEmulator) {
+    const g = global as any;
+    if (!g._firebase_emulators_connected) {
+        // 環境変数からポートを取得、なければデフォルト
+        // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
+        connectFirestoreEmulator(db, '127.0.0.1', 8080);
+        connectAuthEmulator(auth, "http://127.0.0.1:9099");
+        connectStorageEmulator(storage, '127.0.0.1', 9199);
+        g._firebase_emulators_connected = true;
+        console.log(`Connected to Firebase Emulators: ${projectId}`);
+    }
+}
+
+export { db, auth, storage };
+</file>
+
+<file path="src/shared/types/index.ts">
+/**
+ * 共通型定義
+ * プロジェクト全体で使用される基本的な型
+ */
+
+export type ProcessStatus =
+    | 'UNPRINTED'
+    | 'PRINTED'
+    | 'CUTTING'
+    | 'SURFACE_TREATMENT'
+    | 'PAINTING'
+    | 'ASSEMBLED'
+    | 'DEFECTIVE';
+
+export interface Project {
+    id: number;
+    name: string;
+    description: string;
+    deadline: string;
+}
+</file>
+
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+</file>
+
+<file path="tsconfig.node.json">
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path=".firebaserc">
+{
+  "projects": {
+    "default": "demo-bom3d-sn923"
+  }
+}
+</file>
+
+<file path="app/actions/storageActions.ts">
+'use server'
+
+import {
+    releaseStorageCase as releaseNew,
+    getStorageBoxStatus as getStatusNew
+} from '@/src/modules/inventory/actions/storageActions';
+
+/**
+ * @deprecated Use src/modules/inventory/actions/storageActions
+ */
+export async function releaseStorageCase(itemId: number) {
+    return releaseNew(itemId);
+}
+
+/**
+ * @deprecated Use src/modules/inventory/actions/storageActions
+ */
+export async function getStorageBoxStatus(maxBoxNumber: number = 100) {
+    return getStatusNew(maxBoxNumber);
+}
+</file>
+
+<file path="app/api/import-stl/route.ts">
+import { NextRequest, NextResponse } from 'next/server';
+import { importMultipleStl } from '@/src/modules/engineering/actions/importStl';
+import { ProcessStatus } from '@/src/shared/types';
+
+export async function POST(request: NextRequest) {
+    try {
+        const { projectId, defaultStatus, filesData } = await request.json();
+
+        if (!projectId || !filesData || !Array.isArray(filesData)) {
+            return NextResponse.json(
+                { error: 'Invalid request parameters' },
+                { status: 400 }
+            );
+        }
+
+        // Uint8Array を ArrayBuffer に変換
+        const convertedFilesData = filesData.map((fd: any) => ({
+            name: fd.name,
+            buffer: new Uint8Array(fd.buffer).buffer
+        }));
+
+        const results = await importMultipleStl(
+            convertedFilesData,
+            projectId,
+            (defaultStatus as ProcessStatus) || 'CUTTING'
+        );
+
+        return NextResponse.json(results);
+    } catch (error) {
+        console.error('Error in import-stl API:', error);
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
+</file>
+
 <file path="app/globals.css">
 @import "tailwindcss";
 </file>
@@ -2181,6 +3289,58 @@ export default function RootLayout({
       <body>{children}</body>
     </html>
   )
+}
+</file>
+
+<file path="app/storage/page.tsx">
+import { getStorageBoxStatus } from '@/src/modules/inventory/actions/storageActions';
+import StorageBoxGrid from '@/src/modules/inventory/components/StorageBoxGrid';
+
+export const dynamic = 'force-dynamic';
+
+export default async function StoragePage() {
+    const result = await getStorageBoxStatus(100);
+
+    if (!result.success) {
+        return (
+            <div className="min-h-screen bg-gray-50 p-8">
+                <div className="max-w-7xl mx-auto">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-6">保管ボックス管理</h1>
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800">エラーが発生しました: {result.error}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 p-8">
+            <div className="max-w-7xl mx-auto">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">保管ボックス管理</h1>
+                    <p className="text-gray-600">
+                        保管ボックスの使用状況を確認し、必要に応じて強制解放できます。
+                    </p>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                            <span className="text-sm text-gray-700">使用中</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                            <span className="text-sm text-gray-700">空き</span>
+                        </div>
+                    </div>
+                </div>
+
+                <StorageBoxGrid boxes={result.boxes} />
+            </div>
+        </div>
+    );
 }
 </file>
 
@@ -2422,203 +3582,112 @@ seed().catch((error) => {
 }
 </file>
 
-<file path="app/components/PreviewModal.tsx">
-'use client'
+<file path="app/actions/importStl.ts">
+'use server'
 
-import { useState, useTransition } from 'react'
-import { ModelViewer } from './ModelViewer'
-import { PROCESSES } from '@/app/constants'
-import { updateProcess } from '@/app/actions/updateProcess'
-import { reportDefect } from '@/app/actions/reportDefect'
+/**
+ * 後方互換性のためのラッパー
+ * 新しいモジュラーモノリス構造の Engineering Module に委譲
+ */
 
-interface PreviewModalProps {
-    isOpen: boolean
-    onClose: () => void
-    partNumber: string
-    itemId?: number
-    status?: string
-    projectId?: number
+import { ProcessStatus } from '@/app/types';
+import { ParsedFileInfo } from '@/lib/utils/parseFileName';
+
+// 新しいモジュール構造から関数をインポート
+import {
+    importSingleStl as importSingleStlNew,
+    importMultipleStl as importMultipleStlNew,
+    previewFileNames as previewFileNamesNew,
+    type ImportResult
+} from '@/src/modules/engineering/actions/importStl';
+
+// 既存のインターフェースをエクスポート（後方互換性）
+export type { ImportResult };
+
+/**
+ * 単一のSTLファイルをインポートする
+ * @deprecated 新しいモジュール構造の importSingleStl を使用してください
+ */
+export async function importSingleStl(
+    fileBuffer: ArrayBuffer,
+    fileName: string,
+    projectId: number,
+    defaultStatus: ProcessStatus = 'CUTTING'
+): Promise<ImportResult> {
+    return importSingleStlNew(fileBuffer, fileName, projectId, defaultStatus);
 }
 
-export function PreviewModal({
-    isOpen,
-    onClose,
-    partNumber,
-    itemId,
-    status,
-    projectId
-}: PreviewModalProps) {
-    const [isPending, startTransition] = useTransition()
-    const [defectReason, setDefectReason] = useState('')
+/**
+ * 複数のSTLファイルを一括インポートする
+ * @deprecated 新しいモジュール構造の importMultipleStl を使用してください
+ */
+export async function importMultipleStl(
+    filesData: Array<{ buffer: ArrayBuffer; name: string }>,
+    projectId: number,
+    defaultStatus: ProcessStatus = 'CUTTING'
+): Promise<ImportResult[]> {
+    return importMultipleStlNew(filesData, projectId, defaultStatus);
+}
 
-    if (!isOpen) return null
-
-    // 現在の工程より「前」の工程を抽出（差し戻し用）
-    const currentIndex = PROCESSES.findIndex(p => p.key === status)
-    const previousProcesses = PROCESSES.slice(0, currentIndex)
-
-    const handleUpdateStatus = (statusKey: string) => {
-        if (!itemId || !projectId) return
-        startTransition(async () => {
-            await updateProcess(itemId, statusKey, projectId)
-            onClose()
-        })
-    }
-
-    const handleReportDefect = () => {
-        if (!itemId || !defectReason) return
-        startTransition(async () => {
-            await reportDefect(itemId, defectReason)
-            setDefectReason('')
-            onClose()
-        })
-    }
-
-    return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
-            <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
-
-                {/* ヘッダー */}
-                <div className="p-6 border-b flex justify-between items-center bg-gray-50">
-                    <div>
-                        <h3 className="text-2xl font-black text-gray-900">{partNumber}</h3>
-                        <p className="text-sm text-gray-500 font-bold">ITEM ID: {itemId} / CURRENT: {status}</p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors text-2xl font-bold"
-                    >
-                        &times;
-                    </button>
-                </div>
-
-                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-                    {/* 左側：3Dプレビュー */}
-                    <div className="flex-[2] bg-gray-100 relative min-h-[300px]">
-                        <ModelViewer url={`/models/${partNumber}.stl`} />
-                        <div className="absolute bottom-4 left-4 bg-white/80 px-3 py-1 rounded text-xs font-bold text-gray-500">
-                            3D PREVIEW MODE
-                        </div>
-                    </div>
-
-                    {/* 右側：操作パネル */}
-                    <div className="flex-1 border-l bg-white p-6 overflow-y-auto space-y-8">
-
-                        {/* 1. 工程の差し戻し */}
-                        <section>
-                            <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">工程を差し戻す (手戻り)</h4>
-                            <div className="grid grid-cols-1 gap-2">
-                                {previousProcesses.length > 0 ? (
-                                    previousProcesses.map((proc) => (
-                                        <button
-                                            key={proc.key}
-                                            onClick={() => handleUpdateStatus(proc.key)}
-                                            disabled={isPending}
-                                            className="text-left px-4 py-3 border-2 border-orange-100 rounded-xl hover:border-orange-500 hover:bg-orange-50 transition-all group"
-                                        >
-                                            <span className="text-xs font-bold text-orange-400 block uppercase">{proc.key}へ戻す</span>
-                                            <span className="font-bold text-gray-700 group-hover:text-orange-700">{proc.name}</span>
-                                        </button>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-gray-400 italic">差し戻せる前の工程はありません</p>
-                                )}
-                            </div>
-                        </section>
-
-                        <hr className="border-gray-100" />
-
-                        {/* 2. 不良報告 */}
-                        <section className="p-5 border-2 border-red-100 rounded-2xl bg-red-50/30">
-                            <h4 className="text-lg font-black text-red-700 mb-2">不良を報告する</h4>
-                            <p className="text-xs text-red-600 mb-4 leading-relaxed font-medium">
-                                個体に欠陥がある場合、不良として確定させます。実行すると自動的に再製作ジョブが生成されます。
-                            </p>
-                            <div className="space-y-3">
-                                <textarea
-                                    value={defectReason}
-                                    onChange={(e) => setDefectReason(e.target.value)}
-                                    placeholder="不良の理由を入力してください..."
-                                    className="w-full p-3 border-2 border-red-100 rounded-xl text-sm focus:border-red-500 outline-none resize-none h-24 font-medium"
-                                />
-                                <button
-                                    onClick={handleReportDefect}
-                                    disabled={isPending || !defectReason}
-                                    className={`w-full py-4 rounded-xl font-black transition-all shadow-md ${isPending || !defectReason
-                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                        : 'bg-red-600 text-white hover:bg-red-700 active:scale-95'
-                                        }`}
-                                >
-                                    {isPending ? '処理中...' : '不良確定 & 再製作依頼'}
-                                </button>
-                            </div>
-                        </section>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    )
+/**
+ * ファイル名のプレビュー解析（実際のインポートは行わない）
+ * @deprecated 新しいモジュール構造の previewFileNames を使用してください
+ */
+export async function previewFileNames(fileNames: string[]): Promise<ParsedFileInfo[]> {
+    return previewFileNamesNew(fileNames);
 }
 </file>
 
-<file path="app/components/swimlane/SwimlaneCell.tsx">
-import React from 'react';
-import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { PartItem, ProcessStatus } from '@/app/types';
-import { SwimlaneItem } from './SwimlaneItem';
+<file path="app/actions/reportDefect.ts">
+'use server'
 
-interface SwimlaneCellProps {
-    partId: number;
-    status: ProcessStatus;
-    items: PartItem[];
-    isLast: boolean;
-    selectedIds: number[];
-    onToggleSelect: (itemId: number) => void;
-    onPreview: (item: any) => void;
+import { reportDefect as reportDefectNew } from '@/src/modules/production/actions/reportDefect';
+
+/**
+ * @deprecated Use src/modules/production/actions/reportDefect
+ */
+export async function reportDefect(itemId: number | string, reason: string) {
+    return reportDefectNew(itemId, reason);
 }
+</file>
 
-export function SwimlaneCell({ partId, status, items, isLast, selectedIds, onToggleSelect, onPreview }: SwimlaneCellProps) {
-    const droppableId = `container-${partId}-${status}`;
-    const { setNodeRef, isOver } = useDroppable({ id: droppableId });
+<file path="app/actions/updateItemStatus.ts">
+'use server'
 
-    return (
-        <div
-            ref={setNodeRef}
-            className={`
-        relative w-full h-[80px] border-b border-gray-100 p-2.5 transition-colors
-        ${isOver ? 'bg-blue-50/50' : 'bg-white'}
-        ${isLast ? 'border-b-0' : ''}
-      `}
-        >
-            <SortableContext
-                items={items.map(i => `item-${i.id}`)}
-                strategy={verticalListSortingStrategy}
-            >
-                <div className="flex flex-col gap-2 h-full">
-                    {items.map(item => (
-                        <SwimlaneItem
-                            key={item.id}
-                            item={item}
-                            isSelected={selectedIds.includes(item.id)}
-                            onToggleSelect={onToggleSelect}
-                            onPreview={onPreview}
-                        />
-                    ))}
+import { updateItemStatus as updateNew } from '@/src/modules/production/actions/updateItemStatus';
 
-                    {/* Placeholder when empty */}
-                    {items.length === 0 && (
-                        <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-[10px] text-gray-300 font-medium border border-dashed border-gray-200 rounded px-2 py-1">
-                                Drop
-                            </span>
-                        </div>
-                    )}
-                </div>
-            </SortableContext>
-        </div>
-    );
+/**
+ * @deprecated Use src/modules/production/actions/updateItemStatus
+ */
+export async function updateItemStatus(itemId: string | number, newStatus: string) {
+    return updateNew(itemId, newStatus);
+}
+</file>
+
+<file path="app/api/preview-filenames/route.ts">
+import { NextRequest, NextResponse } from 'next/server';
+import { previewFileNames } from '@/src/modules/engineering/actions/importStl';
+
+export async function POST(request: NextRequest) {
+    try {
+        const { fileNames } = await request.json();
+
+        if (!Array.isArray(fileNames)) {
+            return NextResponse.json(
+                { error: 'fileNames must be an array' },
+                { status: 400 }
+            );
+        }
+
+        const results = await previewFileNames(fileNames);
+        return NextResponse.json(results);
+    } catch (error) {
+        console.error('Error in preview-filenames API:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
 }
 </file>
 
@@ -2704,221 +3773,6 @@ if (isEmulator) {
 }
 
 export { db, auth, storage };
-</file>
-
-<file path="app/actions/consumeItem.ts">
-'use server'
-
-import { mockStore } from '@/lib/mockStore'
-import { revalidatePath } from 'next/cache'
-
-/**
- * 部品アイテムを消費済みにするサーバーアクション
- * @param itemId - 消費する部品アイテムのID
- */
-export async function consumeItem(itemId: string | number) {
-  const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-
-  await mockStore.updatePartItem(id, {
-    status: 'READY', // 本来のロジックに合わせてREADYにするか、または別のステータス
-    completed_at: new Date(),
-    storage_case: 'CONSUMED' // 便宜上の表記
-  });
-
-  console.log(`Consumed item ${id}`);
-
-  revalidatePath('/');
-  revalidatePath(`/item/${id}`);
-}
-</file>
-
-<file path="app/components/swimlane/SwimlaneColumn.tsx">
-import React from 'react';
-import { Part, PartItem } from '@/app/types';
-import { PROCESSES } from '@/app/constants';
-import { SwimlaneCell } from './SwimlaneCell';
-import FileDownloadButton from '@/app/components/common/FileDownloadButton';
-
-interface SwimlaneColumnProps {
-    part: Part;
-    items: PartItem[];
-    selectedIds: number[];
-    onToggleSelect: (itemId: number) => void;
-    onPreview: (item: any) => void;
-}
-
-export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPreview }: SwimlaneColumnProps) {
-    // Find the "furthest" process index that has items
-    const lastActiveIndex = items.reduce((max, item) => {
-        const idx = PROCESSES.findIndex(p => p.key === item.status);
-        return Math.max(max, idx);
-    }, -1);
-
-    return (
-        <div className="
-      relative flex flex-col
-      w-[85vw] md:w-64 shrink-0 snap-center
-      border-r border-gray-200 bg-white
-    ">
-            {/* Column Header - Part Info */}
-            <div className="sticky top-0 z-20 h-24 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex flex-col justify-between group-hover:bg-white transition-colors">
-                <div className="min-w-0">
-                    <h3 className="font-black text-gray-900 text-xs tracking-tight truncate uppercase" title={part.part_number}>
-                        {part.part_number}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                            Active
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 mt-2">
-                    <div className="flex flex-wrap gap-1">
-                        {Array.from(new Set(items.map(i => i.storage_case).filter(Boolean))).map(sc => (
-                            <span key={sc} className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-600 font-bold rounded-md border border-blue-100">
-                                {sc}
-                            </span>
-                        ))}
-                    </div>
-                    <div className="text-[10px] text-gray-400 font-medium shrink-0">
-                        {items.length} units
-                    </div>
-                </div>
-            </div>
-
-            {/* Cells with Progress Line Overlay */}
-            <div className="relative flex-1 bg-gray-50/30">
-                {/* Vertical Progress Line (Connector) */}
-                {lastActiveIndex >= 0 && (
-                    <div
-                        className="absolute left-1/2 -translate-x-1/2 top-0 w-[3px] -z-0"
-                        style={{
-                            height: `${(lastActiveIndex + 0.5) * 80}px`,
-                            transition: 'height 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-                        }}
-                    >
-                        <div className="h-full w-full bg-gradient-to-b from-blue-100 via-blue-200 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
-                    </div>
-                )}
-
-                {/* Status Cells */}
-                <div className="flex flex-col">
-                    {PROCESSES.map((proc, index) => (
-                        <SwimlaneCell
-                            key={proc.key}
-                            partId={part.id}
-                            status={proc.key}
-                            items={items.filter(i => i.status === proc.key)}
-                            isLast={index === PROCESSES.length - 1}
-                            selectedIds={selectedIds}
-                            onToggleSelect={onToggleSelect}
-                            onPreview={onPreview}
-                        />
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="app/components/swimlane/SwimlaneItem.tsx">
-import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Eye } from 'lucide-react';
-import { PartItem } from '@/app/types';
-
-interface SwimlaneItemProps {
-    item: PartItem & { part_number?: string };
-    isOverlay?: boolean;
-    isSelected?: boolean;
-    onToggleSelect: (itemId: number) => void;
-    onPreview: (item: any) => void;
-}
-
-export function SwimlaneItem({ item, isOverlay, isSelected, onToggleSelect, onPreview }: SwimlaneItemProps) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: `item-${item.id}` });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.3 : 1,
-        zIndex: isDragging || isOverlay ? 999 : 'auto',
-    };
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={style}
-            className={`
-        bg-white rounded-xl shadow-sm border p-2 select-none group relative
-        ${isOverlay ? 'shadow-2xl scale-105 border-blue-500 ring-4 ring-blue-50' : 'hover:border-blue-400 hover:shadow-md'}
-        ${isSelected ? 'border-blue-500 bg-blue-50/30 ring-2 ring-blue-100' : 'border-gray-200'}
-        transition-all duration-200
-      `}
-        >
-            <div className="flex items-center justify-between gap-3">
-                {/* Drag Handle */}
-                <div
-                    {...attributes}
-                    {...listeners}
-                    className="cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors touch-none"
-                >
-                    <GripVertical size={16} />
-                </div>
-
-                {/* Item Content */}
-                <div className="flex-1 min-w-0">
-                    <div className="flex flex-col">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="font-black text-xs text-gray-900 tracking-tight">#{item.id}</span>
-                        </div>
-                        {item.updated_at && (
-                            <div className="text-[9px] text-gray-400 font-medium">
-                                Last: {new Date(item.updated_at).toLocaleDateString()}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Selection Checkbox */}
-                <div className="flex items-center">
-                    <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                            e.stopPropagation();
-                            onToggleSelect(item.id);
-                        }}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                </div>
-
-                {/* Action Buttons */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onPreview(item);
-                    }}
-                    className="text-gray-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition-colors shadow-sm bg-gray-50/50"
-                    title="詳細を見る"
-                >
-                    <Eye size={16} />
-                </button>
-            </div>
-        </div>
-    );
-}
 </file>
 
 <file path="lib/mockStore.ts">
@@ -3059,167 +3913,16 @@ export const mockStore = {
 };
 </file>
 
-<file path="app/actions/createPrinted.ts">
+<file path="app/actions/consumeItem.ts">
 'use server'
 
-import { storage, db } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import {
-  collection,
-  getDocs,
-  doc,
-  runTransaction,
-  query,
-  where,
-  serverTimestamp,
-  increment
-} from 'firebase/firestore';
-import { revalidatePath } from 'next/cache';
-import { parseFileName } from '@/lib/utils/parseFileName';
-import { Part, PartItem, ProcessStatus } from '@/app/types';
+import { consumeItem as consumeItemNew } from '@/src/modules/production/actions/consumeItem';
 
 /**
- * 3Dプリントされた新しい部品アイテムを作成するサーバーアクション（強化版）
- * 
- * @param fileBuffer - STLファイルのArrayBuffer
- * @param fileName - ファイル名
- * @param projectId - プロジェクトID
- * @param qty - 数量
- * @param targetStatus - 初期ステータス
+ * @deprecated Use src/modules/production/actions/consumeItem
  */
-export async function createPrinted(
-  fileBuffer: ArrayBuffer,
-  fileName: string,
-  projectId: number,
-  qty: number,
-  targetStatus: ProcessStatus = 'PRINTED'
-) {
-  try {
-    // 1. ファイル名を解析して部品番号を取得
-    const parsed = parseFileName(fileName);
-    if (!parsed.isValid) {
-      throw new Error(parsed.errorMessage || 'ファイル名の解析に失敗しました');
-    }
-    const partNumber = parsed.partNumber;
-
-    // 2. Firebase Storage にファイルを保存
-    const timestamp = Date.now();
-    const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
-    const storageRef = ref(storage, storagePath);
-    await uploadBytes(storageRef, fileBuffer);
-    const downloadUrl = await getDownloadURL(storageRef);
-
-    // 3. Firestore トランザクションで部品とアイテムを作成
-    await runTransaction(db, async (transaction) => {
-      // 3a. 部品(Part)の存在確認
-      const partsRef = collection(db, 'parts');
-      const q = query(
-        partsRef,
-        where('part_number', '==', partNumber),
-        where('project_id', '==', projectId)
-      );
-      const partQuerySnapshot = await getDocs(q); // トランザクション内での getDocs は制限がある場合があるが、Firebase V9+ では transaction.get(query) が基本。
-
-      // 注意: Firestore トランザクション内でのクエリは複雑なため、
-      // ここではドキュメントIDとして部品番号を使用するか、一度検索した後にトランザクションを実行するのが一般的。
-      // しかし、要件に合わせて「整合性を保つ」ためにトランザクションを使用。
-
-      let partId: number;
-
-      if (partQuerySnapshot.empty) {
-        // 新規作成が必要な場合、新しいIDを決定（ここでは簡易的に全件取得で最大ID+1）
-        // 本来はカウンター用ドキュメントを使用するのが望ましい
-        const allPartsSnapshot = await getDocs(collection(db, 'parts'));
-        const existingIds = allPartsSnapshot.docs.map(d => Number(d.id));
-        partId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
-
-        const newPart: Part = {
-          id: partId,
-          part_number: partNumber,
-          project_id: projectId
-        };
-
-        const partDocRef = doc(db, 'parts', String(partId));
-        transaction.set(partDocRef, newPart);
-        console.log(`Transaction: Created new Part: ${partNumber} (ID: ${partId})`);
-      } else {
-        partId = Number(partQuerySnapshot.docs[0].id);
-        console.log(`Transaction: Using existing Part: ${partNumber} (ID: ${partId})`);
-      }
-
-      // 3b. PartItem を指定された個数分作成
-      const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
-      const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
-      let nextItemId = existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
-
-      for (let i = 0; i < qty; i++) {
-        const newItem: PartItem = {
-          id: nextItemId,
-          part_id: partId,
-          storage_case: `AUTO-${partNumber}-${i + 1}`,
-          status: targetStatus,
-          completed_at: null,
-          updated_at: serverTimestamp()
-        };
-
-        const itemDocRef = doc(db, 'partItems', String(nextItemId));
-        transaction.set(itemDocRef, {
-          ...newItem,
-          stl_url: downloadUrl // 保存されたURLを紐付け
-        });
-        nextItemId++;
-      }
-    });
-
-    console.log(`Successfully created ${qty} items for part ${partNumber}`);
-    revalidatePath('/');
-    if (projectId) revalidatePath(`/project/${projectId}`);
-
-    return { success: true, partNumber };
-
-  } catch (error) {
-    console.error('Error in createPrinted:', error);
-    throw error;
-  }
-}
-</file>
-
-<file path="app/actions/updateProcess.ts">
-'use server'
-
-import { mockStore } from '@/lib/mockStore'
-import { ProcessStatus } from '@/app/types'
-import { revalidatePath } from 'next/cache'
-
-/**
- * 部品アイテムの工程を更新するサーバーアクション
- * @param itemId - 更新する部品アイテムのID
- * @param nextProcess - 次の工程名
- */
-export async function updateProcess(
-  itemId: string | number,
-  nextProcess: string,
-  projectId?: number
-) {
-  // 文字列IDを数値に変換（mockStoreの仕様に合わせる）
-  const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-
-  // メモリ上のデータを更新
-  await mockStore.updatePartItem(id, {
-    status: nextProcess as ProcessStatus,
-    // READYに移行した場合は完了日時を設定
-    completed_at: nextProcess === 'READY' ? new Date() : null
-  });
-
-  // 工程ログはモック版では省略、または必要なら追加
-  console.log(`Updated item ${id} to status ${nextProcess}`);
-
-  // キャッシュを更新してUIに反映
-  revalidatePath('/');
-  revalidatePath(`/item/${id}`);
-  if (projectId) {
-    revalidatePath(`/project/${projectId}`);
-  }
+export async function consumeItem(itemId: string | number) {
+  return consumeItemNew(itemId);
 }
 </file>
 
@@ -3297,6 +4000,66 @@ export interface ProgressData {
   part_number: string;
   storage_cases: string[];
   counts: Record<ProcessStatus, number>;
+}
+</file>
+
+<file path="app/actions/createPrinted.ts">
+'use server'
+
+/**
+ * 後方互換性のためのラッパー
+ * 新しいモジュラーモノリス構造の Production Module に委譲
+ */
+
+import { ProcessStatus } from '@/app/types';
+
+// 新しいモジュール構造から関数をインポート
+import { createPrinted as createPrintedNew } from '@/src/modules/production/actions/createPrinted';
+
+/**
+ * 3Dプリントされた新しい部品アイテムを作成するサーバーアクション
+ * @deprecated 新しいモジュール構造の createPrinted を使用してください
+ */
+export async function createPrinted(
+  fileBuffer: ArrayBuffer,
+  fileName: string,
+  projectId: number,
+  qty: number,
+  targetStatus: ProcessStatus = 'PRINTED'
+): Promise<{ success: boolean; partNumber: string }> {
+  return createPrintedNew(
+    fileBuffer,
+    fileName,
+    projectId,
+    qty,
+    targetStatus
+  );
+}
+</file>
+
+<file path="app/actions/updateProcess.ts">
+'use server'
+
+/**
+ * 後方互換性のためのラッパー
+ * 新しいモジュラーモノリス構造の Production Module に委譲
+ */
+
+import { ProcessStatus } from '@/app/types';
+
+// 新しいモジュール構造から関数をインポート
+import { updateProcess as updateProcessNew } from '@/src/modules/production/actions/updateProcess';
+
+/**
+ * 部品アイテムの工程を更新するサーバーアクション
+ * @deprecated 新しいモジュール構造の updateProcess を使用してください
+ */
+export async function updateProcess(
+  itemId: string | number,
+  nextProcess: string,
+  projectId?: number
+) {
+  return updateProcessNew(itemId, nextProcess, projectId);
 }
 </file>
 
@@ -3731,8 +4494,8 @@ export default function PrintRegistrationPage() {
 <file path="app/project/[id]/page.tsx">
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { aggregateProgress } from '@/app/utils';
-import { SummaryCard } from '@/app/components/SummaryCard';
+import { aggregateProgress } from '@/src/modules/production/services/itemService';
+import { SummaryCard } from '@/src/shared/components/SummaryCard';
 import { mockStore } from '@/lib/mockStore';
 import ProjectClientContent from './ProjectClientContent';
 
@@ -3837,12 +4600,14 @@ import {
 import {
     sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { CartModal } from '@/app/components/CartModal';
-import { PreviewModal } from '@/app/components/PreviewModal';
-import { Part, PartItem, ProcessStatus } from '@/app/types';
-import { updateItemStatus } from '@/app/actions/updateItemStatus';
-import { SwimlaneColumn } from '@/app/components/swimlane/SwimlaneColumn';
-import { SwimlaneItem } from '@/app/components/swimlane/SwimlaneItem';
+import { CartModal } from '@/src/modules/logistics/components/CartModal';
+import { PreviewModal } from '@/src/modules/production/components/PreviewModal';
+import { Part } from '@/src/modules/inventory/types';
+import { PartItem } from '@/src/modules/production/types';
+import { ProcessStatus } from '@/src/shared/types';
+import { updateItemStatus } from '@/src/modules/production/actions/updateItemStatus';
+import { SwimlaneColumn } from '@/src/modules/production/components/swimlane/SwimlaneColumn';
+import { SwimlaneItem } from '@/src/modules/production/components/swimlane/SwimlaneItem';
 import { PROCESSES } from '@/app/constants';
 
 // --- Main Component ---

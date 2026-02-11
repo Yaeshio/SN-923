@@ -1,4 +1,4 @@
-import { Part, PartItem, Project, ProcessStatus } from '@/app/types';
+import { Part, PartItem, Project, ProcessStatus, Unit } from '@/app/types';
 import { db } from './firebase';
 import {
     collection,
@@ -7,6 +7,7 @@ import {
     getDoc,
     updateDoc,
     setDoc,
+    addDoc,
     query,
     where,
     Timestamp,
@@ -42,6 +43,35 @@ export const mockStore = {
         return { id: Number(span.id), ...dateConverter(span.data()) } as Project;
     },
 
+    getUnitsByProject: async (projectId: number): Promise<Unit[]> => {
+        const q = query(collection(db, 'units'), where('project_id', '==', projectId));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        })) as Unit[];
+    },
+
+    addUnit: async (projectId: number, name: string): Promise<Unit> => {
+        const docRef = await addDoc(collection(db, 'units'), {
+            project_id: projectId,
+            name: name,
+            description: ''
+        });
+        return {
+            id: docRef.id,
+            project_id: projectId,
+            name: name
+        };
+    },
+
+    assignPartToUnit: async (partId: number, unitId: string | null): Promise<void> => {
+        const docRef = doc(db, 'parts', String(partId));
+        await updateDoc(docRef, {
+            unit_id: unitId
+        });
+    },
+
     getParts: async (projectId?: number): Promise<Part[]> => {
         let q;
         if (projectId) {
@@ -65,8 +95,6 @@ export const mockStore = {
             if (targetPartIds.length === 0) return [];
         }
 
-        // Firestoreの 'in' 句は最大10個までなので、ここでは全件取得してJSでフィルタリングする方式を採用
-        // (プロトタイプのため簡易実装)
         const snapshot = await getDocs(collection(db, 'partItems'));
         const items = snapshot.docs.map(doc => ({
             id: Number(doc.id),

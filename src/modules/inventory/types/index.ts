@@ -7,6 +7,7 @@ export interface Part {
     id: number;
     part_number: string;
     project_id: number;
+    unit_id?: string | null;
 }
 
 export interface ParsedFileInfo {

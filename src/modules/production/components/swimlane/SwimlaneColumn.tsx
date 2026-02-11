@@ -4,15 +4,18 @@ import { PROCESSES } from '@/app/constants';
 import { SwimlaneCell } from './SwimlaneCell';
 import FileDownloadButton from '@/src/shared/components/FileDownloadButton';
 
+import { MoveRight } from 'lucide-react';
+
 interface SwimlaneColumnProps {
     part: Part;
     items: PartItem[];
     selectedIds: number[];
     onToggleSelect: (itemId: number) => void;
     onPreview: (item: any) => void;
+    onMove: (partId: number) => void;
 }
 
-export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPreview }: SwimlaneColumnProps) {
+export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPreview, onMove }: SwimlaneColumnProps) {
     // Find the "furthest" process index that has items
     const lastActiveIndex = items.reduce((max, item) => {
         const idx = PROCESSES.findIndex(p => p.key === item.status);
@@ -27,16 +30,25 @@ export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPre
     ">
             {/* Column Header - Part Info */}
             <div className="sticky top-0 z-20 h-24 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex flex-col justify-between group-hover:bg-white transition-colors">
-                <div className="min-w-0">
-                    <h3 className="font-black text-gray-900 text-xs tracking-tight truncate uppercase" title={part.part_number}>
-                        {part.part_number}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                            Active
-                        </p>
+                <div className="min-w-0 flex items-start justify-between gap-2">
+                    <div>
+                        <h3 className="font-black text-gray-900 text-xs tracking-tight truncate uppercase" title={part.part_number}>
+                            {part.part_number}
+                        </h3>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                Active
+                            </p>
+                        </div>
                     </div>
+                    <button
+                        onClick={() => onMove(part.id)}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        title="ユニットへ移動"
+                    >
+                        <MoveRight size={14} />
+                    </button>
                 </div>
 
                 <div className="flex items-center justify-between gap-2 mt-2">

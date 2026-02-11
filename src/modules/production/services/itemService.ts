@@ -127,7 +127,8 @@ export function aggregateProgress(parts: Part[], partItems: PartItem[]): any[] {
             part_number: part.part_number,
             status: currentProcess,
             storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
-            count: items.length
+            count: items.length,
+            unit_id: part.unit_id
         };
     });
 }

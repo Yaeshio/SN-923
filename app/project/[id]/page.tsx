@@ -30,6 +30,7 @@ export default async function ProjectDetailPage(props: PageProps) {
     // データの取得
     const parts = await mockStore.getParts(projectId);
     const partItems = await mockStore.getPartItems(projectId);
+    const units = await mockStore.getUnitsByProject(projectId);
 
     const totalInventory = partItems.length;
     const inProgress = partItems.filter(item => item.status !== 'ASSEMBLED').length;
@@ -45,6 +46,7 @@ export default async function ProjectDetailPage(props: PageProps) {
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
+            {/* ... (header and summary cards) */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div>
                     <Link href="/" className="text-blue-600 hover:text-blue-800 mb-2 inline-block font-medium">
@@ -82,6 +84,7 @@ export default async function ProjectDetailPage(props: PageProps) {
                 parts={parts}
                 partItems={partItems}
                 projectId={projectId}
+                initialUnits={units}
             />
         </div>
     );

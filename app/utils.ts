@@ -22,7 +22,17 @@ export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] =
       part_number: part.part_number,
       status: currentProcess, // Rename field
       storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
-      count: items.length
+      count: items.length,
+      unit_id: part.unit_id
     };
   });
+};
+
+export const calculateUnitProgress = (parts: Part[], partItems: PartItem[]): number => {
+  if (parts.length === 0) return 0;
+
+  const aggregated = aggregateProgress(parts, partItems);
+  const readyCount = aggregated.filter(p => p.status === 'READY').length;
+
+  return Math.round((readyCount / parts.length) * 100);
 };

@@ -18,3 +18,17 @@ export interface Project {
     description: string;
     deadline: string;
 }
+
+export interface Part {
+    id: number;
+    part_number: string;
+    project_id: number;
+    unit_id?: string | null;
+}
+
+export interface Unit {
+    id: string;
+    name: string;
+    project_id: number;
+    description?: string;
+}
