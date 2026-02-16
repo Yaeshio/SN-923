@@ -24,3 +24,19 @@ export interface ParsedFileInfo {
     /** 割り当てられる保管ボックスのリスト */
     storageBoxes?: string[];
 }
+
+/**
+ * 物理的な箱（パーツ保管用）の型定義
+ */
+export interface Box {
+    /** FirestoreのドキュメントID (例: "BOX-001") */
+    id: string;
+    /** 物理的な箱の名称 (例: "棚A-1") */
+    name: string;
+    /** 現在部品が入っているかどうか */
+    is_occupied: boolean;
+    /** 紐付いている PartItem の ID */
+    current_item_id: string | null;
+    /** 最終更新日時（FirestoreのTimestamp想定） */
+    last_used_at?: any;
+}

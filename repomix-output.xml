@@ -99,11 +99,13 @@ firebase-export-1770456349158PyqgDy/firestore_export/firestore_export.overall_ex
 firebase-export-1770545049902UW2hwo/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
 firebase-export-1770545049902UW2hwo/firestore_export/all_namespaces/all_kinds/output-0
 firebase-export-1770545049902UW2hwo/firestore_export/firestore_export.overall_export_metadata
+firebase-export-1771230710410C4qDYo/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
+firebase-export-1771230710410C4qDYo/firestore_export/all_namespaces/all_kinds/output-0
+firebase-export-1771230710410C4qDYo/firestore_export/firestore_export.overall_export_metadata
 firebase.json
 firestore.indexes.json
 firestore.rules
 graph.dot
-lib/firebase.ts
 lib/mockStore.ts
 lib/utils/parseFileName.ts
 next.config.js
@@ -152,6 +154,87 @@ types-diagram.mmd
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path=".continue/agents/new-config.yaml">
+# This is an example configuration file
+# To learn more, see the full config.yaml reference: https://docs.continue.dev/reference
+
+name: Example Config
+version: 1.0.0
+schema: v1
+
+# Define which models can be used
+# https://docs.continue.dev/customization/models
+models:
+  - name: my gpt-5
+    provider: openai
+    model: gpt-5
+    apiKey: YOUR_OPENAI_API_KEY_HERE
+  - uses: ollama/qwen2.5-coder-7b
+  - uses: anthropic/claude-4-sonnet
+    with:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+# MCP Servers that Continue can access
+# https://docs.continue.dev/customization/mcp-tools
+mcpServers:
+  - uses: anthropic/memory-mcp
+</file>
+
+<file path=".env,local">
+# Firebase Project ID (Emulator用に 'demo-' を付ける)
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-bom3d-sn923
+
+# 各種エミュレータのポート番号（デフォルト）
+NEXT_PUBLIC_FIREBASE_FIRESTORE_EMULATOR_HOST=localhost:8080
+NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=http://localhost:9099
+</file>
+
+<file path=".gitignore">
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+</file>
 
 <file path="diagram_full.mmd">
 classDiagram
@@ -352,1107 +435,6 @@ class ProgressData {
 +counts: Record~ProcessStatus, number~
             
         }
-</file>
-
-<file path="emulator_data/auth_export/accounts.json">
-{"kind":"identitytoolkit#DownloadAccountResponse","users":[]}
-</file>
-
-<file path="emulator_data/auth_export/config.json">
-{"signIn":{"allowDuplicateEmails":false},"emailPrivacyConfig":{"enableImprovedEmailPrivacy":false}}
-</file>
-
-<file path="emulator_data/firebase-export-metadata.json">
-{
-  "version": "15.5.1",
-  "firestore": {
-    "version": "1.20.2",
-    "path": "firestore_export",
-    "metadata_file": "firestore_export/firestore_export.overall_export_metadata"
-  },
-  "database": {
-    "version": "4.11.2",
-    "path": "database_export"
-  },
-  "auth": {
-    "version": "15.5.1",
-    "path": "auth_export"
-  },
-  "storage": {
-    "version": "15.5.1",
-    "path": "storage_export"
-  }
-}
-</file>
-
-<file path="emulator_data/storage_export/buckets.json">
-{
-  "buckets": [
-    {
-      "id": "demo-bom3d-sn923.appspot.com"
-    }
-  ]
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/1592b06d-023b-4d51-a98b-9b3ec464ab92.json">
-{
-  "name": "projects/1/stl/ボディ187_1770448719111.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770448719129,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "0d5b873f-5566-41c8-9aed-2966cb89c568"
-  ],
-  "etag": "/8CRwCb9eSxkxd1bg1VpEt1L/RM",
-  "customMetadata": {},
-  "timeCreated": "2026-02-07T07:18:39.129Z",
-  "updated": "2026-02-07T07:18:39.129Z",
-  "size": 39684,
-  "md5Hash": "jZtKIN6hQiBgTaoJmooYZg==",
-  "crc32c": "166781100"
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/62721c6e-4531-4e24-9503-c9354d564dda.json">
-{
-  "name": "projects/1/stl/ボディ179_1770529445795.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770529445803,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "c8356d83-1b71-492e-ad9e-1e08a7059152"
-  ],
-  "etag": "G7O4LY1yNWn2fz3aAjD0WA4xnlE",
-  "customMetadata": {},
-  "timeCreated": "2026-02-08T05:44:05.803Z",
-  "updated": "2026-02-08T05:44:05.803Z",
-  "size": 35684,
-  "md5Hash": "r+kYllHl14flvVDvPfPe6A==",
-  "crc32c": "1892013277"
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/6b16cb67-4e80-4417-a181-dbc10ab6386a.json">
-{
-  "name": "projects/1/stl/ボディ183_1770529444757.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770529444789,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "b24bc10e-e721-4980-b3b5-d8bdca2345f0"
-  ],
-  "etag": "g12pRYleuMn2JZKWrge4QO4vElQ",
-  "customMetadata": {},
-  "timeCreated": "2026-02-08T05:44:04.789Z",
-  "updated": "2026-02-08T05:44:04.789Z",
-  "size": 29384,
-  "md5Hash": "OEi71t0ezdb9aZB3RXtkcw==",
-  "crc32c": "115996729"
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/83c411db-774b-4e81-a3e4-26fad60acd23.json">
-{
-  "name": "projects/1/stl/ボディ180_1770529445567.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770529445576,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "b9e90764-c8ed-4ed1-9e5b-aea9489bee1a"
-  ],
-  "etag": "LBOEOOSnr8Nd2AocdQ224yyApQ8",
-  "customMetadata": {},
-  "timeCreated": "2026-02-08T05:44:05.576Z",
-  "updated": "2026-02-08T05:44:05.576Z",
-  "size": 25284,
-  "md5Hash": "bc0DrlnmuANN4871E26lxw==",
-  "crc32c": "694601673"
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/b257a210-a7a3-4c46-b1b3-f2d9dec88453.json">
-{
-  "name": "projects/1/stl/ボディ186_1770529445301.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770529445312,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "22f50b40-1c42-486a-a476-ad04f0ce8618"
-  ],
-  "etag": "ivhmcEfZc6mELCYhaybXm8I2Mo8",
-  "customMetadata": {},
-  "timeCreated": "2026-02-08T05:44:05.312Z",
-  "updated": "2026-02-08T05:44:05.312Z",
-  "size": 22884,
-  "md5Hash": "o4PfDl24x7AjTrkMvz7cQQ==",
-  "crc32c": "2880207178"
-}
-</file>
-
-<file path="out.svg">
-<svg version="1.1" baseProfile="full" width="1792.0" height="209.0" viewBox="0 0 1792 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
-<desc >#.interface: fill=lightblue
-#.enumeration: fill=lightgreen
-#.type: fill=lightgray
-
-[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
-[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
-[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
-[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
-[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]
-[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
-[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
-[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
-[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
-[&lt;interface&gt;ImportResult|+success: boolean;+fileName: string;+partNumber?: string;+partId?: number;+itemsCreated?: number;+error?: string|]
-[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
-[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
-[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
-[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
-<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
-<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
-<g stroke="transparent" fill="transparent">
-<rect x="0.0" y="0.0" height="209.0" width="1792.0" stroke="none"></rect>
-</g>
-<g transform="translate(8, 8)" fill="#33322E">
-<g transform="translate(20, 20)">
-<g data-name="Project">
-<g fill="lightblue" stroke="#33322E" data-name="Project">
-<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
-<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
-<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
-</g>
-<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
-<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
-
-</g>
-</g>
-<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
-<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
-<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
-
-</g>
-</g>
-<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="Unit">
-<g fill="lightblue" stroke="#33322E" data-name="Unit">
-<rect x="207.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
-<path d="M207.0 48.0 L384.0 48.0" fill="none" data-name="Unit"></path>
-<path d="M207.0 129.0 L384.0 129.0" fill="none" data-name="Unit"></path>
-</g>
-<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
-<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
-
-</g>
-</g>
-<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
-<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
-<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
-
-</g>
-</g>
-<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="Part">
-<g fill="lightblue" stroke="#33322E" data-name="Part">
-<rect x="424.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
-<path d="M424.0 48.0 L605.0 48.0" fill="none" data-name="Part"></path>
-<path d="M424.0 129.0 L605.0 129.0" fill="none" data-name="Part"></path>
-</g>
-<g transform="translate(424, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
-<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
-
-</g>
-</g>
-<g transform="translate(424, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
-<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
-<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
-
-</g>
-</g>
-<g transform="translate(424, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="PartItem">
-<g fill="lightblue" stroke="#33322E" data-name="PartItem">
-<rect x="645.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
-<path d="M645.0 32.0 L843.0 32.0" fill="none" data-name="PartItem"></path>
-<path d="M645.0 145.0 L843.0 145.0" fill="none" data-name="PartItem"></path>
-</g>
-<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
-<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
-
-</g>
-</g>
-<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
-<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
-<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
-<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
-<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
-<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
-
-</g>
-</g>
-<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="ProgressData">
-<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
-<rect x="883.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
-<path d="M883.0 56.0 L1233.0 56.0" fill="none" data-name="ProgressData"></path>
-<path d="M883.0 121.0 L1233.0 121.0" fill="none" data-name="ProgressData"></path>
-</g>
-<g transform="translate(883, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
-<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
-
-</g>
-</g>
-<g transform="translate(883, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
-<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
-<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
-
-</g>
-</g>
-<g transform="translate(883, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="ParsedFileInfo">
-<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
-<rect x="1273.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
-<path d="M1273.0 32.0 L1485.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
-<path d="M1273.0 145.0 L1485.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
-</g>
-<g transform="translate(1273, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
-<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
-
-</g>
-</g>
-<g transform="translate(1273, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
-<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
-<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
-<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
-<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
-
-</g>
-</g>
-<g transform="translate(1273, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="ImportResult">
-<g fill="lightblue" stroke="#33322E" data-name="ImportResult">
-<rect x="1525.0" y="0.0" height="153.0" width="211.0" data-name="ImportResult"></rect>
-<path d="M1525.0 32.0 L1736.0 32.0" fill="none" data-name="ImportResult"></path>
-<path d="M1525.0 145.0 L1736.0 145.0" fill="none" data-name="ImportResult"></path>
-</g>
-<g transform="translate(1525, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ImportResult" data-compartment="0">
-<a id="src\modules\engineering\actions\importStl.ts.ImportResult" xlink:href="src\modules\engineering\actions\importStl.ts"><text x="97.5" y="14.1" stroke="none" text-anchor="middle" data-name="ImportResult" data-compartment="0">ImportResult</text></a>
-
-</g>
-</g>
-<g transform="translate(1525, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ImportResult" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="ImportResult" data-compartment="1">+success: boolean</text>
-<text x="0.0" y="30.3" stroke="none" data-name="ImportResult" data-compartment="1">+fileName: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="ImportResult" data-compartment="1">+partNumber?: string</text>
-<text x="0.0" y="62.7" stroke="none" data-name="ImportResult" data-compartment="1">+partId?: number</text>
-<text x="0.0" y="78.9" stroke="none" data-name="ImportResult" data-compartment="1">+itemsCreated?: number</text>
-<text x="0.0" y="95.1" stroke="none" data-name="ImportResult" data-compartment="1">+error?: string</text>
-
-</g>
-</g>
-<g transform="translate(1525, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="ImportResult" data-compartment="2">
-
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-</svg>
-</file>
-
-<file path="scripts/seed-initial-data.ts">
-import { db } from '../lib/firebase';
-import {
-    collection,
-    doc,
-    setDoc,
-    getDocs,
-    deleteDoc,
-    getDoc,
-    serverTimestamp
-} from 'firebase/firestore';
-
-/**
- * 初期データ投入（シーディング）スクリプト
- * 
- * 役割:
- * 1. projects コレクションへの初期プロジェクト投入
- * 2. boxes コレクションへの初期ボックス投入 (BOX-001 ～ BOX-050)
- * 
- * 実行方法:
- * npx tsx scripts/seed-initial-data.ts
- * 
- * オプション:
- * --clear  既存のデータを一旦削除してから投入します。
- */
-
-// エミュレーター接続を確実にするための設定
-(process.env as any).NEXT_PUBLIC_FIREBASE_PROJECT_ID = "demo-bom3d-sn923";
-(process.env as any).NODE_ENV = 'development';
-
-async function clearCollection(name: string) {
-    console.log(`[Clear] Cleaning collection: ${name}...`);
-    const q = collection(db, name);
-    const snapshot = await getDocs(q);
-    const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
-    await Promise.all(deletePromises);
-    console.log(`[Clear] ${snapshot.size} documents deleted from ${name}.`);
-}
-
-async function seed() {
-    const args = process.argv.slice(2);
-    const shouldClear = args.includes('--clear');
-
-    console.log('--- Database Seeding Start ---');
-
-    if (shouldClear) {
-        await clearCollection('projects');
-        await clearCollection('boxes');
-    }
-
-    // 1. projects
-    console.log('Seeding projects...');
-    const projectId = "proto-2024";
-    const projectRef = doc(db, 'projects', projectId);
-    const projectData = {
-        name: "プロトタイプ開発2024",
-        deadline: "2024-12-31",
-        description: "Firebase移行後の初期データ",
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp()
-    };
-
-    const projectSnap = await getDoc(projectRef);
-    if (!projectSnap.exists() || shouldClear) {
-        await setDoc(projectRef, projectData);
-        console.log(`✔️  Project "${projectData.name}" created (ID: ${projectId}).`);
-    } else {
-        console.log(`ℹ️  Project "${projectId}" already exists. Skipping.`);
-    }
-
-    // 2. boxes (新規追加)
-    console.log('Seeding boxes (BOX-001 to BOX-050)...');
-    let createdCount = 0;
-    let skippedCount = 0;
-
-    for (let i = 1; i <= 50; i++) {
-        const boxId = `BOX-${String(i).padStart(3, '0')}`;
-        const boxRef = doc(db, 'boxes', boxId);
-
-        const boxData = {
-            id: boxId,
-            status: "AVAILABLE",
-            updated_at: serverTimestamp()
-        };
-
-        if (!shouldClear) {
-            const boxSnap = await getDoc(boxRef);
-            if (boxSnap.exists()) {
-                skippedCount++;
-                continue;
-            }
-        }
-
-        await setDoc(boxRef, boxData);
-        createdCount++;
-    }
-
-    console.log(`✔️  Boxes: ${createdCount} created, ${skippedCount} skipped.`);
-    console.log('--- Seeding Completed! ---');
-    process.exit(0);
-}
-
-seed().catch((error) => {
-    console.error('❌  Seeding failed:', error);
-    process.exit(1);
-});
-</file>
-
-<file path="src/modules/engineering/actions/projectActions.ts">
-'use server'
-
-/**
- * Engineering Module - Project Actions
- * プロジェクトの作成と管理
- */
-
-import { db } from '@/src/shared/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { revalidatePath } from 'next/cache';
-
-/**
- * 新規プロジェクトを作成するサーバーアクション
- * 
- * @param name - プロジェクト名
- * @param description - 説明
- * @param deadline - 納期
- * @returns 作成されたプロジェクトのID
- */
-export async function createProject(
-    name: string,
-    description: string,
-    deadline: string
-) {
-    try {
-        const docRef = await addDoc(collection(db, 'projects'), {
-            name,
-            description,
-            deadline,
-            created_at: serverTimestamp(),
-            updated_at: serverTimestamp()
-        });
-
-        console.log(`[ProjectActions] Created new project with ID: ${docRef.id}`);
-
-        // ダッシュボードを更新
-        revalidatePath('/');
-
-        return { success: true, id: docRef.id };
-    } catch (error) {
-        console.error('Failed to create project:', error);
-        return { success: false, error: 'プロジェクトの作成に失敗しました' };
-    }
-}
-</file>
-
-<file path="src/modules/project/components/ProjectsList.tsx">
-'use client';
-
-/**
- * Project Module - Projects List Component
- * プロジェクト一覧をリアルタイムで表示する
- */
-
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { db } from '@/src/shared/lib/firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { Project } from '@/src/shared/types';
-
-export function ProjectsList() {
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const q = query(collection(db, 'projects'), orderBy('name', 'asc'));
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const projectsData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as Project[];
-            setProjects(projectsData);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error fetching projects: ", error);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-    if (loading) {
-        return (
-            <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-        );
-    }
-
-    if (projects.length === 0) {
-        return (
-            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
-                <p className="text-gray-500">プロジェクトがありません。新しいプロジェクトを作成してください。</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {projects.map((project) => (
-                <Link key={project.id} href={`/project/${project.id}`}>
-                    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer flex flex-col h-full transform hover:-translate-y-1">
-                        <div className="p-8 flex-grow">
-                            <div className="flex justify-between items-start mb-6">
-                                <h2 className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
-                                    {project.name}
-                                </h2>
-                                <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                                    進行中
-                                </span>
-                            </div>
-                            <p className="text-gray-600 mb-8 leading-relaxed">
-                                {project.description}
-                            </p>
-
-                            {/* 簡易進捗表示（ダミー） */}
-                            <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="font-medium text-gray-700">全体進捗</span>
-                                    <span className="font-bold text-blue-600">65%</span>
-                                </div>
-                                <div className="w-full bg-gray-100 rounded-full h-3">
-                                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full w-[65%] shadow-sm"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center group-hover:bg-blue-50 transition-colors">
-                            <div className="text-sm">
-                                <span className="text-gray-500">納期: </span>
-                                <span className="font-semibold text-gray-800">{project.deadline}</span>
-                            </div>
-                            <span className="text-blue-600 font-bold flex items-center group-hover:translate-x-1 transition-transform">
-                                詳細を見る
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </span>
-                        </div>
-                    </div>
-                </Link>
-            ))}
-        </div>
-    );
-}
-</file>
-
-<file path="types-diagram.md">
-<svg version="1.1" baseProfile="full" width="1541.0" height="209.0" viewBox="0 0 1541 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
-<desc >#.interface: fill=lightblue
-#.enumeration: fill=lightgreen
-#.type: fill=lightgray
-
-[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
-[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
-[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
-[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
-[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
-[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
-[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
-<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
-<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
-<g stroke="transparent" fill="transparent">
-<rect x="0.0" y="0.0" height="209.0" width="1541.0" stroke="none"></rect>
-</g>
-<g transform="translate(8, 8)" fill="#33322E">
-<g transform="translate(20, 20)">
-<g data-name="Project">
-<g fill="lightblue" stroke="#33322E" data-name="Project">
-<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
-<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
-<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
-</g>
-<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
-<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
-
-</g>
-</g>
-<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
-<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
-<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
-
-</g>
-</g>
-<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="Part">
-<g fill="lightblue" stroke="#33322E" data-name="Part">
-<rect x="207.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
-<path d="M207.0 48.0 L388.0 48.0" fill="none" data-name="Part"></path>
-<path d="M207.0 129.0 L388.0 129.0" fill="none" data-name="Part"></path>
-</g>
-<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
-<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
-
-</g>
-</g>
-<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
-<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
-<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
-
-</g>
-</g>
-<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="Unit">
-<g fill="lightblue" stroke="#33322E" data-name="Unit">
-<rect x="428.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
-<path d="M428.0 48.0 L605.0 48.0" fill="none" data-name="Unit"></path>
-<path d="M428.0 129.0 L605.0 129.0" fill="none" data-name="Unit"></path>
-</g>
-<g transform="translate(428, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
-<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
-
-</g>
-</g>
-<g transform="translate(428, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
-<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
-<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
-
-</g>
-</g>
-<g transform="translate(428, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="ParsedFileInfo">
-<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
-<rect x="645.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
-<path d="M645.0 32.0 L857.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
-<path d="M645.0 145.0 L857.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
-</g>
-<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
-<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
-
-</g>
-</g>
-<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
-<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
-<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
-<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
-<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
-
-</g>
-</g>
-<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="PartItem">
-<g fill="lightblue" stroke="#33322E" data-name="PartItem">
-<rect x="897.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
-<path d="M897.0 32.0 L1095.0 32.0" fill="none" data-name="PartItem"></path>
-<path d="M897.0 145.0 L1095.0 145.0" fill="none" data-name="PartItem"></path>
-</g>
-<g transform="translate(897, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
-<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
-
-</g>
-</g>
-<g transform="translate(897, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
-<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
-<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
-<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
-<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
-<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
-
-</g>
-</g>
-<g transform="translate(897, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="ProgressData">
-<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
-<rect x="1135.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
-<path d="M1135.0 56.0 L1485.0 56.0" fill="none" data-name="ProgressData"></path>
-<path d="M1135.0 121.0 L1485.0 121.0" fill="none" data-name="ProgressData"></path>
-</g>
-<g transform="translate(1135, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
-<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
-
-</g>
-</g>
-<g transform="translate(1135, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
-<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
-<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
-
-</g>
-</g>
-<g transform="translate(1135, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
-
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-</svg>
-</file>
-
-<file path="types-diagram.mmd">
-<svg version="1.1" baseProfile="full" width="1541.0" height="209.0" viewBox="0 0 1541 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
-<desc >#.interface: fill=lightblue
-#.enumeration: fill=lightgreen
-#.type: fill=lightgray
-
-[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
-[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
-[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
-[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
-[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
-[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
-[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
-<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
-<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
-<g stroke="transparent" fill="transparent">
-<rect x="0.0" y="0.0" height="209.0" width="1541.0" stroke="none"></rect>
-</g>
-<g transform="translate(8, 8)" fill="#33322E">
-<g transform="translate(20, 20)">
-<g data-name="Project">
-<g fill="lightblue" stroke="#33322E" data-name="Project">
-<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
-<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
-<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
-</g>
-<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
-<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
-
-</g>
-</g>
-<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
-<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
-<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
-
-</g>
-</g>
-<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="Part">
-<g fill="lightblue" stroke="#33322E" data-name="Part">
-<rect x="207.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
-<path d="M207.0 48.0 L388.0 48.0" fill="none" data-name="Part"></path>
-<path d="M207.0 129.0 L388.0 129.0" fill="none" data-name="Part"></path>
-</g>
-<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
-<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
-
-</g>
-</g>
-<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
-<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
-<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
-
-</g>
-</g>
-<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="Unit">
-<g fill="lightblue" stroke="#33322E" data-name="Unit">
-<rect x="428.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
-<path d="M428.0 48.0 L605.0 48.0" fill="none" data-name="Unit"></path>
-<path d="M428.0 129.0 L605.0 129.0" fill="none" data-name="Unit"></path>
-</g>
-<g transform="translate(428, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
-<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
-
-</g>
-</g>
-<g transform="translate(428, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
-<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
-<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
-
-</g>
-</g>
-<g transform="translate(428, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="ParsedFileInfo">
-<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
-<rect x="645.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
-<path d="M645.0 32.0 L857.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
-<path d="M645.0 145.0 L857.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
-</g>
-<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
-<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
-
-</g>
-</g>
-<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
-<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
-<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
-<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
-<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
-<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
-
-</g>
-</g>
-<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="PartItem">
-<g fill="lightblue" stroke="#33322E" data-name="PartItem">
-<rect x="897.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
-<path d="M897.0 32.0 L1095.0 32.0" fill="none" data-name="PartItem"></path>
-<path d="M897.0 145.0 L1095.0 145.0" fill="none" data-name="PartItem"></path>
-</g>
-<g transform="translate(897, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
-<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
-
-</g>
-</g>
-<g transform="translate(897, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
-<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
-<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
-<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
-<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
-<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
-
-</g>
-</g>
-<g transform="translate(897, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
-
-</g>
-</g>
-</g>
-<g data-name="ProgressData">
-<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
-<rect x="1135.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
-<path d="M1135.0 56.0 L1485.0 56.0" fill="none" data-name="ProgressData"></path>
-<path d="M1135.0 121.0 L1485.0 121.0" fill="none" data-name="ProgressData"></path>
-</g>
-<g transform="translate(1135, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
-<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
-<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
-
-</g>
-</g>
-<g transform="translate(1135, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
-<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
-<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
-<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
-<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
-
-</g>
-</g>
-<g transform="translate(1135, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
-<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
-
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-</g>
-</svg>
-</file>
-
-<file path=".continue/agents/new-config.yaml">
-# This is an example configuration file
-# To learn more, see the full config.yaml reference: https://docs.continue.dev/reference
-
-name: Example Config
-version: 1.0.0
-schema: v1
-
-# Define which models can be used
-# https://docs.continue.dev/customization/models
-models:
-  - name: my gpt-5
-    provider: openai
-    model: gpt-5
-    apiKey: YOUR_OPENAI_API_KEY_HERE
-  - uses: ollama/qwen2.5-coder-7b
-  - uses: anthropic/claude-4-sonnet
-    with:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-# MCP Servers that Continue can access
-# https://docs.continue.dev/customization/mcp-tools
-mcpServers:
-  - uses: anthropic/memory-mcp
-</file>
-
-<file path=".env,local">
-# Firebase Project ID (Emulator用に 'demo-' を付ける)
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-bom3d-sn923
-
-# 各種エミュレータのポート番号（デフォルト）
-NEXT_PUBLIC_FIREBASE_FIRESTORE_EMULATOR_HOST=localhost:8080
-NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=http://localhost:9099
-</file>
-
-<file path=".gitignore">
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-Thumbs.db
 </file>
 
 <file path="docs/INTEGRATION_EXAMPLE.md">
@@ -1867,6 +849,47 @@ const storagePath = `custom/path/${partNumber}.stl`;
 - [ ] CSVによる一括インポート
 </file>
 
+<file path="emulator_data/auth_export/accounts.json">
+{"kind":"identitytoolkit#DownloadAccountResponse","users":[]}
+</file>
+
+<file path="emulator_data/auth_export/config.json">
+{"signIn":{"allowDuplicateEmails":false},"emailPrivacyConfig":{"enableImprovedEmailPrivacy":false}}
+</file>
+
+<file path="emulator_data/firebase-export-metadata.json">
+{
+  "version": "15.5.1",
+  "firestore": {
+    "version": "1.20.2",
+    "path": "firestore_export",
+    "metadata_file": "firestore_export/firestore_export.overall_export_metadata"
+  },
+  "database": {
+    "version": "4.11.2",
+    "path": "database_export"
+  },
+  "auth": {
+    "version": "15.5.1",
+    "path": "auth_export"
+  },
+  "storage": {
+    "version": "15.5.1",
+    "path": "storage_export"
+  }
+}
+</file>
+
+<file path="emulator_data/storage_export/buckets.json">
+{
+  "buckets": [
+    {
+      "id": "demo-bom3d-sn923.appspot.com"
+    }
+  ]
+}
+</file>
+
 <file path="firebase-data/auth_export/accounts.json">
 {"kind":"identitytoolkit#DownloadAccountResponse","users":[]}
 </file>
@@ -1898,35 +921,113 @@ const storagePath = `custom/path/${partNumber}.stl`;
 }
 </file>
 
-<file path="firebase.json">
+<file path="firebase-data/storage_export/metadata/1592b06d-023b-4d51-a98b-9b3ec464ab92.json">
 {
-  "firestore": {
-    "database": "(default)",
-    "location": "nam5",
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "emulators": {
-    "auth": {
-      "port": 9099
-    },
-    "firestore": {
-      "port": 8080
-    },
-    "database": {
-      "port": 9000
-    },
-    "hosting": {
-      "port": 5000
-    },
-    "storage": {
-      "port": 9199
-    },
-    "ui": {
-      "enabled": true
-    },
-    "singleProjectMode": true
-  }
+  "name": "projects/1/stl/ボディ187_1770448719111.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770448719129,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "0d5b873f-5566-41c8-9aed-2966cb89c568"
+  ],
+  "etag": "/8CRwCb9eSxkxd1bg1VpEt1L/RM",
+  "customMetadata": {},
+  "timeCreated": "2026-02-07T07:18:39.129Z",
+  "updated": "2026-02-07T07:18:39.129Z",
+  "size": 39684,
+  "md5Hash": "jZtKIN6hQiBgTaoJmooYZg==",
+  "crc32c": "166781100"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/62721c6e-4531-4e24-9503-c9354d564dda.json">
+{
+  "name": "projects/1/stl/ボディ179_1770529445795.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529445803,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "c8356d83-1b71-492e-ad9e-1e08a7059152"
+  ],
+  "etag": "G7O4LY1yNWn2fz3aAjD0WA4xnlE",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:05.803Z",
+  "updated": "2026-02-08T05:44:05.803Z",
+  "size": 35684,
+  "md5Hash": "r+kYllHl14flvVDvPfPe6A==",
+  "crc32c": "1892013277"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/6b16cb67-4e80-4417-a181-dbc10ab6386a.json">
+{
+  "name": "projects/1/stl/ボディ183_1770529444757.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529444789,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "b24bc10e-e721-4980-b3b5-d8bdca2345f0"
+  ],
+  "etag": "g12pRYleuMn2JZKWrge4QO4vElQ",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:04.789Z",
+  "updated": "2026-02-08T05:44:04.789Z",
+  "size": 29384,
+  "md5Hash": "OEi71t0ezdb9aZB3RXtkcw==",
+  "crc32c": "115996729"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/83c411db-774b-4e81-a3e4-26fad60acd23.json">
+{
+  "name": "projects/1/stl/ボディ180_1770529445567.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529445576,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "b9e90764-c8ed-4ed1-9e5b-aea9489bee1a"
+  ],
+  "etag": "LBOEOOSnr8Nd2AocdQ224yyApQ8",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:05.576Z",
+  "updated": "2026-02-08T05:44:05.576Z",
+  "size": 25284,
+  "md5Hash": "bc0DrlnmuANN4871E26lxw==",
+  "crc32c": "694601673"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/b257a210-a7a3-4c46-b1b3-f2d9dec88453.json">
+{
+  "name": "projects/1/stl/ボディ186_1770529445301.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529445312,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "22f50b40-1c42-486a-a476-ad04f0ce8618"
+  ],
+  "etag": "ivhmcEfZc6mELCYhaybXm8I2Mo8",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:05.312Z",
+  "updated": "2026-02-08T05:44:05.312Z",
+  "size": 22884,
+  "md5Hash": "o4PfDl24x7AjTrkMvz7cQQ==",
+  "crc32c": "2880207178"
 }
 </file>
 
@@ -1984,19 +1085,6 @@ const storagePath = `custom/path/${partNumber}.stl`;
 }
 </file>
 
-<file path="firestore.rules">
-rules_version='2'
-
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      // 開発中は認証なしで全操作を許可
-      allow read, write: if true;
-    }
-  }
-}
-</file>
-
 <file path="next.config.js">
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -2004,6 +1092,234 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
+</file>
+
+<file path="out.svg">
+<svg version="1.1" baseProfile="full" width="1792.0" height="209.0" viewBox="0 0 1792 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
+<desc >#.interface: fill=lightblue
+#.enumeration: fill=lightgreen
+#.type: fill=lightgray
+
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;ImportResult|+success: boolean;+fileName: string;+partNumber?: string;+partId?: number;+itemsCreated?: number;+error?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
+<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
+<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
+<g stroke="transparent" fill="transparent">
+<rect x="0.0" y="0.0" height="209.0" width="1792.0" stroke="none"></rect>
+</g>
+<g transform="translate(8, 8)" fill="#33322E">
+<g transform="translate(20, 20)">
+<g data-name="Project">
+<g fill="lightblue" stroke="#33322E" data-name="Project">
+<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
+<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
+<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
+</g>
+<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
+<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
+
+</g>
+</g>
+<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
+
+</g>
+</g>
+<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Unit">
+<g fill="lightblue" stroke="#33322E" data-name="Unit">
+<rect x="207.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
+<path d="M207.0 48.0 L384.0 48.0" fill="none" data-name="Unit"></path>
+<path d="M207.0 129.0 L384.0 129.0" fill="none" data-name="Unit"></path>
+</g>
+<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
+<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
+
+</g>
+</g>
+<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
+
+</g>
+</g>
+<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Part">
+<g fill="lightblue" stroke="#33322E" data-name="Part">
+<rect x="424.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
+<path d="M424.0 48.0 L605.0 48.0" fill="none" data-name="Part"></path>
+<path d="M424.0 129.0 L605.0 129.0" fill="none" data-name="Part"></path>
+</g>
+<g transform="translate(424, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
+
+</g>
+</g>
+<g transform="translate(424, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
+
+</g>
+</g>
+<g transform="translate(424, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="PartItem">
+<g fill="lightblue" stroke="#33322E" data-name="PartItem">
+<rect x="645.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
+<path d="M645.0 32.0 L843.0 32.0" fill="none" data-name="PartItem"></path>
+<path d="M645.0 145.0 L843.0 145.0" fill="none" data-name="PartItem"></path>
+</g>
+<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
+<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
+
+</g>
+</g>
+<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
+<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
+<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
+<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
+
+</g>
+</g>
+<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ProgressData">
+<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
+<rect x="883.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
+<path d="M883.0 56.0 L1233.0 56.0" fill="none" data-name="ProgressData"></path>
+<path d="M883.0 121.0 L1233.0 121.0" fill="none" data-name="ProgressData"></path>
+</g>
+<g transform="translate(883, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
+<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
+
+</g>
+</g>
+<g transform="translate(883, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
+
+</g>
+</g>
+<g transform="translate(883, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ParsedFileInfo">
+<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
+<rect x="1273.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
+<path d="M1273.0 32.0 L1485.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
+<path d="M1273.0 145.0 L1485.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
+</g>
+<g transform="translate(1273, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
+
+</g>
+</g>
+<g transform="translate(1273, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
+
+</g>
+</g>
+<g transform="translate(1273, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ImportResult">
+<g fill="lightblue" stroke="#33322E" data-name="ImportResult">
+<rect x="1525.0" y="0.0" height="153.0" width="211.0" data-name="ImportResult"></rect>
+<path d="M1525.0 32.0 L1736.0 32.0" fill="none" data-name="ImportResult"></path>
+<path d="M1525.0 145.0 L1736.0 145.0" fill="none" data-name="ImportResult"></path>
+</g>
+<g transform="translate(1525, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ImportResult" data-compartment="0">
+<a id="src\modules\engineering\actions\importStl.ts.ImportResult" xlink:href="src\modules\engineering\actions\importStl.ts"><text x="97.5" y="14.1" stroke="none" text-anchor="middle" data-name="ImportResult" data-compartment="0">ImportResult</text></a>
+
+</g>
+</g>
+<g transform="translate(1525, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ImportResult" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ImportResult" data-compartment="1">+success: boolean</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ImportResult" data-compartment="1">+fileName: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ImportResult" data-compartment="1">+partNumber?: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ImportResult" data-compartment="1">+partId?: number</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ImportResult" data-compartment="1">+itemsCreated?: number</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ImportResult" data-compartment="1">+error?: string</text>
+
+</g>
+</g>
+<g transform="translate(1525, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ImportResult" data-compartment="2">
+
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
 </file>
 
 <file path="postcss.config.js">
@@ -2018,167 +1334,158 @@ module.exports = {
 # SN-923
 </file>
 
-<file path="src/modules/engineering/actions/importStl.ts">
+<file path="scripts/seed-initial-data.ts">
+import { db } from '../lib/firebase';
+import {
+    collection,
+    doc,
+    setDoc,
+    getDocs,
+    deleteDoc,
+    getDoc,
+    serverTimestamp
+} from 'firebase/firestore';
+
+/**
+ * 初期データ投入（シーディング）スクリプト
+ * 
+ * 役割:
+ * 1. projects コレクションへの初期プロジェクト投入
+ * 2. boxes コレクションへの初期ボックス投入 (BOX-001 ～ BOX-050)
+ * 
+ * 実行方法:
+ * npx tsx scripts/seed-initial-data.ts
+ * 
+ * オプション:
+ * --clear  既存のデータを一旦削除してから投入します。
+ */
+
+// エミュレーター接続を確実にするための設定
+(process.env as any).NEXT_PUBLIC_FIREBASE_PROJECT_ID = "demo-bom3d-sn923";
+(process.env as any).NODE_ENV = 'development';
+
+async function clearCollection(name: string) {
+    console.log(`[Clear] Cleaning collection: ${name}...`);
+    const q = collection(db, name);
+    const snapshot = await getDocs(q);
+    const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
+    await Promise.all(deletePromises);
+    console.log(`[Clear] ${snapshot.size} documents deleted from ${name}.`);
+}
+
+async function seed() {
+    const args = process.argv.slice(2);
+    const shouldClear = args.includes('--clear');
+
+    console.log('--- Database Seeding Start ---');
+
+    if (shouldClear) {
+        await clearCollection('projects');
+        await clearCollection('boxes');
+    }
+
+    // 1. projects
+    console.log('Seeding projects...');
+    const projectId = "proto-2024";
+    const projectRef = doc(db, 'projects', projectId);
+    const projectData = {
+        name: "プロトタイプ開発2024",
+        deadline: "2024-12-31",
+        description: "Firebase移行後の初期データ",
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp()
+    };
+
+    const projectSnap = await getDoc(projectRef);
+    if (!projectSnap.exists() || shouldClear) {
+        await setDoc(projectRef, projectData);
+        console.log(`✔️  Project "${projectData.name}" created (ID: ${projectId}).`);
+    } else {
+        console.log(`ℹ️  Project "${projectId}" already exists. Skipping.`);
+    }
+
+    // 2. boxes (新規追加)
+    console.log('Seeding boxes (BOX-001 to BOX-050)...');
+    let createdCount = 0;
+    let skippedCount = 0;
+
+    for (let i = 1; i <= 50; i++) {
+        const boxId = `BOX-${String(i).padStart(3, '0')}`;
+        const boxRef = doc(db, 'boxes', boxId);
+
+        const boxData = {
+            id: boxId,
+            status: "AVAILABLE",
+            updated_at: serverTimestamp()
+        };
+
+        if (!shouldClear) {
+            const boxSnap = await getDoc(boxRef);
+            if (boxSnap.exists()) {
+                skippedCount++;
+                continue;
+            }
+        }
+
+        await setDoc(boxRef, boxData);
+        createdCount++;
+    }
+
+    console.log(`✔️  Boxes: ${createdCount} created, ${skippedCount} skipped.`);
+    console.log('--- Seeding Completed! ---');
+    process.exit(0);
+}
+
+seed().catch((error) => {
+    console.error('❌  Seeding failed:', error);
+    process.exit(1);
+});
+</file>
+
+<file path="src/modules/engineering/actions/projectActions.ts">
 'use server'
 
 /**
- * Engineering Module - Import STL Action
- * STLファイルのインポートを統括するオーケストレーター
+ * Engineering Module - Project Actions
+ * プロジェクトの作成と管理
  */
 
+import { db } from '@/src/shared/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
-import { ProcessStatus } from '@/src/shared/types';
-import { ParsedFileInfo } from '@/src/modules/inventory/types';
-
-// Engineering Services
-import {
-    parseFileName,
-    uploadStlFile
-} from '@/src/modules/engineering/services/stlService';
-
-// Inventory Services
-import { ensurePartExists } from '@/src/modules/inventory/services/partService';
-import {
-    allocateBoxes,
-    previewBoxAllocation
-} from '@/src/modules/inventory/services/boxService';
-
-// Production Services
-import { createItems } from '@/src/modules/production/services/itemService';
-
-export interface ImportResult {
-    success: boolean;
-    fileName: string;
-    partNumber?: string;
-    partId?: string;
-    itemsCreated?: number;
-    error?: string;
-}
 
 /**
- * 単一のSTLファイルをインポートする
+ * 新規プロジェクトを作成するサーバーアクション
  * 
- * @param fileBuffer - アップロードするファイル（ArrayBuffer）
- * @param fileName - ファイル名
- * @param projectId - プロジェクトID
- * @param defaultStatus - 初期ステータス（デフォルト: 'CUTTING'）
- * @returns インポート結果
+ * @param name - プロジェクト名
+ * @param description - 説明
+ * @param deadline - 納期
+ * @returns 作成されたプロジェクトのID
  */
-export async function importSingleStl(
-    fileBuffer: ArrayBuffer,
-    fileName: string,
-    projectId: string,
-    defaultStatus: ProcessStatus = 'CUTTING'
-): Promise<ImportResult> {
+export async function createProject(
+    name: string,
+    description: string,
+    deadline: string
+) {
     try {
-        // 1. Engineering: ファイル名を解析
-        const parsed = parseFileName(fileName);
+        const docRef = await addDoc(collection(db, 'projects'), {
+            name,
+            description,
+            deadline,
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp()
+        });
 
-        if (!parsed.isValid) {
-            return {
-                success: false,
-                fileName,
-                error: parsed.errorMessage || 'ファイル名の解析に失敗しました'
-            };
-        }
+        console.log(`[ProjectActions] Created new project with ID: ${docRef.id}`);
 
-        const { partNumber, quantity } = parsed;
-
-        // 2. Engineering: Firebase Storage にアップロード
-        const downloadUrl = await uploadStlFile(fileBuffer, partNumber, projectId as any);
-        console.log(`[ImportSTL] Uploaded file: ${downloadUrl}`);
-
-        // 3. Inventory: 部品マスタの確認・作成
-        const part = await ensurePartExists(partNumber, projectId);
-
-        // 4. Inventory: ボックスの確保（空き箱を探す）
-        const boxes = await allocateBoxes(quantity);
-
-        // 5. Production: アイテムの生成とステータス初期化
-        await createItems(part.id, quantity, boxes, defaultStatus);
-
-        // 6. キャッシュを再検証
+        // ダッシュボードを更新
         revalidatePath('/');
-        revalidatePath(`/project/${projectId}`);
 
-        return {
-            success: true,
-            fileName,
-            partNumber,
-            partId: part.id,
-            itemsCreated: quantity
-        };
-
+        return { success: true, id: docRef.id };
     } catch (error) {
-        console.error('[ImportSTL] Error importing STL:', error);
-        return {
-            success: false,
-            fileName,
-            error: error instanceof Error ? error.message : '不明なエラーが発生しました'
-        };
+        console.error('Failed to create project:', error);
+        return { success: false, error: 'プロジェクトの作成に失敗しました' };
     }
-}
-
-/**
- * 複数のSTLファイルを一括インポートする
- * 
- * @param filesData - アップロードするファイルの配列
- * @param projectId - プロジェクトID
- * @param defaultStatus - 初期ステータス
- * @returns インポート結果の配列
- */
-export async function importMultipleStl(
-    filesData: Array<{ buffer: ArrayBuffer; name: string }>,
-    projectId: string,
-    defaultStatus: ProcessStatus = 'CUTTING'
-): Promise<ImportResult[]> {
-    const results: ImportResult[] = [];
-
-    for (const fileData of filesData) {
-        const result = await importSingleStl(
-            fileData.buffer,
-            fileData.name,
-            projectId,
-            defaultStatus
-        );
-        results.push(result);
-    }
-
-    return results;
-}
-
-/**
- * ファイル名のプレビュー解析（実際のインポートは行わない）
- * 
- * @param fileNames - ファイル名の配列
- * @returns 解析結果の配列（ボックス割り当て情報付き）
- */
-export async function previewFileNames(fileNames: string[]): Promise<ParsedFileInfo[]> {
-    // 1. 各ファイル名を解析
-    const parsedResults = fileNames.map(parseFileName);
-
-    // 2. 有効な解析結果のみを抽出
-    const validResults = parsedResults.filter(r => r.isValid);
-    const quantities = validResults.map(r => r.quantity);
-
-    // 3. ボックス割り当てをシミュレート
-    const boxAllocations = await previewBoxAllocation(quantities);
-
-    // 4. 解析結果にボックス情報を追加
-    let validIndex = 0;
-    return parsedResults.map(parsed => {
-        if (!parsed.isValid) {
-            return parsed;
-        }
-
-        const storageBoxes = boxAllocations[validIndex];
-        validIndex++;
-
-        return {
-            ...parsed,
-            storageBoxes
-        };
-    });
 }
 </file>
 
@@ -2524,143 +1831,6 @@ export function StlImportModal({ isOpen, onClose, projectId, onImportComplete }:
 }
 </file>
 
-<file path="src/modules/engineering/services/stlService.ts">
-/**
- * Engineering Module - STL Service
- * STLファイルの解析とアップロード処理
- */
-
-import { storage } from '@/src/shared/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { ParsedFileInfo } from '@/src/modules/inventory/types';
-
-/**
- * ファイル名から部品番号と個数を抽出する
- * 
- * 対応フォーマット:
- * - PART123.stl → 部品番号: PART123, 個数: 1
- * - PART123_x5.stl → 部品番号: PART123, 個数: 5
- * - PART123_X10.stl → 部品番号: PART123, 個数: 10
- * - ABC-456_x3.stl → 部品番号: ABC-456, 個数: 3
- * 
- * @param fileName - 解析するファイル名（拡張子含む）
- * @returns 解析結果
- */
-export function parseFileName(fileName: string): ParsedFileInfo {
-    // 拡張子を除去
-    const nameWithoutExt = fileName.replace(/\.(stl|STL)$/, '');
-
-    if (!nameWithoutExt) {
-        return {
-            originalFileName: fileName,
-            partNumber: '',
-            quantity: 1,
-            isValid: false,
-            errorMessage: 'ファイル名が空です'
-        };
-    }
-
-    // パターン1: 部品番号_x個数 または 部品番号_X個数
-    const quantityPattern = /^(.+?)_[xX](\d+)$/;
-    const match = nameWithoutExt.match(quantityPattern);
-
-    if (match) {
-        const partNumber = match[1].trim();
-        const quantity = parseInt(match[2], 10);
-
-        if (!partNumber) {
-            return {
-                originalFileName: fileName,
-                partNumber: '',
-                quantity: 1,
-                isValid: false,
-                errorMessage: '部品番号が空です'
-            };
-        }
-
-        if (quantity <= 0 || quantity > 1000) {
-            return {
-                originalFileName: fileName,
-                partNumber,
-                quantity: 1,
-                isValid: false,
-                errorMessage: `個数が範囲外です（1-1000）: ${quantity}`
-            };
-        }
-
-        return {
-            originalFileName: fileName,
-            partNumber,
-            quantity,
-            isValid: true
-        };
-    }
-
-    // パターン2: 部品番号のみ（個数指定なし）
-    const partNumber = nameWithoutExt.trim();
-
-    if (!partNumber) {
-        return {
-            originalFileName: fileName,
-            partNumber: '',
-            quantity: 1,
-            isValid: false,
-            errorMessage: '部品番号が空です'
-        };
-    }
-
-    return {
-        originalFileName: fileName,
-        partNumber,
-        quantity: 1,
-        isValid: true
-    };
-}
-
-/**
- * 複数のファイル名を一括解析する
- * 
- * @param fileNames - ファイル名の配列
- * @returns 解析結果の配列
- */
-export function parseFileNames(fileNames: string[]): ParsedFileInfo[] {
-    return fileNames.map(parseFileName);
-}
-
-/**
- * 解析結果から有効なもののみをフィルタリング
- * 
- * @param parsedInfos - 解析結果の配列
- * @returns 有効な解析結果のみの配列
- */
-export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFileInfo[] {
-    return parsedInfos.filter(info => info.isValid);
-}
-
-/**
- * STLファイルをFirebase Storageにアップロードする
- * 
- * @param fileBuffer - ファイルのArrayBuffer
- * @param partNumber - 部品番号
- * @param projectId - プロジェクトID
- * @returns アップロードされたファイルのダウンロードURL
- */
-export async function uploadStlFile(
-    fileBuffer: ArrayBuffer,
-    partNumber: string,
-    projectId: string
-): Promise<string> {
-    const timestamp = Date.now();
-    const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
-    const storageRef = ref(storage, storagePath);
-
-    await uploadBytes(storageRef, fileBuffer);
-    const downloadUrl = await getDownloadURL(storageRef);
-
-    return downloadUrl;
-}
-</file>
-
 <file path="src/modules/inventory/actions/storageActions.ts">
 'use server'
 
@@ -2933,6 +2103,1521 @@ export async function previewBoxAllocation(quantities: number[]): Promise<string
 }
 </file>
 
+<file path="src/modules/production/actions/consumeItem.ts">
+'use server'
+
+/**
+ * Production Module - Consume Item Action
+ * 部品アイテムを消費済みにする
+ */
+
+import { revalidatePath } from 'next/cache';
+import { updateItemStatus } from '@/src/modules/production/services/itemService';
+
+/**
+ * 部品アイテムを消費済みにするサーバーアクション
+ * @param itemId - 消費する部品アイテムのID
+ */
+export async function consumeItem(itemId: string | number) {
+    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+
+    // READY（または消費済みを意味するステータス）に更新
+    // ここでは既存ロジックに合わせてステータスを更新し、保管ボックスを実質的に空にする
+    await updateItemStatus(id, 'ASSEMBLED'); // 完成＝消費とみなす
+
+    console.log(`[ConsumeItem] Consumed item ${id}`);
+
+    revalidatePath('/');
+    revalidatePath(`/item/${id}`);
+}
+</file>
+
+<file path="src/modules/production/components/MovePartModal.tsx">
+import React from 'react';
+import { Unit } from '@/app/types';
+import { X, FolderOutput, Folder } from 'lucide-react';
+
+interface MovePartModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onMove: (unitId: string | null) => void;
+    units: Unit[];
+    currentUnitId?: string | null;
+    partNumber: string;
+}
+
+export function MovePartModal({
+    isOpen,
+    onClose,
+    onMove,
+    units,
+    currentUnitId,
+    partNumber
+}: MovePartModalProps) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-900">ユニット移動</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">部品: <span className="font-mono text-blue-600">{partNumber}</span></p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-1 rounded-full hover:bg-gray-200 transition-colors text-gray-400 hover:text-gray-600"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <div className="p-2 max-h-[60vh] overflow-y-auto">
+                    <div className="grid gap-1">
+                        {/* 未分類へ移動 */}
+                        <button
+                            onClick={() => onMove(null)}
+                            disabled={!currentUnitId}
+                            className={`
+                                flex items-center gap-3 w-full p-3 rounded-lg text-left transition-all border
+                                ${!currentUnitId
+                                    ? 'bg-blue-50 border-blue-200 text-blue-700 cursor-default'
+                                    : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-600'
+                                }
+                            `}
+                        >
+                            <div className={`p-2 rounded-md ${!currentUnitId ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                                <FolderOutput size={18} />
+                            </div>
+                            <div className="flex-1">
+                                <span className="text-sm font-bold block">未分類 (No Unit)</span>
+                                <span className="text-[10px] text-gray-400">ユニットから除外する</span>
+                            </div>
+                            {!currentUnitId && <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">CURRENT</span>}
+                        </button>
+
+                        <div className="h-px bg-gray-100 my-1 mx-2" />
+
+                        {/* 各ユニットへ移動 */}
+                        {units.length === 0 ? (
+                            <div className="text-center py-8 text-gray-400 text-xs italic">
+                                作成されたユニットはありません
+                            </div>
+                        ) : (
+                            units.map((unit) => {
+                                const isCurrent = unit.id === currentUnitId;
+                                return (
+                                    <button
+                                        key={unit.id}
+                                        onClick={() => onMove(unit.id)}
+                                        disabled={isCurrent}
+                                        className={`
+                                            flex items-center gap-3 w-full p-3 rounded-lg text-left transition-all border
+                                            ${isCurrent
+                                                ? 'bg-blue-50 border-blue-200 text-blue-700 cursor-default'
+                                                : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-700'
+                                            }
+                                        `}
+                                    >
+                                        <div className={`p-2 rounded-md ${isCurrent ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                                            <Folder size={18} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-sm font-bold block truncate">{unit.name}</span>
+                                            {unit.description && <span className="text-[10px] text-gray-400 truncate block">{unit.description}</span>}
+                                        </div>
+                                        {isCurrent && <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">CURRENT</span>}
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/modules/project/components/ProjectsList.tsx">
+'use client';
+
+/**
+ * Project Module - Projects List Component
+ * プロジェクト一覧をリアルタイムで表示する
+ */
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { db } from '@/src/shared/lib/firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { Project } from '@/src/shared/types';
+
+export function ProjectsList() {
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const q = query(collection(db, 'projects'), orderBy('name', 'asc'));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const projectsData = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Project[];
+            setProjects(projectsData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching projects: ", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
+
+    if (projects.length === 0) {
+        return (
+            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
+                <p className="text-gray-500">プロジェクトがありません。新しいプロジェクトを作成してください。</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {projects.map((project) => (
+                <Link key={project.id} href={`/project/${project.id}`}>
+                    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer flex flex-col h-full transform hover:-translate-y-1">
+                        <div className="p-8 flex-grow">
+                            <div className="flex justify-between items-start mb-6">
+                                <h2 className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                                    {project.name}
+                                </h2>
+                                <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                    進行中
+                                </span>
+                            </div>
+                            <p className="text-gray-600 mb-8 leading-relaxed">
+                                {project.description}
+                            </p>
+
+                            {/* 簡易進捗表示（ダミー） */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="font-medium text-gray-700">全体進捗</span>
+                                    <span className="font-bold text-blue-600">65%</span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-3">
+                                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full w-[65%] shadow-sm"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center group-hover:bg-blue-50 transition-colors">
+                            <div className="text-sm">
+                                <span className="text-gray-500">納期: </span>
+                                <span className="font-semibold text-gray-800">{project.deadline}</span>
+                            </div>
+                            <span className="text-blue-600 font-bold flex items-center group-hover:translate-x-1 transition-transform">
+                                詳細を見る
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                </Link>
+            ))}
+        </div>
+    );
+}
+</file>
+
+<file path="src/shared/components/FileDownloadButton.tsx">
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { ref, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
+
+interface FileDownloadButtonProps {
+    storagePath: string;
+    fileName: string;
+    label?: string;
+    variant?: 'primary' | 'outline' | 'ghost';
+    icon?: React.ReactNode;
+}
+
+export default function FileDownloadButton({
+    storagePath,
+    fileName,
+    label,
+    variant = 'outline',
+    icon
+}: FileDownloadButtonProps) {
+    const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isError, setIsError] = useState(false);
+
+    useEffect(() => {
+        const fetchUrl = async () => {
+            setIsLoading(true);
+            setIsError(false);
+            try {
+                const fileRef = ref(storage, storagePath);
+                const url = await getDownloadURL(fileRef);
+                setDownloadUrl(url);
+            } catch (error: any) {
+                console.error(`Error fetching download URL for ${storagePath}:`, error);
+                if (error.code === 'storage/object-not-found') {
+                    setIsError(true);
+                } else {
+                    setIsError(true);
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (storagePath) {
+            fetchUrl();
+        }
+    }, [storagePath]);
+
+    const handleDownload = () => {
+        if (!downloadUrl) return;
+
+        // Use a hidden anchor tag to trigger download with fileName
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const baseStyles = "inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+
+    const variants = {
+        primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
+        outline: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50",
+        ghost: "bg-transparent text-gray-600 hover:bg-gray-100"
+    };
+
+    const defaultIcon = (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+    );
+
+    if (isLoading) {
+        return (
+            <button disabled className={`${baseStyles} ${variants[variant]}`}>
+                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></span>
+                {label || 'Loading...'}
+            </button>
+        );
+    }
+
+    if (isError) {
+        return (
+            <button disabled title="ファイルが登録されていません" className={`${baseStyles} ${variants[variant]} opacity-40`}>
+                {icon || defaultIcon}
+                {label ? `${label} (未登録)` : '未登録'}
+            </button>
+        );
+    }
+
+    return (
+        <button
+            onClick={handleDownload}
+            className={`${baseStyles} ${variants[variant]}`}
+        >
+            {icon || defaultIcon}
+            {label}
+        </button>
+    );
+}
+</file>
+
+<file path="src/shared/components/ModelViewer.tsx">
+'use client';
+
+import { Canvas, useLoader } from '@react-three/fiber';
+import { OrbitControls, Stage } from '@react-three/drei';
+import { useState, useEffect, Suspense } from 'react';
+import { STLLoader } from 'three-stdlib';
+
+function STLModel({ url }: { url: string }) {
+    if (!url) return null;
+
+    const geom = useLoader(STLLoader, url);
+
+    return (
+        /* rotation: [x, y, z] 
+           Math.PI / 2 は 90度です。
+           CADのZ上をThree.jsのY上に合わせるため、X軸を軸にマイナス90度回転させます。
+        */
+        <mesh
+            geometry={geom}
+            rotation={[-Math.PI / 2, 0, 0]}
+        >
+            <meshStandardMaterial color="#3b82f6" />
+        </mesh>
+    );
+}
+
+export function ModelViewer({ url }: { url: string }) {
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return <div className="w-full h-[400px] bg-gray-900 rounded-lg" />;
+    }
+
+    return (
+        <div className="w-full h-[400px] bg-gray-900 rounded-lg">
+            <Canvas shadows camera={{ position: [0, 0, 20], fov: 50 }}>
+                <Suspense fallback={null}>
+                    <Stage environment="city" intensity={0.5}>
+                        <STLModel url={url} />
+                    </Stage>
+                </Suspense>
+                <OrbitControls autoRotate />
+            </Canvas>
+        </div>
+    );
+}
+</file>
+
+<file path="src/shared/components/SummaryCard.tsx">
+// app/dashboard/components/SummaryCard.tsx
+import React from 'react';
+
+interface SummaryCardProps {
+  title: string;
+  value: number | string;
+  valueColor?: string;
+}
+
+export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: SummaryCardProps) {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-lg flex items-center">
+      <div>
+        <p className="text-lg text-gray-500">{title}</p>
+        <p className={`text-5xl font-extrabold ${valueColor}`}>{value}</p>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+</file>
+
+<file path="tsconfig.node.json">
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path="types-diagram.md">
+<svg version="1.1" baseProfile="full" width="1541.0" height="209.0" viewBox="0 0 1541 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
+<desc >#.interface: fill=lightblue
+#.enumeration: fill=lightgreen
+#.type: fill=lightgray
+
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
+<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
+<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
+<g stroke="transparent" fill="transparent">
+<rect x="0.0" y="0.0" height="209.0" width="1541.0" stroke="none"></rect>
+</g>
+<g transform="translate(8, 8)" fill="#33322E">
+<g transform="translate(20, 20)">
+<g data-name="Project">
+<g fill="lightblue" stroke="#33322E" data-name="Project">
+<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
+<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
+<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
+</g>
+<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
+<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
+
+</g>
+</g>
+<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
+
+</g>
+</g>
+<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Part">
+<g fill="lightblue" stroke="#33322E" data-name="Part">
+<rect x="207.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
+<path d="M207.0 48.0 L388.0 48.0" fill="none" data-name="Part"></path>
+<path d="M207.0 129.0 L388.0 129.0" fill="none" data-name="Part"></path>
+</g>
+<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
+
+</g>
+</g>
+<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
+
+</g>
+</g>
+<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Unit">
+<g fill="lightblue" stroke="#33322E" data-name="Unit">
+<rect x="428.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
+<path d="M428.0 48.0 L605.0 48.0" fill="none" data-name="Unit"></path>
+<path d="M428.0 129.0 L605.0 129.0" fill="none" data-name="Unit"></path>
+</g>
+<g transform="translate(428, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
+<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
+
+</g>
+</g>
+<g transform="translate(428, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
+
+</g>
+</g>
+<g transform="translate(428, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ParsedFileInfo">
+<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
+<rect x="645.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
+<path d="M645.0 32.0 L857.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
+<path d="M645.0 145.0 L857.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
+</g>
+<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
+
+</g>
+</g>
+<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
+
+</g>
+</g>
+<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="PartItem">
+<g fill="lightblue" stroke="#33322E" data-name="PartItem">
+<rect x="897.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
+<path d="M897.0 32.0 L1095.0 32.0" fill="none" data-name="PartItem"></path>
+<path d="M897.0 145.0 L1095.0 145.0" fill="none" data-name="PartItem"></path>
+</g>
+<g transform="translate(897, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
+<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
+
+</g>
+</g>
+<g transform="translate(897, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
+<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
+<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
+<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
+
+</g>
+</g>
+<g transform="translate(897, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ProgressData">
+<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
+<rect x="1135.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
+<path d="M1135.0 56.0 L1485.0 56.0" fill="none" data-name="ProgressData"></path>
+<path d="M1135.0 121.0 L1485.0 121.0" fill="none" data-name="ProgressData"></path>
+</g>
+<g transform="translate(1135, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
+<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
+
+</g>
+</g>
+<g transform="translate(1135, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
+
+</g>
+</g>
+<g transform="translate(1135, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
+
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</file>
+
+<file path="types-diagram.mmd">
+<svg version="1.1" baseProfile="full" width="1541.0" height="209.0" viewBox="0 0 1541 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
+<desc >#.interface: fill=lightblue
+#.enumeration: fill=lightgreen
+#.type: fill=lightgray
+
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
+<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
+<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
+<g stroke="transparent" fill="transparent">
+<rect x="0.0" y="0.0" height="209.0" width="1541.0" stroke="none"></rect>
+</g>
+<g transform="translate(8, 8)" fill="#33322E">
+<g transform="translate(20, 20)">
+<g data-name="Project">
+<g fill="lightblue" stroke="#33322E" data-name="Project">
+<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
+<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
+<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
+</g>
+<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
+<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
+
+</g>
+</g>
+<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
+
+</g>
+</g>
+<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Part">
+<g fill="lightblue" stroke="#33322E" data-name="Part">
+<rect x="207.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
+<path d="M207.0 48.0 L388.0 48.0" fill="none" data-name="Part"></path>
+<path d="M207.0 129.0 L388.0 129.0" fill="none" data-name="Part"></path>
+</g>
+<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
+
+</g>
+</g>
+<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
+
+</g>
+</g>
+<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Unit">
+<g fill="lightblue" stroke="#33322E" data-name="Unit">
+<rect x="428.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
+<path d="M428.0 48.0 L605.0 48.0" fill="none" data-name="Unit"></path>
+<path d="M428.0 129.0 L605.0 129.0" fill="none" data-name="Unit"></path>
+</g>
+<g transform="translate(428, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
+<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
+
+</g>
+</g>
+<g transform="translate(428, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
+
+</g>
+</g>
+<g transform="translate(428, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ParsedFileInfo">
+<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
+<rect x="645.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
+<path d="M645.0 32.0 L857.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
+<path d="M645.0 145.0 L857.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
+</g>
+<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
+
+</g>
+</g>
+<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
+
+</g>
+</g>
+<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="PartItem">
+<g fill="lightblue" stroke="#33322E" data-name="PartItem">
+<rect x="897.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
+<path d="M897.0 32.0 L1095.0 32.0" fill="none" data-name="PartItem"></path>
+<path d="M897.0 145.0 L1095.0 145.0" fill="none" data-name="PartItem"></path>
+</g>
+<g transform="translate(897, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
+<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
+
+</g>
+</g>
+<g transform="translate(897, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
+<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
+<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
+<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
+
+</g>
+</g>
+<g transform="translate(897, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ProgressData">
+<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
+<rect x="1135.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
+<path d="M1135.0 56.0 L1485.0 56.0" fill="none" data-name="ProgressData"></path>
+<path d="M1135.0 121.0 L1485.0 121.0" fill="none" data-name="ProgressData"></path>
+</g>
+<g transform="translate(1135, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
+<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
+
+</g>
+</g>
+<g transform="translate(1135, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
+
+</g>
+</g>
+<g transform="translate(1135, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
+
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</file>
+
+<file path=".firebaserc">
+{
+  "projects": {
+    "default": "demo-bom3d-sn923"
+  }
+}
+</file>
+
+<file path="app/actions/storageActions.ts">
+'use server'
+
+import {
+    releaseStorageCase as releaseNew,
+    getStorageBoxStatus as getStatusNew
+} from '@/src/modules/inventory/actions/storageActions';
+
+/**
+ * @deprecated Use src/modules/inventory/actions/storageActions
+ */
+export async function releaseStorageCase(itemId: number) {
+    return releaseNew(itemId);
+}
+
+/**
+ * @deprecated Use src/modules/inventory/actions/storageActions
+ */
+export async function getStorageBoxStatus(maxBoxNumber: number = 100) {
+    return getStatusNew(maxBoxNumber);
+}
+</file>
+
+<file path="app/api/import-stl/route.ts">
+import { NextRequest, NextResponse } from 'next/server';
+import { importMultipleStl } from '@/src/modules/engineering/actions/importStl';
+import { ProcessStatus } from '@/src/shared/types';
+
+export async function POST(request: NextRequest) {
+    try {
+        const { projectId, defaultStatus, filesData } = await request.json();
+
+        if (!projectId || !filesData || !Array.isArray(filesData)) {
+            return NextResponse.json(
+                { error: 'Invalid request parameters' },
+                { status: 400 }
+            );
+        }
+
+        // Uint8Array を ArrayBuffer に変換
+        const convertedFilesData = filesData.map((fd: any) => ({
+            name: fd.name,
+            buffer: new Uint8Array(fd.buffer).buffer
+        }));
+
+        const results = await importMultipleStl(
+            convertedFilesData,
+            projectId,
+            (defaultStatus as ProcessStatus) || 'CUTTING'
+        );
+
+        return NextResponse.json(results);
+    } catch (error) {
+        console.error('Error in import-stl API:', error);
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
+</file>
+
+<file path="app/globals.css">
+@import "tailwindcss";
+</file>
+
+<file path="app/layout.tsx">
+import './globals.css'
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "SN-923",
+  description: "在庫管理アプリケーション",
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="ja">
+      <body>{children}</body>
+    </html>
+  )
+}
+</file>
+
+<file path="app/storage/page.tsx">
+import { getStorageBoxStatus } from '@/src/modules/inventory/actions/storageActions';
+import StorageBoxGrid from '@/src/modules/inventory/components/StorageBoxGrid';
+
+export const dynamic = 'force-dynamic';
+
+export default async function StoragePage() {
+    const result = await getStorageBoxStatus(100);
+
+    if (!result.success) {
+        return (
+            <div className="min-h-screen bg-gray-50 p-8">
+                <div className="max-w-7xl mx-auto">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-6">保管ボックス管理</h1>
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800">エラーが発生しました: {result.error}</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 p-8">
+            <div className="max-w-7xl mx-auto">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">保管ボックス管理</h1>
+                    <p className="text-gray-600">
+                        保管ボックスの使用状況を確認し、必要に応じて強制解放できます。
+                    </p>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                            <span className="text-sm text-gray-700">使用中</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                            <span className="text-sm text-gray-700">空き</span>
+                        </div>
+                    </div>
+                </div>
+
+                <StorageBoxGrid boxes={result.boxes} />
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="firebase-data/storage_export/buckets.json">
+{
+  "buckets": [
+    {
+      "id": "demo-no-project.appspot.com"
+    },
+    {
+      "id": "demo-bom3d-sn923.appspot.com"
+    }
+  ]
+}
+</file>
+
+<file path="firebase.json">
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "database": {
+      "port": 9000
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true
+    },
+    "singleProjectMode": true
+  }
+}
+</file>
+
+<file path="firestore.rules">
+rules_version='2'
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // 開発中は認証なしで全操作を許可
+      allow read, write: if true;
+    }
+  }
+}
+</file>
+
+<file path="lib/utils/parseFileName.ts">
+/**
+ * STLファイル名から部品情報を抽出するユーティリティ
+ */
+
+export interface ParsedFileInfo {
+    /** 元のファイル名 */
+    originalFileName: string;
+    /** 抽出された部品番号 */
+    partNumber: string;
+    /** 個数（デフォルト: 1） */
+    quantity: number;
+    /** 解析が成功したか */
+    isValid: boolean;
+    /** エラーメッセージ（解析失敗時） */
+    errorMessage?: string;
+    /** 割り当てられる保管ボックスのリスト */
+    storageBoxes?: string[];
+}
+
+/**
+ * ファイル名から部品番号と個数を抽出する
+ * 
+ * 対応フォーマット:
+ * - PART123.stl → 部品番号: PART123, 個数: 1
+ * - PART123_x5.stl → 部品番号: PART123, 個数: 5
+ * - PART123_X10.stl → 部品番号: PART123, 個数: 10
+ * - ABC-456_x3.stl → 部品番号: ABC-456, 個数: 3
+ * 
+ * @param fileName - 解析するファイル名（拡張子含む）
+ * @returns 解析結果
+ */
+export function parseFileName(fileName: string): ParsedFileInfo {
+    // 拡張子を除去
+    const nameWithoutExt = fileName.replace(/\.(stl|STL)$/, '');
+
+    if (!nameWithoutExt) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: 'ファイル名が空です'
+        };
+    }
+
+    // パターン1: 部品番号_x個数 または 部品番号_X個数
+    const quantityPattern = /^(.+?)_[xX](\d+)$/;
+    const match = nameWithoutExt.match(quantityPattern);
+
+    if (match) {
+        const partNumber = match[1].trim();
+        const quantity = parseInt(match[2], 10);
+
+        if (!partNumber) {
+            return {
+                originalFileName: fileName,
+                partNumber: '',
+                quantity: 1,
+                isValid: false,
+                errorMessage: '部品番号が空です'
+            };
+        }
+
+        if (quantity <= 0 || quantity > 1000) {
+            return {
+                originalFileName: fileName,
+                partNumber,
+                quantity: 1,
+                isValid: false,
+                errorMessage: `個数が範囲外です（1-1000）: ${quantity}`
+            };
+        }
+
+        return {
+            originalFileName: fileName,
+            partNumber,
+            quantity,
+            isValid: true
+        };
+    }
+
+    // パターン2: 部品番号のみ（個数指定なし）
+    const partNumber = nameWithoutExt.trim();
+
+    if (!partNumber) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: '部品番号が空です'
+        };
+    }
+
+    return {
+        originalFileName: fileName,
+        partNumber,
+        quantity: 1,
+        isValid: true
+    };
+}
+
+/**
+ * 複数のファイル名を一括解析する
+ * 
+ * @param fileNames - ファイル名の配列
+ * @returns 解析結果の配列
+ */
+export function parseFileNames(fileNames: string[]): ParsedFileInfo[] {
+    return fileNames.map(parseFileName);
+}
+
+/**
+ * 解析結果から有効なもののみをフィルタリング
+ * 
+ * @param parsedInfos - 解析結果の配列
+ * @returns 有効な解析結果のみの配列
+ */
+export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFileInfo[] {
+    return parsedInfos.filter(info => info.isValid);
+}
+</file>
+
+<file path="scripts/seed-emulator.ts">
+import { db } from '../lib/firebase';
+import { projects, parts, partItems } from '../app/data';
+import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+
+// @ts-ignore
+process.env.NODE_ENV = 'development';
+
+async function seed() {
+    console.log('Seeding Firestore Emulator...');
+    console.log('Connecting to Firestore (ensure Emulator is running on localhost:8080)...');
+
+    // Projects
+    console.log('Seeding Projects...');
+    for (const project of projects) {
+        const projectRef = doc(db, 'projects', String(project.id));
+        await setDoc(projectRef, {
+            ...project,
+            // Ensure dates are compatible if strings
+        });
+    }
+
+    // Parts
+    console.log('Seeding Parts...');
+    for (const part of parts) {
+        const partRef = doc(db, 'parts', String(part.id));
+        await setDoc(partRef, part);
+    }
+
+    // PartItems
+    console.log('Seeding PartItems...');
+    for (const item of partItems) {
+        const itemRef = doc(db, 'partItems', String(item.id));
+        await setDoc(itemRef, {
+            ...item,
+            // Convert Date object to Timestamp or keep as Date
+            completed_at: item.completed_at ? item.completed_at : null,
+            updated_at: serverTimestamp()
+        });
+    }
+
+    console.log('Seeding completed!');
+    process.exit(0);
+}
+
+seed().catch((error) => {
+    console.error('Seeding failed:', error);
+    process.exit(1);
+});
+</file>
+
+<file path="src/modules/engineering/actions/importStl.ts">
+'use server'
+
+/**
+ * Engineering Module - Import STL Action
+ * STLファイルのインポートを統括するオーケストレーター
+ */
+
+import { revalidatePath } from 'next/cache';
+import { ProcessStatus } from '@/src/shared/types';
+import { ParsedFileInfo } from '@/src/modules/inventory/types';
+
+// Engineering Services
+import {
+    parseFileName,
+    uploadStlFile
+} from '@/src/modules/engineering/services/stlService';
+
+// Inventory Services
+import { ensurePartExists } from '@/src/modules/inventory/services/partService';
+import {
+    allocateBoxes,
+    previewBoxAllocation
+} from '@/src/modules/inventory/services/boxService';
+
+// Production Services
+import { createItems } from '@/src/modules/production/services/itemService';
+
+export interface ImportResult {
+    success: boolean;
+    fileName: string;
+    partNumber?: string;
+    partId?: string;
+    itemsCreated?: number;
+    error?: string;
+}
+
+/**
+ * 単一のSTLファイルをインポートする
+ * 
+ * @param fileBuffer - アップロードするファイル（ArrayBuffer）
+ * @param fileName - ファイル名
+ * @param projectId - プロジェクトID
+ * @param defaultStatus - 初期ステータス（デフォルト: 'CUTTING'）
+ * @returns インポート結果
+ */
+export async function importSingleStl(
+    fileBuffer: ArrayBuffer,
+    fileName: string,
+    projectId: string,
+    defaultStatus: ProcessStatus = 'CUTTING'
+): Promise<ImportResult> {
+    try {
+        // 1. Engineering: ファイル名を解析
+        const parsed = parseFileName(fileName);
+
+        if (!parsed.isValid) {
+            return {
+                success: false,
+                fileName,
+                error: parsed.errorMessage || 'ファイル名の解析に失敗しました'
+            };
+        }
+
+        const { partNumber, quantity } = parsed;
+
+        // 2. Engineering: Firebase Storage にアップロード
+        const downloadUrl = await uploadStlFile(fileBuffer, partNumber, projectId as any);
+        console.log(`[ImportSTL] Uploaded file: ${downloadUrl}`);
+
+        // 3. Inventory: 部品マスタの確認・作成
+        const part = await ensurePartExists(partNumber, projectId);
+
+        // 4. Inventory: ボックスの確保（空き箱を探す）
+        const boxes = await allocateBoxes(quantity);
+
+        // 5. Production: アイテムの生成とステータス初期化
+        await createItems(part.id, quantity, boxes, defaultStatus);
+
+        // 6. キャッシュを再検証
+        revalidatePath('/');
+        revalidatePath(`/project/${projectId}`);
+
+        return {
+            success: true,
+            fileName,
+            partNumber,
+            partId: part.id,
+            itemsCreated: quantity
+        };
+
+    } catch (error) {
+        console.error('[ImportSTL] Error importing STL:', error);
+        return {
+            success: false,
+            fileName,
+            error: error instanceof Error ? error.message : '不明なエラーが発生しました'
+        };
+    }
+}
+
+/**
+ * 複数のSTLファイルを一括インポートする
+ * 
+ * @param filesData - アップロードするファイルの配列
+ * @param projectId - プロジェクトID
+ * @param defaultStatus - 初期ステータス
+ * @returns インポート結果の配列
+ */
+export async function importMultipleStl(
+    filesData: Array<{ buffer: ArrayBuffer; name: string }>,
+    projectId: string,
+    defaultStatus: ProcessStatus = 'CUTTING'
+): Promise<ImportResult[]> {
+    const results: ImportResult[] = [];
+
+    for (const fileData of filesData) {
+        const result = await importSingleStl(
+            fileData.buffer,
+            fileData.name,
+            projectId,
+            defaultStatus
+        );
+        results.push(result);
+    }
+
+    return results;
+}
+
+/**
+ * ファイル名のプレビュー解析（実際のインポートは行わない）
+ * 
+ * @param fileNames - ファイル名の配列
+ * @returns 解析結果の配列（ボックス割り当て情報付き）
+ */
+export async function previewFileNames(fileNames: string[]): Promise<ParsedFileInfo[]> {
+    // 1. 各ファイル名を解析
+    const parsedResults = fileNames.map(parseFileName);
+
+    // 2. 有効な解析結果のみを抽出
+    const validResults = parsedResults.filter(r => r.isValid);
+    const quantities = validResults.map(r => r.quantity);
+
+    // 3. ボックス割り当てをシミュレート
+    const boxAllocations = await previewBoxAllocation(quantities);
+
+    // 4. 解析結果にボックス情報を追加
+    let validIndex = 0;
+    return parsedResults.map(parsed => {
+        if (!parsed.isValid) {
+            return parsed;
+        }
+
+        const storageBoxes = boxAllocations[validIndex];
+        validIndex++;
+
+        return {
+            ...parsed,
+            storageBoxes
+        };
+    });
+}
+</file>
+
+<file path="src/modules/engineering/services/stlService.ts">
+/**
+ * Engineering Module - STL Service
+ * STLファイルの解析とアップロード処理
+ */
+
+import { storage } from '@/src/shared/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ParsedFileInfo } from '@/src/modules/inventory/types';
+
+/**
+ * ファイル名から部品番号と個数を抽出する
+ * 
+ * 対応フォーマット:
+ * - PART123.stl → 部品番号: PART123, 個数: 1
+ * - PART123_x5.stl → 部品番号: PART123, 個数: 5
+ * - PART123_X10.stl → 部品番号: PART123, 個数: 10
+ * - ABC-456_x3.stl → 部品番号: ABC-456, 個数: 3
+ * 
+ * @param fileName - 解析するファイル名（拡張子含む）
+ * @returns 解析結果
+ */
+export function parseFileName(fileName: string): ParsedFileInfo {
+    // 拡張子を除去
+    const nameWithoutExt = fileName.replace(/\.(stl|STL)$/, '');
+
+    if (!nameWithoutExt) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: 'ファイル名が空です'
+        };
+    }
+
+    // パターン1: 部品番号_x個数 または 部品番号_X個数
+    const quantityPattern = /^(.+?)_[xX](\d+)$/;
+    const match = nameWithoutExt.match(quantityPattern);
+
+    if (match) {
+        const partNumber = match[1].trim();
+        const quantity = parseInt(match[2], 10);
+
+        if (!partNumber) {
+            return {
+                originalFileName: fileName,
+                partNumber: '',
+                quantity: 1,
+                isValid: false,
+                errorMessage: '部品番号が空です'
+            };
+        }
+
+        if (quantity <= 0 || quantity > 1000) {
+            return {
+                originalFileName: fileName,
+                partNumber,
+                quantity: 1,
+                isValid: false,
+                errorMessage: `個数が範囲外です（1-1000）: ${quantity}`
+            };
+        }
+
+        return {
+            originalFileName: fileName,
+            partNumber,
+            quantity,
+            isValid: true
+        };
+    }
+
+    // パターン2: 部品番号のみ（個数指定なし）
+    const partNumber = nameWithoutExt.trim();
+
+    if (!partNumber) {
+        return {
+            originalFileName: fileName,
+            partNumber: '',
+            quantity: 1,
+            isValid: false,
+            errorMessage: '部品番号が空です'
+        };
+    }
+
+    return {
+        originalFileName: fileName,
+        partNumber,
+        quantity: 1,
+        isValid: true
+    };
+}
+
+/**
+ * 複数のファイル名を一括解析する
+ * 
+ * @param fileNames - ファイル名の配列
+ * @returns 解析結果の配列
+ */
+export function parseFileNames(fileNames: string[]): ParsedFileInfo[] {
+    return fileNames.map(parseFileName);
+}
+
+/**
+ * 解析結果から有効なもののみをフィルタリング
+ * 
+ * @param parsedInfos - 解析結果の配列
+ * @returns 有効な解析結果のみの配列
+ */
+export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFileInfo[] {
+    return parsedInfos.filter(info => info.isValid);
+}
+
+/**
+ * STLファイルをFirebase Storageにアップロードする
+ * 
+ * @param fileBuffer - ファイルのArrayBuffer
+ * @param partNumber - 部品番号
+ * @param projectId - プロジェクトID
+ * @returns アップロードされたファイルのダウンロードURL
+ */
+export async function uploadStlFile(
+    fileBuffer: ArrayBuffer,
+    partNumber: string,
+    projectId: string
+): Promise<string> {
+    const timestamp = Date.now();
+    const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
+    const storageRef = ref(storage, storagePath);
+
+    await uploadBytes(storageRef, fileBuffer);
+    const downloadUrl = await getDownloadURL(storageRef);
+
+    return downloadUrl;
+}
+</file>
+
 <file path="src/modules/inventory/services/partService.ts">
 /**
  * Inventory Module - Part Service
@@ -3127,35 +3812,6 @@ export function CartModal({ isOpen, onClose, items, onDownload }: CartModalProps
             </div>
         </div>
     );
-}
-</file>
-
-<file path="src/modules/production/actions/consumeItem.ts">
-'use server'
-
-/**
- * Production Module - Consume Item Action
- * 部品アイテムを消費済みにする
- */
-
-import { revalidatePath } from 'next/cache';
-import { updateItemStatus } from '@/src/modules/production/services/itemService';
-
-/**
- * 部品アイテムを消費済みにするサーバーアクション
- * @param itemId - 消費する部品アイテムのID
- */
-export async function consumeItem(itemId: string | number) {
-    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-
-    // READY（または消費済みを意味するステータス）に更新
-    // ここでは既存ロジックに合わせてステータスを更新し、保管ボックスを実質的に空にする
-    await updateItemStatus(id, 'ASSEMBLED'); // 完成＝消費とみなす
-
-    console.log(`[ConsumeItem] Consumed item ${id}`);
-
-    revalidatePath('/');
-    revalidatePath(`/item/${id}`);
 }
 </file>
 
@@ -3356,113 +4012,6 @@ export async function updateProcess(
     if (projectId) {
         revalidatePath(`/project/${projectId}`);
     }
-}
-</file>
-
-<file path="src/modules/production/components/MovePartModal.tsx">
-import React from 'react';
-import { Unit } from '@/app/types';
-import { X, FolderOutput, Folder } from 'lucide-react';
-
-interface MovePartModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onMove: (unitId: string | null) => void;
-    units: Unit[];
-    currentUnitId?: string | null;
-    partNumber: string;
-}
-
-export function MovePartModal({
-    isOpen,
-    onClose,
-    onMove,
-    units,
-    currentUnitId,
-    partNumber
-}: MovePartModalProps) {
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between">
-                    <div>
-                        <h3 className="text-sm font-bold text-gray-900">ユニット移動</h3>
-                        <p className="text-xs text-gray-500 mt-0.5">部品: <span className="font-mono text-blue-600">{partNumber}</span></p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-1 rounded-full hover:bg-gray-200 transition-colors text-gray-400 hover:text-gray-600"
-                    >
-                        <X size={18} />
-                    </button>
-                </div>
-
-                <div className="p-2 max-h-[60vh] overflow-y-auto">
-                    <div className="grid gap-1">
-                        {/* 未分類へ移動 */}
-                        <button
-                            onClick={() => onMove(null)}
-                            disabled={!currentUnitId}
-                            className={`
-                                flex items-center gap-3 w-full p-3 rounded-lg text-left transition-all border
-                                ${!currentUnitId
-                                    ? 'bg-blue-50 border-blue-200 text-blue-700 cursor-default'
-                                    : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-600'
-                                }
-                            `}
-                        >
-                            <div className={`p-2 rounded-md ${!currentUnitId ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
-                                <FolderOutput size={18} />
-                            </div>
-                            <div className="flex-1">
-                                <span className="text-sm font-bold block">未分類 (No Unit)</span>
-                                <span className="text-[10px] text-gray-400">ユニットから除外する</span>
-                            </div>
-                            {!currentUnitId && <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">CURRENT</span>}
-                        </button>
-
-                        <div className="h-px bg-gray-100 my-1 mx-2" />
-
-                        {/* 各ユニットへ移動 */}
-                        {units.length === 0 ? (
-                            <div className="text-center py-8 text-gray-400 text-xs italic">
-                                作成されたユニットはありません
-                            </div>
-                        ) : (
-                            units.map((unit) => {
-                                const isCurrent = unit.id === currentUnitId;
-                                return (
-                                    <button
-                                        key={unit.id}
-                                        onClick={() => onMove(unit.id)}
-                                        disabled={isCurrent}
-                                        className={`
-                                            flex items-center gap-3 w-full p-3 rounded-lg text-left transition-all border
-                                            ${isCurrent
-                                                ? 'bg-blue-50 border-blue-200 text-blue-700 cursor-default'
-                                                : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-700'
-                                            }
-                                        `}
-                                    >
-                                        <div className={`p-2 rounded-md ${isCurrent ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
-                                            <Folder size={18} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <span className="text-sm font-bold block truncate">{unit.name}</span>
-                                            {unit.description && <span className="text-[10px] text-gray-400 truncate block">{unit.description}</span>}
-                                        </div>
-                                        {isCurrent && <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">CURRENT</span>}
-                                    </button>
-                                );
-                            })
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
 }
 </file>
 
@@ -3879,189 +4428,6 @@ export interface ProgressData {
 }
 </file>
 
-<file path="src/shared/components/FileDownloadButton.tsx">
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { ref, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
-
-interface FileDownloadButtonProps {
-    storagePath: string;
-    fileName: string;
-    label?: string;
-    variant?: 'primary' | 'outline' | 'ghost';
-    icon?: React.ReactNode;
-}
-
-export default function FileDownloadButton({
-    storagePath,
-    fileName,
-    label,
-    variant = 'outline',
-    icon
-}: FileDownloadButtonProps) {
-    const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isError, setIsError] = useState(false);
-
-    useEffect(() => {
-        const fetchUrl = async () => {
-            setIsLoading(true);
-            setIsError(false);
-            try {
-                const fileRef = ref(storage, storagePath);
-                const url = await getDownloadURL(fileRef);
-                setDownloadUrl(url);
-            } catch (error: any) {
-                console.error(`Error fetching download URL for ${storagePath}:`, error);
-                if (error.code === 'storage/object-not-found') {
-                    setIsError(true);
-                } else {
-                    setIsError(true);
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        if (storagePath) {
-            fetchUrl();
-        }
-    }, [storagePath]);
-
-    const handleDownload = () => {
-        if (!downloadUrl) return;
-
-        // Use a hidden anchor tag to trigger download with fileName
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = fileName;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const baseStyles = "inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
-
-    const variants = {
-        primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm",
-        outline: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50",
-        ghost: "bg-transparent text-gray-600 hover:bg-gray-100"
-    };
-
-    const defaultIcon = (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-    );
-
-    if (isLoading) {
-        return (
-            <button disabled className={`${baseStyles} ${variants[variant]}`}>
-                <span className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></span>
-                {label || 'Loading...'}
-            </button>
-        );
-    }
-
-    if (isError) {
-        return (
-            <button disabled title="ファイルが登録されていません" className={`${baseStyles} ${variants[variant]} opacity-40`}>
-                {icon || defaultIcon}
-                {label ? `${label} (未登録)` : '未登録'}
-            </button>
-        );
-    }
-
-    return (
-        <button
-            onClick={handleDownload}
-            className={`${baseStyles} ${variants[variant]}`}
-        >
-            {icon || defaultIcon}
-            {label}
-        </button>
-    );
-}
-</file>
-
-<file path="src/shared/components/ModelViewer.tsx">
-'use client';
-
-import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, Stage } from '@react-three/drei';
-import { useState, useEffect, Suspense } from 'react';
-import { STLLoader } from 'three-stdlib';
-
-function STLModel({ url }: { url: string }) {
-    if (!url) return null;
-
-    const geom = useLoader(STLLoader, url);
-
-    return (
-        /* rotation: [x, y, z] 
-           Math.PI / 2 は 90度です。
-           CADのZ上をThree.jsのY上に合わせるため、X軸を軸にマイナス90度回転させます。
-        */
-        <mesh
-            geometry={geom}
-            rotation={[-Math.PI / 2, 0, 0]}
-        >
-            <meshStandardMaterial color="#3b82f6" />
-        </mesh>
-    );
-}
-
-export function ModelViewer({ url }: { url: string }) {
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    if (!mounted) {
-        return <div className="w-full h-[400px] bg-gray-900 rounded-lg" />;
-    }
-
-    return (
-        <div className="w-full h-[400px] bg-gray-900 rounded-lg">
-            <Canvas shadows camera={{ position: [0, 0, 20], fov: 50 }}>
-                <Suspense fallback={null}>
-                    <Stage environment="city" intensity={0.5}>
-                        <STLModel url={url} />
-                    </Stage>
-                </Suspense>
-                <OrbitControls autoRotate />
-            </Canvas>
-        </div>
-    );
-}
-</file>
-
-<file path="src/shared/components/SummaryCard.tsx">
-// app/dashboard/components/SummaryCard.tsx
-import React from 'react';
-
-interface SummaryCardProps {
-  title: string;
-  value: number | string;
-  valueColor?: string;
-}
-
-export function SummaryCard({ title, value, valueColor = 'text-gray-800' }: SummaryCardProps) {
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-lg flex items-center">
-      <div>
-        <p className="text-lg text-gray-500">{title}</p>
-        <p className={`text-5xl font-extrabold ${valueColor}`}>{value}</p>
-      </div>
-    </div>
-  );
-}
-</file>
-
 <file path="src/shared/lib/firebase.ts">
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
@@ -4086,384 +4452,201 @@ const storage = getStorage(app);
 
 const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
 
+console.log(`[Firebase] Initializing with Project ID: ${projectId}, IsEmulator: ${isEmulator}`);
+
 if (isEmulator) {
-    const g = global as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g = globalThis as any;
     if (!g._firebase_emulators_connected) {
-        // 環境変数からポートを取得、なければデフォルト
         // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
-        connectFirestoreEmulator(db, '127.0.0.1', 8080);
-        connectAuthEmulator(auth, "http://127.0.0.1:9099");
-        connectStorageEmulator(storage, '127.0.0.1', 9199);
-        g._firebase_emulators_connected = true;
-        console.log(`Connected to Firebase Emulators: ${projectId}`);
+        console.log(`[Firebase] Connecting to Firestore Emulator: ${projectId}`);
+        try {
+            connectFirestoreEmulator(db, '127.0.0.1', 8080);
+            connectAuthEmulator(auth, "http://127.0.0.1:9099");
+            connectStorageEmulator(storage, '127.0.0.1', 9199);
+            g._firebase_emulators_connected = true;
+            console.log(`[Firebase] Successfully connected to Firebase Emulators: ${projectId}`);
+        } catch (error) {
+            console.error('[Firebase] Failed to connect to emulators:', error);
+        }
+    } else {
+        console.log('[Firebase] Emulators already connected, skipping initialization.');
     }
 }
 
 export { db, auth, storage };
 </file>
 
-<file path="tailwind.config.js">
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-</file>
-
-<file path="tsconfig.node.json">
+<file path="tsconfig.json">
 {
   "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true,
+    "target": "es2017",
+    "useDefineForClassFields": true,
+    "lib": [
+      "es2020",
+      "dom",
+      "dom.iterable"
+    ],
     "module": "esnext",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    /* Next.js */
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    /* Path mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowJs": true,
+    "strict": false,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": ["vite.config.ts"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
 </file>
 
-<file path=".firebaserc">
-{
-  "projects": {
-    "default": "demo-bom3d-sn923"
-  }
-}
-</file>
-
-<file path="app/actions/storageActions.ts">
+<file path="app/actions/importStl.ts">
 'use server'
 
+/**
+ * 後方互換性のためのラッパー
+ * 新しいモジュラーモノリス構造の Engineering Module に委譲
+ */
+
+import { ProcessStatus } from '@/app/types';
+import { ParsedFileInfo } from '@/lib/utils/parseFileName';
+
+// 新しいモジュール構造から関数をインポート
 import {
-    releaseStorageCase as releaseNew,
-    getStorageBoxStatus as getStatusNew
-} from '@/src/modules/inventory/actions/storageActions';
+    importSingleStl as importSingleStlNew,
+    importMultipleStl as importMultipleStlNew,
+    previewFileNames as previewFileNamesNew,
+    type ImportResult
+} from '@/src/modules/engineering/actions/importStl';
+
+// 既存のインターフェースをエクスポート（後方互換性）
+export type { ImportResult };
 
 /**
- * @deprecated Use src/modules/inventory/actions/storageActions
+ * 単一のSTLファイルをインポートする
+ * @deprecated 新しいモジュール構造の importSingleStl を使用してください
  */
-export async function releaseStorageCase(itemId: number) {
-    return releaseNew(itemId);
+export async function importSingleStl(
+    fileBuffer: ArrayBuffer,
+    fileName: string,
+    projectId: number,
+    defaultStatus: ProcessStatus = 'CUTTING'
+): Promise<ImportResult> {
+    return importSingleStlNew(fileBuffer, fileName, projectId, defaultStatus);
 }
 
 /**
- * @deprecated Use src/modules/inventory/actions/storageActions
+ * 複数のSTLファイルを一括インポートする
+ * @deprecated 新しいモジュール構造の importMultipleStl を使用してください
  */
-export async function getStorageBoxStatus(maxBoxNumber: number = 100) {
-    return getStatusNew(maxBoxNumber);
+export async function importMultipleStl(
+    filesData: Array<{ buffer: ArrayBuffer; name: string }>,
+    projectId: number,
+    defaultStatus: ProcessStatus = 'CUTTING'
+): Promise<ImportResult[]> {
+    return importMultipleStlNew(filesData, projectId, defaultStatus);
+}
+
+/**
+ * ファイル名のプレビュー解析（実際のインポートは行わない）
+ * @deprecated 新しいモジュール構造の previewFileNames を使用してください
+ */
+export async function previewFileNames(fileNames: string[]): Promise<ParsedFileInfo[]> {
+    return previewFileNamesNew(fileNames);
 }
 </file>
 
-<file path="app/api/import-stl/route.ts">
+<file path="app/actions/reportDefect.ts">
+'use server'
+
+import { reportDefect as reportDefectNew } from '@/src/modules/production/actions/reportDefect';
+
+/**
+ * @deprecated Use src/modules/production/actions/reportDefect
+ */
+export async function reportDefect(itemId: number | string, reason: string) {
+    return reportDefectNew(itemId, reason);
+}
+</file>
+
+<file path="app/actions/updateItemStatus.ts">
+'use server'
+
+import { updateItemStatus as updateNew } from '@/src/modules/production/actions/updateItemStatus';
+
+/**
+ * @deprecated Use src/modules/production/actions/updateItemStatus
+ */
+export async function updateItemStatus(itemId: string | number, newStatus: string) {
+    return updateNew(itemId, newStatus);
+}
+</file>
+
+<file path="app/api/preview-filenames/route.ts">
 import { NextRequest, NextResponse } from 'next/server';
-import { importMultipleStl } from '@/src/modules/engineering/actions/importStl';
-import { ProcessStatus } from '@/src/shared/types';
+import { previewFileNames } from '@/src/modules/engineering/actions/importStl';
 
 export async function POST(request: NextRequest) {
     try {
-        const { projectId, defaultStatus, filesData } = await request.json();
+        const { fileNames } = await request.json();
 
-        if (!projectId || !filesData || !Array.isArray(filesData)) {
+        if (!Array.isArray(fileNames)) {
             return NextResponse.json(
-                { error: 'Invalid request parameters' },
+                { error: 'fileNames must be an array' },
                 { status: 400 }
             );
         }
 
-        // Uint8Array を ArrayBuffer に変換
-        const convertedFilesData = filesData.map((fd: any) => ({
-            name: fd.name,
-            buffer: new Uint8Array(fd.buffer).buffer
-        }));
-
-        const results = await importMultipleStl(
-            convertedFilesData,
-            projectId,
-            (defaultStatus as ProcessStatus) || 'CUTTING'
-        );
-
+        const results = await previewFileNames(fileNames);
         return NextResponse.json(results);
     } catch (error) {
-        console.error('Error in import-stl API:', error);
+        console.error('Error in preview-filenames API:', error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Internal server error' },
+            { error: 'Internal server error' },
             { status: 500 }
         );
     }
 }
 </file>
 
-<file path="app/globals.css">
-@import "tailwindcss";
-</file>
+<file path="app/constants.ts">
+import { ProcessStatus } from './types';
 
-<file path="app/layout.tsx">
-import './globals.css'
-import type { Metadata } from "next"
-
-export const metadata: Metadata = {
-  title: "SN-923",
-  description: "在庫管理アプリケーション",
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="ja">
-      <body>{children}</body>
-    </html>
-  )
-}
-</file>
-
-<file path="app/storage/page.tsx">
-import { getStorageBoxStatus } from '@/src/modules/inventory/actions/storageActions';
-import StorageBoxGrid from '@/src/modules/inventory/components/StorageBoxGrid';
-
-export const dynamic = 'force-dynamic';
-
-export default async function StoragePage() {
-    const result = await getStorageBoxStatus(100);
-
-    if (!result.success) {
-        return (
-            <div className="min-h-screen bg-gray-50 p-8">
-                <div className="max-w-7xl mx-auto">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-6">保管ボックス管理</h1>
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <p className="text-red-800">エラーが発生しました: {result.error}</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen bg-gray-50 p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">保管ボックス管理</h1>
-                    <p className="text-gray-600">
-                        保管ボックスの使用状況を確認し、必要に応じて強制解放できます。
-                    </p>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                    <div className="flex items-center gap-6">
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                            <span className="text-sm text-gray-700">使用中</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 bg-gray-200 rounded"></div>
-                            <span className="text-sm text-gray-700">空き</span>
-                        </div>
-                    </div>
-                </div>
-
-                <StorageBoxGrid boxes={result.boxes} />
-            </div>
-        </div>
-    );
-}
-</file>
-
-<file path="firebase-data/storage_export/buckets.json">
-{
-  "buckets": [
-    {
-      "id": "demo-no-project.appspot.com"
-    },
-    {
-      "id": "demo-bom3d-sn923.appspot.com"
-    }
-  ]
-}
-</file>
-
-<file path="lib/utils/parseFileName.ts">
-/**
- * STLファイル名から部品情報を抽出するユーティリティ
- */
-
-export interface ParsedFileInfo {
-    /** 元のファイル名 */
-    originalFileName: string;
-    /** 抽出された部品番号 */
-    partNumber: string;
-    /** 個数（デフォルト: 1） */
-    quantity: number;
-    /** 解析が成功したか */
-    isValid: boolean;
-    /** エラーメッセージ（解析失敗時） */
-    errorMessage?: string;
-    /** 割り当てられる保管ボックスのリスト */
-    storageBoxes?: string[];
-}
-
-/**
- * ファイル名から部品番号と個数を抽出する
- * 
- * 対応フォーマット:
- * - PART123.stl → 部品番号: PART123, 個数: 1
- * - PART123_x5.stl → 部品番号: PART123, 個数: 5
- * - PART123_X10.stl → 部品番号: PART123, 個数: 10
- * - ABC-456_x3.stl → 部品番号: ABC-456, 個数: 3
- * 
- * @param fileName - 解析するファイル名（拡張子含む）
- * @returns 解析結果
- */
-export function parseFileName(fileName: string): ParsedFileInfo {
-    // 拡張子を除去
-    const nameWithoutExt = fileName.replace(/\.(stl|STL)$/, '');
-
-    if (!nameWithoutExt) {
-        return {
-            originalFileName: fileName,
-            partNumber: '',
-            quantity: 1,
-            isValid: false,
-            errorMessage: 'ファイル名が空です'
-        };
-    }
-
-    // パターン1: 部品番号_x個数 または 部品番号_X個数
-    const quantityPattern = /^(.+?)_[xX](\d+)$/;
-    const match = nameWithoutExt.match(quantityPattern);
-
-    if (match) {
-        const partNumber = match[1].trim();
-        const quantity = parseInt(match[2], 10);
-
-        if (!partNumber) {
-            return {
-                originalFileName: fileName,
-                partNumber: '',
-                quantity: 1,
-                isValid: false,
-                errorMessage: '部品番号が空です'
-            };
-        }
-
-        if (quantity <= 0 || quantity > 1000) {
-            return {
-                originalFileName: fileName,
-                partNumber,
-                quantity: 1,
-                isValid: false,
-                errorMessage: `個数が範囲外です（1-1000）: ${quantity}`
-            };
-        }
-
-        return {
-            originalFileName: fileName,
-            partNumber,
-            quantity,
-            isValid: true
-        };
-    }
-
-    // パターン2: 部品番号のみ（個数指定なし）
-    const partNumber = nameWithoutExt.trim();
-
-    if (!partNumber) {
-        return {
-            originalFileName: fileName,
-            partNumber: '',
-            quantity: 1,
-            isValid: false,
-            errorMessage: '部品番号が空です'
-        };
-    }
-
-    return {
-        originalFileName: fileName,
-        partNumber,
-        quantity: 1,
-        isValid: true
-    };
-}
-
-/**
- * 複数のファイル名を一括解析する
- * 
- * @param fileNames - ファイル名の配列
- * @returns 解析結果の配列
- */
-export function parseFileNames(fileNames: string[]): ParsedFileInfo[] {
-    return fileNames.map(parseFileName);
-}
-
-/**
- * 解析結果から有効なもののみをフィルタリング
- * 
- * @param parsedInfos - 解析結果の配列
- * @returns 有効な解析結果のみの配列
- */
-export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFileInfo[] {
-    return parsedInfos.filter(info => info.isValid);
-}
-</file>
-
-<file path="scripts/seed-emulator.ts">
-import { db } from '../lib/firebase';
-import { projects, parts, partItems } from '../app/data';
-import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-
-// @ts-ignore
-process.env.NODE_ENV = 'development';
-
-async function seed() {
-    console.log('Seeding Firestore Emulator...');
-    console.log('Connecting to Firestore (ensure Emulator is running on localhost:8080)...');
-
-    // Projects
-    console.log('Seeding Projects...');
-    for (const project of projects) {
-        const projectRef = doc(db, 'projects', String(project.id));
-        await setDoc(projectRef, {
-            ...project,
-            // Ensure dates are compatible if strings
-        });
-    }
-
-    // Parts
-    console.log('Seeding Parts...');
-    for (const part of parts) {
-        const partRef = doc(db, 'parts', String(part.id));
-        await setDoc(partRef, part);
-    }
-
-    // PartItems
-    console.log('Seeding PartItems...');
-    for (const item of partItems) {
-        const itemRef = doc(db, 'partItems', String(item.id));
-        await setDoc(itemRef, {
-            ...item,
-            // Convert Date object to Timestamp or keep as Date
-            completed_at: item.completed_at ? item.completed_at : null,
-            updated_at: serverTimestamp()
-        });
-    }
-
-    console.log('Seeding completed!');
-    process.exit(0);
-}
-
-seed().catch((error) => {
-    console.error('Seeding failed:', error);
-    process.exit(1);
-});
+export const PROCESSES: { key: ProcessStatus; name: string }[] = [
+  { key: 'UNPRINTED', name: '未プリント' },
+  { key: 'PRINTED', name: 'プリント済' },
+  { key: 'CUTTING', name: '切削' },
+  { key: 'SURFACE_TREATMENT', name: '表面処理' },
+  { key: 'PAINTING', name: '塗装' },
+  { key: 'ASSEMBLED', name: '組付け済み' },
+];
 </file>
 
 <file path="src/modules/inventory/types/index.ts">
@@ -4769,218 +4952,6 @@ export interface Box {
 }
 </file>
 
-<file path="tsconfig.json">
-{
-  "compilerOptions": {
-    "target": "es2017",
-    "useDefineForClassFields": true,
-    "lib": [
-      "es2020",
-      "dom",
-      "dom.iterable"
-    ],
-    "module": "esnext",
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    /* Next.js */
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "incremental": true,
-    /* Path mapping */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    },
-    "allowJs": true,
-    "strict": false,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
-}
-</file>
-
-<file path="app/actions/importStl.ts">
-'use server'
-
-/**
- * 後方互換性のためのラッパー
- * 新しいモジュラーモノリス構造の Engineering Module に委譲
- */
-
-import { ProcessStatus } from '@/app/types';
-import { ParsedFileInfo } from '@/lib/utils/parseFileName';
-
-// 新しいモジュール構造から関数をインポート
-import {
-    importSingleStl as importSingleStlNew,
-    importMultipleStl as importMultipleStlNew,
-    previewFileNames as previewFileNamesNew,
-    type ImportResult
-} from '@/src/modules/engineering/actions/importStl';
-
-// 既存のインターフェースをエクスポート（後方互換性）
-export type { ImportResult };
-
-/**
- * 単一のSTLファイルをインポートする
- * @deprecated 新しいモジュール構造の importSingleStl を使用してください
- */
-export async function importSingleStl(
-    fileBuffer: ArrayBuffer,
-    fileName: string,
-    projectId: number,
-    defaultStatus: ProcessStatus = 'CUTTING'
-): Promise<ImportResult> {
-    return importSingleStlNew(fileBuffer, fileName, projectId, defaultStatus);
-}
-
-/**
- * 複数のSTLファイルを一括インポートする
- * @deprecated 新しいモジュール構造の importMultipleStl を使用してください
- */
-export async function importMultipleStl(
-    filesData: Array<{ buffer: ArrayBuffer; name: string }>,
-    projectId: number,
-    defaultStatus: ProcessStatus = 'CUTTING'
-): Promise<ImportResult[]> {
-    return importMultipleStlNew(filesData, projectId, defaultStatus);
-}
-
-/**
- * ファイル名のプレビュー解析（実際のインポートは行わない）
- * @deprecated 新しいモジュール構造の previewFileNames を使用してください
- */
-export async function previewFileNames(fileNames: string[]): Promise<ParsedFileInfo[]> {
-    return previewFileNamesNew(fileNames);
-}
-</file>
-
-<file path="app/actions/reportDefect.ts">
-'use server'
-
-import { reportDefect as reportDefectNew } from '@/src/modules/production/actions/reportDefect';
-
-/**
- * @deprecated Use src/modules/production/actions/reportDefect
- */
-export async function reportDefect(itemId: number | string, reason: string) {
-    return reportDefectNew(itemId, reason);
-}
-</file>
-
-<file path="app/actions/updateItemStatus.ts">
-'use server'
-
-import { updateItemStatus as updateNew } from '@/src/modules/production/actions/updateItemStatus';
-
-/**
- * @deprecated Use src/modules/production/actions/updateItemStatus
- */
-export async function updateItemStatus(itemId: string | number, newStatus: string) {
-    return updateNew(itemId, newStatus);
-}
-</file>
-
-<file path="app/api/preview-filenames/route.ts">
-import { NextRequest, NextResponse } from 'next/server';
-import { previewFileNames } from '@/src/modules/engineering/actions/importStl';
-
-export async function POST(request: NextRequest) {
-    try {
-        const { fileNames } = await request.json();
-
-        if (!Array.isArray(fileNames)) {
-            return NextResponse.json(
-                { error: 'fileNames must be an array' },
-                { status: 400 }
-            );
-        }
-
-        const results = await previewFileNames(fileNames);
-        return NextResponse.json(results);
-    } catch (error) {
-        console.error('Error in preview-filenames API:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
-        );
-    }
-}
-</file>
-
-<file path="app/constants.ts">
-import { ProcessStatus } from './types';
-
-export const PROCESSES: { key: ProcessStatus; name: string }[] = [
-  { key: 'UNPRINTED', name: '未プリント' },
-  { key: 'PRINTED', name: 'プリント済' },
-  { key: 'CUTTING', name: '切削' },
-  { key: 'SURFACE_TREATMENT', name: '表面処理' },
-  { key: 'PAINTING', name: '塗装' },
-  { key: 'ASSEMBLED', name: '組付け済み' },
-];
-</file>
-
-<file path="lib/firebase.ts">
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
-import { getStorage, connectStorageEmulator } from "firebase/storage";
-
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "demo-bom3d-sn923";
-
-const firebaseConfig = {
-    apiKey: "fake-api-key", // Emulator用ダミー
-    authDomain: `${projectId}.firebaseapp.com`,
-    projectId: projectId,
-    storageBucket: `${projectId}.appspot.com`,
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
-
-const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
-
-if (isEmulator) {
-    const g = global as any;
-    if (!g._firebase_emulators_connected) {
-        // 環境変数からポートを取得、なければデフォルト
-        // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
-        connectFirestoreEmulator(db, '127.0.0.1', 8080);
-        connectAuthEmulator(auth, "http://127.0.0.1:9099");
-        connectStorageEmulator(storage, '127.0.0.1', 9199);
-        g._firebase_emulators_connected = true;
-        console.log(`Connected to Firebase Emulators: ${projectId}`);
-    }
-}
-
-export { db, auth, storage };
-</file>
-
 <file path="app/utils.ts">
 // app/utils.ts
 import { Part, PartItem, ProgressData, ProcessStatus } from './types';
@@ -5035,6 +5006,32 @@ export async function consumeItem(itemId: string | number) {
 }
 </file>
 
+<file path="app/actions/updateProcess.ts">
+'use server'
+
+/**
+ * 後方互換性のためのラッパー
+ * 新しいモジュラーモノリス構造の Production Module に委譲
+ */
+
+import { ProcessStatus } from '@/app/types';
+
+// 新しいモジュール構造から関数をインポート
+import { updateProcess as updateProcessNew } from '@/src/modules/production/actions/updateProcess';
+
+/**
+ * 部品アイテムの工程を更新するサーバーアクション
+ * @deprecated 新しいモジュール構造の updateProcess を使用してください
+ */
+export async function updateProcess(
+  itemId: string | number,
+  nextProcess: string,
+  projectId?: number
+) {
+  return updateProcessNew(itemId, nextProcess, projectId);
+}
+</file>
+
 <file path="app/data.ts">
 // app/data.ts
 import { Part, PartItem, Project } from './types';
@@ -5075,7 +5072,7 @@ export const partItems: PartItem[] = [
 
 <file path="lib/mockStore.ts">
 import { Part, PartItem, Project, ProcessStatus, Unit } from '@/app/types';
-import { db } from './firebase';
+import { db } from '@/src/shared/lib/firebase';
 import {
     collection,
     getDocs,
@@ -5260,107 +5257,6 @@ export async function createPrinted(
 }
 </file>
 
-<file path="app/actions/updateProcess.ts">
-'use server'
-
-/**
- * 後方互換性のためのラッパー
- * 新しいモジュラーモノリス構造の Production Module に委譲
- */
-
-import { ProcessStatus } from '@/app/types';
-
-// 新しいモジュール構造から関数をインポート
-import { updateProcess as updateProcessNew } from '@/src/modules/production/actions/updateProcess';
-
-/**
- * 部品アイテムの工程を更新するサーバーアクション
- * @deprecated 新しいモジュール構造の updateProcess を使用してください
- */
-export async function updateProcess(
-  itemId: string | number,
-  nextProcess: string,
-  projectId?: number
-) {
-  return updateProcessNew(itemId, nextProcess, projectId);
-}
-</file>
-
-<file path="app/page.tsx">
-import { ProjectsList } from '@/src/modules/project/components/ProjectsList';
-
-/**
- * プロジェクト一覧ダッシュボード
- */
-export default async function ProjectsDashboardPage() {
-  return (
-    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
-      <header className="mb-12 text-center">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
-          BOM進捗管理システム
-        </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          プロジェクトを選択して、部品の製造工程と進捗状況をリアルタイムで確認できます。
-        </p>
-      </header>
-
-      <div className="max-w-6xl mx-auto">
-        <ProjectsList />
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="app/types.ts">
-export type ProcessStatus =
-  | 'UNPRINTED'
-  | 'PRINTED'
-  | 'CUTTING'
-  | 'SURFACE_TREATMENT'
-  | 'PAINTING'
-  | 'ASSEMBLED'
-  | 'DEFECTIVE';
-
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  deadline: string;
-  created_at?: any;
-  updated_at?: any;
-}
-
-export interface Unit {
-  id: string;
-  name: string;
-  project_id: string;
-  description?: string;
-}
-
-export interface Part {
-  id: string;
-  part_number: string;
-  project_id: string;
-  unit_id?: string | null;
-}
-
-export interface PartItem {
-  id: string;
-  part_id: string;
-  storage_case: string;
-  status: ProcessStatus;
-  completed_at: Date | null;
-  updated_at?: any;
-}
-
-export interface ProgressData {
-  part_number: string;
-  storage_cases: string[];
-  counts: Record<ProcessStatus, number>;
-}
-</file>
-
 <file path="app/item/[id]/page.tsx">
 import { mockStore } from '@/lib/mockStore'
 import { updateProcess } from '@/app/actions/updateProcess'
@@ -5456,6 +5352,81 @@ export default async function ItemPage(props: { params: Promise<{ id: string }> 
       </div>
     </div>
   )
+}
+</file>
+
+<file path="app/page.tsx">
+import { ProjectsList } from '@/src/modules/project/components/ProjectsList';
+
+/**
+ * プロジェクト一覧ダッシュボード
+ */
+export default async function ProjectsDashboardPage() {
+  return (
+    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
+      <header className="mb-12 text-center">
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+          BOM進捗管理システム
+        </h1>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          プロジェクトを選択して、部品の製造工程と進捗状況をリアルタイムで確認できます。
+        </p>
+      </header>
+
+      <div className="max-w-6xl mx-auto">
+        <ProjectsList />
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/types.ts">
+export type ProcessStatus =
+  | 'UNPRINTED'
+  | 'PRINTED'
+  | 'CUTTING'
+  | 'SURFACE_TREATMENT'
+  | 'PAINTING'
+  | 'ASSEMBLED'
+  | 'DEFECTIVE';
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  deadline: string;
+  created_at?: any;
+  updated_at?: any;
+}
+
+export interface Unit {
+  id: string;
+  name: string;
+  project_id: string;
+  description?: string;
+}
+
+export interface Part {
+  id: string;
+  part_number: string;
+  project_id: string;
+  unit_id?: string | null;
+}
+
+export interface PartItem {
+  id: string;
+  part_id: string;
+  storage_case: string;
+  status: ProcessStatus;
+  completed_at: Date | null;
+  updated_at?: any;
+}
+
+export interface ProgressData {
+  part_number: string;
+  storage_cases: string[];
+  counts: Record<ProcessStatus, number>;
 }
 </file>
 
