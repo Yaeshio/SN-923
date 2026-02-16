@@ -18,17 +18,6 @@ import { ProcessStatus } from '@/src/shared/types';
 import { PROCESSES } from '@/app/constants';
 
 /**
- * 新しいアイテムIDを生成する
- * 
- * @returns 次に使用可能なアイテムID
- */
-async function generateNextItemId(): Promise<number> {
-    const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
-    const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
-    return existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
-}
-
-/**
  * 工程アイテムを作成する
  * 
  * @param partId - 部品ID
@@ -38,7 +27,7 @@ async function generateNextItemId(): Promise<number> {
  * @returns 作成されたアイテムの配列
  */
 export async function createItems(
-    partId: number,
+    partId: string,
     quantity: number,
     storageBoxes: string[],
     initialStatus: ProcessStatus = 'CUTTING'
@@ -47,12 +36,12 @@ export async function createItems(
         throw new Error(`Storage boxes count (${storageBoxes.length}) does not match quantity (${quantity})`);
     }
 
-    let nextItemId = await generateNextItemId();
     const createdItems: PartItem[] = [];
 
     for (let i = 0; i < quantity; i++) {
+        const itemRef = doc(collection(db, 'partItems'));
         const newItem: PartItem = {
-            id: nextItemId,
+            id: itemRef.id,
             part_id: partId,
             storage_case: storageBoxes[i],
             status: initialStatus,
@@ -60,9 +49,8 @@ export async function createItems(
             updated_at: serverTimestamp()
         };
 
-        await setDoc(doc(db, 'partItems', String(nextItemId)), newItem);
+        await setDoc(itemRef, newItem);
         createdItems.push(newItem);
-        nextItemId++;
     }
 
     console.log(`[ItemService] Created ${quantity} PartItems for Part ${partId}`);
@@ -76,10 +64,10 @@ export async function createItems(
  * @param newStatus - 新しいステータス
  */
 export async function updateItemStatus(
-    itemId: number,
+    itemId: string,
     newStatus: ProcessStatus
 ): Promise<void> {
-    const itemRef = doc(db, 'partItems', String(itemId));
+    const itemRef = doc(db, 'partItems', itemId);
 
     await updateDoc(itemRef, {
         status: newStatus,
@@ -97,7 +85,7 @@ export async function updateItemStatus(
  * @param newStatus - 新しいステータス
  */
 export async function updateMultipleItemsStatus(
-    itemIds: number[],
+    itemIds: string[],
     newStatus: ProcessStatus
 ): Promise<void> {
     const updatePromises = itemIds.map(itemId => updateItemStatus(itemId, newStatus));

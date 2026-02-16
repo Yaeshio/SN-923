@@ -17,7 +17,7 @@ import { createPrinted as createPrintedNew } from '@/src/modules/production/acti
 export async function createPrinted(
   fileBuffer: ArrayBuffer,
   fileName: string,
-  projectId: number,
+  projectId: string,
   qty: number,
   targetStatus: ProcessStatus = 'PRINTED'
 ): Promise<{ success: boolean; partNumber: string }> {

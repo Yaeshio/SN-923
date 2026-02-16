@@ -23,7 +23,7 @@ import { Part } from '@/src/modules/inventory/types';
  */
 export async function findPartByNumber(
     partNumber: string,
-    projectId: number
+    projectId: string
 ): Promise<Part | null> {
     const partsRef = collection(db, 'parts');
     const q = query(
@@ -39,7 +39,7 @@ export async function findPartByNumber(
 
     const partDoc = snapshot.docs[0];
     return {
-        id: Number(partDoc.id),
+        id: partDoc.id,
         ...partDoc.data()
     } as Part;
 }
@@ -53,21 +53,17 @@ export async function findPartByNumber(
  */
 export async function createPart(
     partNumber: string,
-    projectId: number
+    projectId: string
 ): Promise<Part> {
-    // 新しいIDを生成（既存の最大ID + 1）
-    const allPartsSnapshot = await getDocs(collection(db, 'parts'));
-    const existingIds = allPartsSnapshot.docs.map(d => Number(d.id));
-    const newPartId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
-
+    const partRef = doc(collection(db, 'parts'));
     const newPart: Part = {
-        id: newPartId,
+        id: partRef.id,
         part_number: partNumber,
         project_id: projectId
     };
 
-    await setDoc(doc(db, 'parts', String(newPartId)), newPart);
-    console.log(`[PartService] Created new Part: ${partNumber} (ID: ${newPartId})`);
+    await setDoc(partRef, newPart);
+    console.log(`[PartService] Created new Part: ${partNumber} (ID: ${partRef.id})`);
 
     return newPart;
 }
@@ -81,7 +77,7 @@ export async function createPart(
  */
 export async function ensurePartExists(
     partNumber: string,
-    projectId: number
+    projectId: string
 ): Promise<Part> {
     const existingPart = await findPartByNumber(partNumber, projectId);
 

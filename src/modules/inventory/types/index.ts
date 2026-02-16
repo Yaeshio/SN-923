@@ -4,9 +4,9 @@
  */
 
 export interface Part {
-    id: number;
+    id: string;
     part_number: string;
-    project_id: number;
+    project_id: string;
     unit_id?: string | null;
 }
 

@@ -65,25 +65,34 @@ app/project/[id]/ProjectClientContent.tsx
 app/storage/page.tsx
 app/types.ts
 app/utils.ts
+diagram_full.mmd
+diagram.mmd
 docs/INTEGRATION_EXAMPLE.md
 docs/STL_IMPORT_GUIDE.md
+emulator_data/auth_export/accounts.json
+emulator_data/auth_export/config.json
+emulator_data/firebase-export-metadata.json
+emulator_data/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
+emulator_data/firestore_export/all_namespaces/all_kinds/output-0
+emulator_data/firestore_export/firestore_export.overall_export_metadata
+emulator_data/storage_export/buckets.json
 firebase-data/auth_export/accounts.json
 firebase-data/auth_export/config.json
 firebase-data/firebase-export-metadata.json
 firebase-data/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
 firebase-data/firestore_export/all_namespaces/all_kinds/output-0
 firebase-data/firestore_export/firestore_export.overall_export_metadata
-firebase-data/storage_export/blobs/07329d3c-7ade-4d04-878b-cba2ed959f4f
-firebase-data/storage_export/blobs/2299a94e-5a1b-4750-87a0-8d2887f35a28
-firebase-data/storage_export/blobs/30adc946-cbad-412f-aed8-904867ee12ef
-firebase-data/storage_export/blobs/4fa0f39a-bcd1-472f-a1ef-92bd3a120904
-firebase-data/storage_export/blobs/8a1ed49f-88fe-4c0e-a2a0-dd168182efe6
+firebase-data/storage_export/blobs/1592b06d-023b-4d51-a98b-9b3ec464ab92
+firebase-data/storage_export/blobs/62721c6e-4531-4e24-9503-c9354d564dda
+firebase-data/storage_export/blobs/6b16cb67-4e80-4417-a181-dbc10ab6386a
+firebase-data/storage_export/blobs/83c411db-774b-4e81-a3e4-26fad60acd23
+firebase-data/storage_export/blobs/b257a210-a7a3-4c46-b1b3-f2d9dec88453
 firebase-data/storage_export/buckets.json
-firebase-data/storage_export/metadata/07329d3c-7ade-4d04-878b-cba2ed959f4f.json
-firebase-data/storage_export/metadata/2299a94e-5a1b-4750-87a0-8d2887f35a28.json
-firebase-data/storage_export/metadata/30adc946-cbad-412f-aed8-904867ee12ef.json
-firebase-data/storage_export/metadata/4fa0f39a-bcd1-472f-a1ef-92bd3a120904.json
-firebase-data/storage_export/metadata/8a1ed49f-88fe-4c0e-a2a0-dd168182efe6.json
+firebase-data/storage_export/metadata/1592b06d-023b-4d51-a98b-9b3ec464ab92.json
+firebase-data/storage_export/metadata/62721c6e-4531-4e24-9503-c9354d564dda.json
+firebase-data/storage_export/metadata/6b16cb67-4e80-4417-a181-dbc10ab6386a.json
+firebase-data/storage_export/metadata/83c411db-774b-4e81-a3e4-26fad60acd23.json
+firebase-data/storage_export/metadata/b257a210-a7a3-4c46-b1b3-f2d9dec88453.json
 firebase-export-1770456349158PyqgDy/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
 firebase-export-1770456349158PyqgDy/firestore_export/all_namespaces/all_kinds/output-0
 firebase-export-1770456349158PyqgDy/firestore_export/firestore_export.overall_export_metadata
@@ -93,16 +102,20 @@ firebase-export-1770545049902UW2hwo/firestore_export/firestore_export.overall_ex
 firebase.json
 firestore.indexes.json
 firestore.rules
+graph.dot
 lib/firebase.ts
 lib/mockStore.ts
 lib/utils/parseFileName.ts
 next.config.js
+out.svg
 package.json
 postcss.config.js
 public/models/PART-A.stl
 README.md
 scripts/seed-emulator.ts
+scripts/seed-initial-data.ts
 src/modules/engineering/actions/importStl.ts
+src/modules/engineering/actions/projectActions.ts
 src/modules/engineering/components/StlImportModal.tsx
 src/modules/engineering/services/stlService.ts
 src/modules/inventory/actions/storageActions.ts
@@ -116,6 +129,7 @@ src/modules/production/actions/createPrinted.ts
 src/modules/production/actions/reportDefect.ts
 src/modules/production/actions/updateItemStatus.ts
 src/modules/production/actions/updateProcess.ts
+src/modules/production/components/MovePartModal.tsx
 src/modules/production/components/PreviewModal.tsx
 src/modules/production/components/swimlane/SwimlaneCell.tsx
 src/modules/production/components/swimlane/SwimlaneColumn.tsx
@@ -123,6 +137,7 @@ src/modules/production/components/swimlane/SwimlaneItem.tsx
 src/modules/production/services/itemService.ts
 src/modules/production/services/productionService.ts
 src/modules/production/types/index.ts
+src/modules/project/components/ProjectsList.tsx
 src/shared/components/FileDownloadButton.tsx
 src/shared/components/ModelViewer.tsx
 src/shared/components/SummaryCard.tsx
@@ -131,10 +146,1233 @@ src/shared/types/index.ts
 tailwind.config.js
 tsconfig.json
 tsconfig.node.json
+types-diagram.md
+types-diagram.mmd
 </directory_structure>
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="diagram_full.mmd">
+classDiagram
+
+
+class Project {
+            <<interface>>
+            +id: number
++name: string
++description: string
++deadline: string
+            
+        }
+class Unit {
+            <<interface>>
+            +id: string
++name: string
++project_id: number
++description?: string
+            
+        }
+class Part {
+            <<interface>>
+            +id: number
++part_number: string
++project_id: number
++unit_id?: string
+            
+        }
+class PartItem {
+            <<interface>>
+            +id: number
++part_id: number
++storage_case: string
++status: ProcessStatus
++completed_at: Date
++updated_at?: any
+            
+        }
+class ProgressData {
+            <<interface>>
+            +part_number: string
++storage_cases: string[]
++counts: Record~ProcessStatus, number~
+            
+        }
+class ParsedFileInfo {
+            <<interface>>
+            +originalFileName: string
++partNumber: string
++quantity: number
++isValid: boolean
++errorMessage?: string
++storageBoxes?: string[]
+            
+        }
+class Project {
+            <<interface>>
+            +id: number
++name: string
++description: string
++deadline: string
+            
+        }
+class Part {
+            <<interface>>
+            +id: number
++part_number: string
++project_id: number
++unit_id?: string
+            
+        }
+class Unit {
+            <<interface>>
+            +id: string
++name: string
++project_id: number
++description?: string
+            
+        }
+class ImportResult {
+            <<interface>>
+            +success: boolean
++fileName: string
++partNumber?: string
++partId?: number
++itemsCreated?: number
++error?: string
+            
+        }
+class Part {
+            <<interface>>
+            +id: number
++part_number: string
++project_id: number
++unit_id?: string
+            
+        }
+class ParsedFileInfo {
+            <<interface>>
+            +originalFileName: string
++partNumber: string
++quantity: number
++isValid: boolean
++errorMessage?: string
++storageBoxes?: string[]
+            
+        }
+class PartItem {
+            <<interface>>
+            +id: number
++part_id: number
++storage_case: string
++status: ProcessStatus
++completed_at: Date
++updated_at?: any
+            
+        }
+class ProgressData {
+            <<interface>>
+            +part_number: string
++storage_cases: string[]
++counts: Record~ProcessStatus, number~
+            
+        }
+</file>
+
+<file path="diagram.mmd">
+classDiagram
+
+
+class Project {
+            <<interface>>
+            +id: number
++name: string
++description: string
++deadline: string
+            
+        }
+class Part {
+            <<interface>>
+            +id: number
++part_number: string
++project_id: number
++unit_id?: string
+            
+        }
+class Unit {
+            <<interface>>
+            +id: string
++name: string
++project_id: number
++description?: string
+            
+        }
+class ImportResult {
+            <<interface>>
+            +success: boolean
++fileName: string
++partNumber?: string
++partId?: number
++itemsCreated?: number
++error?: string
+            
+        }
+class Part {
+            <<interface>>
+            +id: number
++part_number: string
++project_id: number
++unit_id?: string
+            
+        }
+class ParsedFileInfo {
+            <<interface>>
+            +originalFileName: string
++partNumber: string
++quantity: number
++isValid: boolean
++errorMessage?: string
++storageBoxes?: string[]
+            
+        }
+class PartItem {
+            <<interface>>
+            +id: number
++part_id: number
++storage_case: string
++status: ProcessStatus
++completed_at: Date
++updated_at?: any
+            
+        }
+class ProgressData {
+            <<interface>>
+            +part_number: string
++storage_cases: string[]
++counts: Record~ProcessStatus, number~
+            
+        }
+</file>
+
+<file path="emulator_data/auth_export/accounts.json">
+{"kind":"identitytoolkit#DownloadAccountResponse","users":[]}
+</file>
+
+<file path="emulator_data/auth_export/config.json">
+{"signIn":{"allowDuplicateEmails":false},"emailPrivacyConfig":{"enableImprovedEmailPrivacy":false}}
+</file>
+
+<file path="emulator_data/firebase-export-metadata.json">
+{
+  "version": "15.5.1",
+  "firestore": {
+    "version": "1.20.2",
+    "path": "firestore_export",
+    "metadata_file": "firestore_export/firestore_export.overall_export_metadata"
+  },
+  "database": {
+    "version": "4.11.2",
+    "path": "database_export"
+  },
+  "auth": {
+    "version": "15.5.1",
+    "path": "auth_export"
+  },
+  "storage": {
+    "version": "15.5.1",
+    "path": "storage_export"
+  }
+}
+</file>
+
+<file path="emulator_data/storage_export/buckets.json">
+{
+  "buckets": [
+    {
+      "id": "demo-bom3d-sn923.appspot.com"
+    }
+  ]
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/1592b06d-023b-4d51-a98b-9b3ec464ab92.json">
+{
+  "name": "projects/1/stl/ボディ187_1770448719111.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770448719129,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "0d5b873f-5566-41c8-9aed-2966cb89c568"
+  ],
+  "etag": "/8CRwCb9eSxkxd1bg1VpEt1L/RM",
+  "customMetadata": {},
+  "timeCreated": "2026-02-07T07:18:39.129Z",
+  "updated": "2026-02-07T07:18:39.129Z",
+  "size": 39684,
+  "md5Hash": "jZtKIN6hQiBgTaoJmooYZg==",
+  "crc32c": "166781100"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/62721c6e-4531-4e24-9503-c9354d564dda.json">
+{
+  "name": "projects/1/stl/ボディ179_1770529445795.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529445803,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "c8356d83-1b71-492e-ad9e-1e08a7059152"
+  ],
+  "etag": "G7O4LY1yNWn2fz3aAjD0WA4xnlE",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:05.803Z",
+  "updated": "2026-02-08T05:44:05.803Z",
+  "size": 35684,
+  "md5Hash": "r+kYllHl14flvVDvPfPe6A==",
+  "crc32c": "1892013277"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/6b16cb67-4e80-4417-a181-dbc10ab6386a.json">
+{
+  "name": "projects/1/stl/ボディ183_1770529444757.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529444789,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "b24bc10e-e721-4980-b3b5-d8bdca2345f0"
+  ],
+  "etag": "g12pRYleuMn2JZKWrge4QO4vElQ",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:04.789Z",
+  "updated": "2026-02-08T05:44:04.789Z",
+  "size": 29384,
+  "md5Hash": "OEi71t0ezdb9aZB3RXtkcw==",
+  "crc32c": "115996729"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/83c411db-774b-4e81-a3e4-26fad60acd23.json">
+{
+  "name": "projects/1/stl/ボディ180_1770529445567.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529445576,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "b9e90764-c8ed-4ed1-9e5b-aea9489bee1a"
+  ],
+  "etag": "LBOEOOSnr8Nd2AocdQ224yyApQ8",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:05.576Z",
+  "updated": "2026-02-08T05:44:05.576Z",
+  "size": 25284,
+  "md5Hash": "bc0DrlnmuANN4871E26lxw==",
+  "crc32c": "694601673"
+}
+</file>
+
+<file path="firebase-data/storage_export/metadata/b257a210-a7a3-4c46-b1b3-f2d9dec88453.json">
+{
+  "name": "projects/1/stl/ボディ186_1770529445301.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1770529445312,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "22f50b40-1c42-486a-a476-ad04f0ce8618"
+  ],
+  "etag": "ivhmcEfZc6mELCYhaybXm8I2Mo8",
+  "customMetadata": {},
+  "timeCreated": "2026-02-08T05:44:05.312Z",
+  "updated": "2026-02-08T05:44:05.312Z",
+  "size": 22884,
+  "md5Hash": "o4PfDl24x7AjTrkMvz7cQQ==",
+  "crc32c": "2880207178"
+}
+</file>
+
+<file path="out.svg">
+<svg version="1.1" baseProfile="full" width="1792.0" height="209.0" viewBox="0 0 1792 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
+<desc >#.interface: fill=lightblue
+#.enumeration: fill=lightgreen
+#.type: fill=lightgray
+
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;ImportResult|+success: boolean;+fileName: string;+partNumber?: string;+partId?: number;+itemsCreated?: number;+error?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
+<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
+<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
+<g stroke="transparent" fill="transparent">
+<rect x="0.0" y="0.0" height="209.0" width="1792.0" stroke="none"></rect>
+</g>
+<g transform="translate(8, 8)" fill="#33322E">
+<g transform="translate(20, 20)">
+<g data-name="Project">
+<g fill="lightblue" stroke="#33322E" data-name="Project">
+<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
+<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
+<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
+</g>
+<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
+<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
+
+</g>
+</g>
+<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
+
+</g>
+</g>
+<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Unit">
+<g fill="lightblue" stroke="#33322E" data-name="Unit">
+<rect x="207.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
+<path d="M207.0 48.0 L384.0 48.0" fill="none" data-name="Unit"></path>
+<path d="M207.0 129.0 L384.0 129.0" fill="none" data-name="Unit"></path>
+</g>
+<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
+<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
+
+</g>
+</g>
+<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
+
+</g>
+</g>
+<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Part">
+<g fill="lightblue" stroke="#33322E" data-name="Part">
+<rect x="424.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
+<path d="M424.0 48.0 L605.0 48.0" fill="none" data-name="Part"></path>
+<path d="M424.0 129.0 L605.0 129.0" fill="none" data-name="Part"></path>
+</g>
+<g transform="translate(424, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
+
+</g>
+</g>
+<g transform="translate(424, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
+
+</g>
+</g>
+<g transform="translate(424, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="PartItem">
+<g fill="lightblue" stroke="#33322E" data-name="PartItem">
+<rect x="645.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
+<path d="M645.0 32.0 L843.0 32.0" fill="none" data-name="PartItem"></path>
+<path d="M645.0 145.0 L843.0 145.0" fill="none" data-name="PartItem"></path>
+</g>
+<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
+<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
+
+</g>
+</g>
+<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
+<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
+<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
+<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
+
+</g>
+</g>
+<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ProgressData">
+<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
+<rect x="883.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
+<path d="M883.0 56.0 L1233.0 56.0" fill="none" data-name="ProgressData"></path>
+<path d="M883.0 121.0 L1233.0 121.0" fill="none" data-name="ProgressData"></path>
+</g>
+<g transform="translate(883, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
+<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
+
+</g>
+</g>
+<g transform="translate(883, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
+
+</g>
+</g>
+<g transform="translate(883, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ParsedFileInfo">
+<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
+<rect x="1273.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
+<path d="M1273.0 32.0 L1485.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
+<path d="M1273.0 145.0 L1485.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
+</g>
+<g transform="translate(1273, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
+
+</g>
+</g>
+<g transform="translate(1273, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
+
+</g>
+</g>
+<g transform="translate(1273, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ImportResult">
+<g fill="lightblue" stroke="#33322E" data-name="ImportResult">
+<rect x="1525.0" y="0.0" height="153.0" width="211.0" data-name="ImportResult"></rect>
+<path d="M1525.0 32.0 L1736.0 32.0" fill="none" data-name="ImportResult"></path>
+<path d="M1525.0 145.0 L1736.0 145.0" fill="none" data-name="ImportResult"></path>
+</g>
+<g transform="translate(1525, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ImportResult" data-compartment="0">
+<a id="src\modules\engineering\actions\importStl.ts.ImportResult" xlink:href="src\modules\engineering\actions\importStl.ts"><text x="97.5" y="14.1" stroke="none" text-anchor="middle" data-name="ImportResult" data-compartment="0">ImportResult</text></a>
+
+</g>
+</g>
+<g transform="translate(1525, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ImportResult" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ImportResult" data-compartment="1">+success: boolean</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ImportResult" data-compartment="1">+fileName: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ImportResult" data-compartment="1">+partNumber?: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ImportResult" data-compartment="1">+partId?: number</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ImportResult" data-compartment="1">+itemsCreated?: number</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ImportResult" data-compartment="1">+error?: string</text>
+
+</g>
+</g>
+<g transform="translate(1525, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ImportResult" data-compartment="2">
+
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</file>
+
+<file path="scripts/seed-initial-data.ts">
+import { db } from '../lib/firebase';
+import {
+    collection,
+    doc,
+    setDoc,
+    getDocs,
+    deleteDoc,
+    getDoc,
+    serverTimestamp
+} from 'firebase/firestore';
+
+/**
+ * 初期データ投入（シーディング）スクリプト
+ * 
+ * 役割:
+ * 1. projects コレクションへの初期プロジェクト投入
+ * 2. boxes コレクションへの初期ボックス投入 (BOX-001 ～ BOX-050)
+ * 
+ * 実行方法:
+ * npx tsx scripts/seed-initial-data.ts
+ * 
+ * オプション:
+ * --clear  既存のデータを一旦削除してから投入します。
+ */
+
+// エミュレーター接続を確実にするための設定
+(process.env as any).NEXT_PUBLIC_FIREBASE_PROJECT_ID = "demo-bom3d-sn923";
+(process.env as any).NODE_ENV = 'development';
+
+async function clearCollection(name: string) {
+    console.log(`[Clear] Cleaning collection: ${name}...`);
+    const q = collection(db, name);
+    const snapshot = await getDocs(q);
+    const deletePromises = snapshot.docs.map(d => deleteDoc(d.ref));
+    await Promise.all(deletePromises);
+    console.log(`[Clear] ${snapshot.size} documents deleted from ${name}.`);
+}
+
+async function seed() {
+    const args = process.argv.slice(2);
+    const shouldClear = args.includes('--clear');
+
+    console.log('--- Database Seeding Start ---');
+
+    if (shouldClear) {
+        await clearCollection('projects');
+        await clearCollection('boxes');
+    }
+
+    // 1. projects
+    console.log('Seeding projects...');
+    const projectId = "proto-2024";
+    const projectRef = doc(db, 'projects', projectId);
+    const projectData = {
+        name: "プロトタイプ開発2024",
+        deadline: "2024-12-31",
+        description: "Firebase移行後の初期データ",
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp()
+    };
+
+    const projectSnap = await getDoc(projectRef);
+    if (!projectSnap.exists() || shouldClear) {
+        await setDoc(projectRef, projectData);
+        console.log(`✔️  Project "${projectData.name}" created (ID: ${projectId}).`);
+    } else {
+        console.log(`ℹ️  Project "${projectId}" already exists. Skipping.`);
+    }
+
+    // 2. boxes (新規追加)
+    console.log('Seeding boxes (BOX-001 to BOX-050)...');
+    let createdCount = 0;
+    let skippedCount = 0;
+
+    for (let i = 1; i <= 50; i++) {
+        const boxId = `BOX-${String(i).padStart(3, '0')}`;
+        const boxRef = doc(db, 'boxes', boxId);
+
+        const boxData = {
+            id: boxId,
+            status: "AVAILABLE",
+            updated_at: serverTimestamp()
+        };
+
+        if (!shouldClear) {
+            const boxSnap = await getDoc(boxRef);
+            if (boxSnap.exists()) {
+                skippedCount++;
+                continue;
+            }
+        }
+
+        await setDoc(boxRef, boxData);
+        createdCount++;
+    }
+
+    console.log(`✔️  Boxes: ${createdCount} created, ${skippedCount} skipped.`);
+    console.log('--- Seeding Completed! ---');
+    process.exit(0);
+}
+
+seed().catch((error) => {
+    console.error('❌  Seeding failed:', error);
+    process.exit(1);
+});
+</file>
+
+<file path="src/modules/engineering/actions/projectActions.ts">
+'use server'
+
+/**
+ * Engineering Module - Project Actions
+ * プロジェクトの作成と管理
+ */
+
+import { db } from '@/src/shared/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { revalidatePath } from 'next/cache';
+
+/**
+ * 新規プロジェクトを作成するサーバーアクション
+ * 
+ * @param name - プロジェクト名
+ * @param description - 説明
+ * @param deadline - 納期
+ * @returns 作成されたプロジェクトのID
+ */
+export async function createProject(
+    name: string,
+    description: string,
+    deadline: string
+) {
+    try {
+        const docRef = await addDoc(collection(db, 'projects'), {
+            name,
+            description,
+            deadline,
+            created_at: serverTimestamp(),
+            updated_at: serverTimestamp()
+        });
+
+        console.log(`[ProjectActions] Created new project with ID: ${docRef.id}`);
+
+        // ダッシュボードを更新
+        revalidatePath('/');
+
+        return { success: true, id: docRef.id };
+    } catch (error) {
+        console.error('Failed to create project:', error);
+        return { success: false, error: 'プロジェクトの作成に失敗しました' };
+    }
+}
+</file>
+
+<file path="src/modules/project/components/ProjectsList.tsx">
+'use client';
+
+/**
+ * Project Module - Projects List Component
+ * プロジェクト一覧をリアルタイムで表示する
+ */
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { db } from '@/src/shared/lib/firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { Project } from '@/src/shared/types';
+
+export function ProjectsList() {
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const q = query(collection(db, 'projects'), orderBy('name', 'asc'));
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const projectsData = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Project[];
+            setProjects(projectsData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching projects: ", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
+
+    if (projects.length === 0) {
+        return (
+            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
+                <p className="text-gray-500">プロジェクトがありません。新しいプロジェクトを作成してください。</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {projects.map((project) => (
+                <Link key={project.id} href={`/project/${project.id}`}>
+                    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer flex flex-col h-full transform hover:-translate-y-1">
+                        <div className="p-8 flex-grow">
+                            <div className="flex justify-between items-start mb-6">
+                                <h2 className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                                    {project.name}
+                                </h2>
+                                <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                    進行中
+                                </span>
+                            </div>
+                            <p className="text-gray-600 mb-8 leading-relaxed">
+                                {project.description}
+                            </p>
+
+                            {/* 簡易進捗表示（ダミー） */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="font-medium text-gray-700">全体進捗</span>
+                                    <span className="font-bold text-blue-600">65%</span>
+                                </div>
+                                <div className="w-full bg-gray-100 rounded-full h-3">
+                                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full w-[65%] shadow-sm"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center group-hover:bg-blue-50 transition-colors">
+                            <div className="text-sm">
+                                <span className="text-gray-500">納期: </span>
+                                <span className="font-semibold text-gray-800">{project.deadline}</span>
+                            </div>
+                            <span className="text-blue-600 font-bold flex items-center group-hover:translate-x-1 transition-transform">
+                                詳細を見る
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                </Link>
+            ))}
+        </div>
+    );
+}
+</file>
+
+<file path="types-diagram.md">
+<svg version="1.1" baseProfile="full" width="1541.0" height="209.0" viewBox="0 0 1541 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
+<desc >#.interface: fill=lightblue
+#.enumeration: fill=lightgreen
+#.type: fill=lightgray
+
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
+<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
+<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
+<g stroke="transparent" fill="transparent">
+<rect x="0.0" y="0.0" height="209.0" width="1541.0" stroke="none"></rect>
+</g>
+<g transform="translate(8, 8)" fill="#33322E">
+<g transform="translate(20, 20)">
+<g data-name="Project">
+<g fill="lightblue" stroke="#33322E" data-name="Project">
+<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
+<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
+<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
+</g>
+<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
+<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
+
+</g>
+</g>
+<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
+
+</g>
+</g>
+<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Part">
+<g fill="lightblue" stroke="#33322E" data-name="Part">
+<rect x="207.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
+<path d="M207.0 48.0 L388.0 48.0" fill="none" data-name="Part"></path>
+<path d="M207.0 129.0 L388.0 129.0" fill="none" data-name="Part"></path>
+</g>
+<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
+
+</g>
+</g>
+<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
+
+</g>
+</g>
+<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Unit">
+<g fill="lightblue" stroke="#33322E" data-name="Unit">
+<rect x="428.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
+<path d="M428.0 48.0 L605.0 48.0" fill="none" data-name="Unit"></path>
+<path d="M428.0 129.0 L605.0 129.0" fill="none" data-name="Unit"></path>
+</g>
+<g transform="translate(428, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
+<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
+
+</g>
+</g>
+<g transform="translate(428, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
+
+</g>
+</g>
+<g transform="translate(428, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ParsedFileInfo">
+<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
+<rect x="645.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
+<path d="M645.0 32.0 L857.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
+<path d="M645.0 145.0 L857.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
+</g>
+<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
+
+</g>
+</g>
+<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
+
+</g>
+</g>
+<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="PartItem">
+<g fill="lightblue" stroke="#33322E" data-name="PartItem">
+<rect x="897.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
+<path d="M897.0 32.0 L1095.0 32.0" fill="none" data-name="PartItem"></path>
+<path d="M897.0 145.0 L1095.0 145.0" fill="none" data-name="PartItem"></path>
+</g>
+<g transform="translate(897, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
+<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
+
+</g>
+</g>
+<g transform="translate(897, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
+<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
+<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
+<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
+
+</g>
+</g>
+<g transform="translate(897, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ProgressData">
+<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
+<rect x="1135.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
+<path d="M1135.0 56.0 L1485.0 56.0" fill="none" data-name="ProgressData"></path>
+<path d="M1135.0 121.0 L1485.0 121.0" fill="none" data-name="ProgressData"></path>
+</g>
+<g transform="translate(1135, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
+<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
+
+</g>
+</g>
+<g transform="translate(1135, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
+
+</g>
+</g>
+<g transform="translate(1135, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
+
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</file>
+
+<file path="types-diagram.mmd">
+<svg version="1.1" baseProfile="full" width="1541.0" height="209.0" viewBox="0 0 1541 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
+<desc >#.interface: fill=lightblue
+#.enumeration: fill=lightgreen
+#.type: fill=lightgray
+
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
+<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
+<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
+<g stroke="transparent" fill="transparent">
+<rect x="0.0" y="0.0" height="209.0" width="1541.0" stroke="none"></rect>
+</g>
+<g transform="translate(8, 8)" fill="#33322E">
+<g transform="translate(20, 20)">
+<g data-name="Project">
+<g fill="lightblue" stroke="#33322E" data-name="Project">
+<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
+<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
+<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
+</g>
+<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
+<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
+
+</g>
+</g>
+<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
+
+</g>
+</g>
+<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Part">
+<g fill="lightblue" stroke="#33322E" data-name="Part">
+<rect x="207.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
+<path d="M207.0 48.0 L388.0 48.0" fill="none" data-name="Part"></path>
+<path d="M207.0 129.0 L388.0 129.0" fill="none" data-name="Part"></path>
+</g>
+<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
+
+</g>
+</g>
+<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
+
+</g>
+</g>
+<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Unit">
+<g fill="lightblue" stroke="#33322E" data-name="Unit">
+<rect x="428.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
+<path d="M428.0 48.0 L605.0 48.0" fill="none" data-name="Unit"></path>
+<path d="M428.0 129.0 L605.0 129.0" fill="none" data-name="Unit"></path>
+</g>
+<g transform="translate(428, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
+<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
+
+</g>
+</g>
+<g transform="translate(428, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
+
+</g>
+</g>
+<g transform="translate(428, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ParsedFileInfo">
+<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
+<rect x="645.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
+<path d="M645.0 32.0 L857.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
+<path d="M645.0 145.0 L857.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
+</g>
+<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
+
+</g>
+</g>
+<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
+
+</g>
+</g>
+<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="PartItem">
+<g fill="lightblue" stroke="#33322E" data-name="PartItem">
+<rect x="897.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
+<path d="M897.0 32.0 L1095.0 32.0" fill="none" data-name="PartItem"></path>
+<path d="M897.0 145.0 L1095.0 145.0" fill="none" data-name="PartItem"></path>
+</g>
+<g transform="translate(897, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
+<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
+
+</g>
+</g>
+<g transform="translate(897, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
+<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
+<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
+<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
+
+</g>
+</g>
+<g transform="translate(897, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ProgressData">
+<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
+<rect x="1135.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
+<path d="M1135.0 56.0 L1485.0 56.0" fill="none" data-name="ProgressData"></path>
+<path d="M1135.0 121.0 L1485.0 121.0" fill="none" data-name="ProgressData"></path>
+</g>
+<g transform="translate(1135, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
+<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
+
+</g>
+</g>
+<g transform="translate(1135, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
+
+</g>
+</g>
+<g transform="translate(1135, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
+
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>
+</file>
 
 <file path=".continue/agents/new-config.yaml">
 # This is an example configuration file
@@ -660,116 +1898,6 @@ const storagePath = `custom/path/${partNumber}.stl`;
 }
 </file>
 
-<file path="firebase-data/storage_export/metadata/07329d3c-7ade-4d04-878b-cba2ed959f4f.json">
-{
-  "name": "projects/1/stl/ボディ187_1770448719111.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770448719129,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "0d5b873f-5566-41c8-9aed-2966cb89c568"
-  ],
-  "etag": "/8CRwCb9eSxkxd1bg1VpEt1L/RM",
-  "customMetadata": {},
-  "timeCreated": "2026-02-07T07:18:39.129Z",
-  "updated": "2026-02-07T07:18:39.129Z",
-  "size": 39684,
-  "md5Hash": "jZtKIN6hQiBgTaoJmooYZg==",
-  "crc32c": "166781100"
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/2299a94e-5a1b-4750-87a0-8d2887f35a28.json">
-{
-  "name": "projects/1/stl/ボディ179_1770529445795.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770529445803,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "c8356d83-1b71-492e-ad9e-1e08a7059152"
-  ],
-  "etag": "G7O4LY1yNWn2fz3aAjD0WA4xnlE",
-  "customMetadata": {},
-  "timeCreated": "2026-02-08T05:44:05.803Z",
-  "updated": "2026-02-08T05:44:05.803Z",
-  "size": 35684,
-  "md5Hash": "r+kYllHl14flvVDvPfPe6A==",
-  "crc32c": "1892013277"
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/30adc946-cbad-412f-aed8-904867ee12ef.json">
-{
-  "name": "projects/1/stl/ボディ180_1770529445567.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770529445576,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "b9e90764-c8ed-4ed1-9e5b-aea9489bee1a"
-  ],
-  "etag": "LBOEOOSnr8Nd2AocdQ224yyApQ8",
-  "customMetadata": {},
-  "timeCreated": "2026-02-08T05:44:05.576Z",
-  "updated": "2026-02-08T05:44:05.576Z",
-  "size": 25284,
-  "md5Hash": "bc0DrlnmuANN4871E26lxw==",
-  "crc32c": "694601673"
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/4fa0f39a-bcd1-472f-a1ef-92bd3a120904.json">
-{
-  "name": "projects/1/stl/ボディ186_1770529445301.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770529445312,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "22f50b40-1c42-486a-a476-ad04f0ce8618"
-  ],
-  "etag": "ivhmcEfZc6mELCYhaybXm8I2Mo8",
-  "customMetadata": {},
-  "timeCreated": "2026-02-08T05:44:05.312Z",
-  "updated": "2026-02-08T05:44:05.312Z",
-  "size": 22884,
-  "md5Hash": "o4PfDl24x7AjTrkMvz7cQQ==",
-  "crc32c": "2880207178"
-}
-</file>
-
-<file path="firebase-data/storage_export/metadata/8a1ed49f-88fe-4c0e-a2a0-dd168182efe6.json">
-{
-  "name": "projects/1/stl/ボディ183_1770529444757.stl",
-  "bucket": "demo-bom3d-sn923.appspot.com",
-  "metageneration": 1,
-  "generation": 1770529444789,
-  "contentType": "application/octet-stream",
-  "storageClass": "STANDARD",
-  "contentDisposition": "inline",
-  "downloadTokens": [
-    "b24bc10e-e721-4980-b3b5-d8bdca2345f0"
-  ],
-  "etag": "g12pRYleuMn2JZKWrge4QO4vElQ",
-  "customMetadata": {},
-  "timeCreated": "2026-02-08T05:44:04.789Z",
-  "updated": "2026-02-08T05:44:04.789Z",
-  "size": 29384,
-  "md5Hash": "OEi71t0ezdb9aZB3RXtkcw==",
-  "crc32c": "115996729"
-}
-</file>
-
 <file path="firebase.json">
 {
   "firestore": {
@@ -862,16 +1990,8 @@ rules_version='2'
 service cloud.firestore {
   match /databases/{database}/documents {
     match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 3, 5);
+      // 開発中は認証なしで全操作を許可
+      allow read, write: if true;
     }
   }
 }
@@ -930,7 +2050,7 @@ export interface ImportResult {
     success: boolean;
     fileName: string;
     partNumber?: string;
-    partId?: number;
+    partId?: string;
     itemsCreated?: number;
     error?: string;
 }
@@ -947,7 +2067,7 @@ export interface ImportResult {
 export async function importSingleStl(
     fileBuffer: ArrayBuffer,
     fileName: string,
-    projectId: number,
+    projectId: string,
     defaultStatus: ProcessStatus = 'CUTTING'
 ): Promise<ImportResult> {
     try {
@@ -965,7 +2085,7 @@ export async function importSingleStl(
         const { partNumber, quantity } = parsed;
 
         // 2. Engineering: Firebase Storage にアップロード
-        const downloadUrl = await uploadStlFile(fileBuffer, partNumber, projectId);
+        const downloadUrl = await uploadStlFile(fileBuffer, partNumber, projectId as any);
         console.log(`[ImportSTL] Uploaded file: ${downloadUrl}`);
 
         // 3. Inventory: 部品マスタの確認・作成
@@ -1009,7 +2129,7 @@ export async function importSingleStl(
  */
 export async function importMultipleStl(
     filesData: Array<{ buffer: ArrayBuffer; name: string }>,
-    projectId: number,
+    projectId: string,
     defaultStatus: ProcessStatus = 'CUTTING'
 ): Promise<ImportResult[]> {
     const results: ImportResult[] = [];
@@ -1528,7 +2648,7 @@ export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFil
 export async function uploadStlFile(
     fileBuffer: ArrayBuffer,
     partNumber: string,
-    projectId: number
+    projectId: string
 ): Promise<string> {
     const timestamp = Date.now();
     const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
@@ -1839,7 +2959,7 @@ import { Part } from '@/src/modules/inventory/types';
  */
 export async function findPartByNumber(
     partNumber: string,
-    projectId: number
+    projectId: string
 ): Promise<Part | null> {
     const partsRef = collection(db, 'parts');
     const q = query(
@@ -1855,7 +2975,7 @@ export async function findPartByNumber(
 
     const partDoc = snapshot.docs[0];
     return {
-        id: Number(partDoc.id),
+        id: partDoc.id,
         ...partDoc.data()
     } as Part;
 }
@@ -1869,21 +2989,17 @@ export async function findPartByNumber(
  */
 export async function createPart(
     partNumber: string,
-    projectId: number
+    projectId: string
 ): Promise<Part> {
-    // 新しいIDを生成（既存の最大ID + 1）
-    const allPartsSnapshot = await getDocs(collection(db, 'parts'));
-    const existingIds = allPartsSnapshot.docs.map(d => Number(d.id));
-    const newPartId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
-
+    const partRef = doc(collection(db, 'parts'));
     const newPart: Part = {
-        id: newPartId,
+        id: partRef.id,
         part_number: partNumber,
         project_id: projectId
     };
 
-    await setDoc(doc(db, 'parts', String(newPartId)), newPart);
-    console.log(`[PartService] Created new Part: ${partNumber} (ID: ${newPartId})`);
+    await setDoc(partRef, newPart);
+    console.log(`[PartService] Created new Part: ${partNumber} (ID: ${partRef.id})`);
 
     return newPart;
 }
@@ -1897,7 +3013,7 @@ export async function createPart(
  */
 export async function ensurePartExists(
     partNumber: string,
-    projectId: number
+    projectId: string
 ): Promise<Part> {
     const existingPart = await findPartByNumber(partNumber, projectId);
 
@@ -1910,40 +3026,12 @@ export async function ensurePartExists(
 }
 </file>
 
-<file path="src/modules/inventory/types/index.ts">
-/**
- * Inventory Module - 型定義
- * 部品マスタと在庫に関する型
- */
-
-export interface Part {
-    id: number;
-    part_number: string;
-    project_id: number;
-}
-
-export interface ParsedFileInfo {
-    /** 元のファイル名 */
-    originalFileName: string;
-    /** 抽出された部品番号 */
-    partNumber: string;
-    /** 個数（デフォルト: 1） */
-    quantity: number;
-    /** 解析が成功したか */
-    isValid: boolean;
-    /** エラーメッセージ（解析失敗時） */
-    errorMessage?: string;
-    /** 割り当てられる保管ボックスのリスト */
-    storageBoxes?: string[];
-}
-</file>
-
 <file path="src/modules/logistics/components/CartModal.tsx">
 import { ProcessStatus } from '@/src/shared/types';
 import { PROCESSES } from '@/app/constants';
 
 interface CartItem {
-    id: number;
+    id: string;
     part_number: string;
     status: ProcessStatus;
     count: number;
@@ -2096,7 +3184,7 @@ import { parseFileName } from '@/src/modules/engineering/services/stlService';
 export async function createPrinted(
     fileBuffer: ArrayBuffer,
     fileName: string,
-    projectId: number,
+    projectId: string,
     qty: number,
     targetStatus: ProcessStatus = 'PRINTED'
 ): Promise<{ success: boolean; partNumber: string }> {
@@ -2148,11 +3236,11 @@ import { updateItemStatus, createItems } from '@/src/modules/production/services
  * @param itemId - 不良が発生したアイテムのID
  * @param reason - 不良の理由
  */
-export async function reportDefect(itemId: number | string, reason: string) {
-    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+export async function reportDefect(itemId: string, reason: string) {
+    const id = itemId;
 
     // 1. 元のアイテム情報を取得
-    const itemRef = doc(db, 'partItems', String(id));
+    const itemRef = doc(db, 'partItems', id);
     const itemSnap = await getDoc(itemRef);
 
     if (!itemSnap.exists()) {
@@ -2203,16 +3291,16 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
  * @param itemId - 部品アイテムのID
  * @param newStatus - 新しいステータス
  */
-export async function updateItemStatus(itemId: string | number, newStatus: string) {
+export async function updateItemStatus(itemId: string, newStatus: string) {
     try {
-        const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+        const id = itemId;
 
         // ステータスを更新
         await updateStatus(id, newStatus as any);
 
         // ステータスがASSEMBLED（完成）の場合、保管ボックスを解放
         if (newStatus === 'ASSEMBLED') {
-            const itemRef = doc(db, 'partItems', String(id));
+            const itemRef = doc(db, 'partItems', id);
             await updateDoc(itemRef, {
                 storage_case: '',
                 updated_at: serverTimestamp()
@@ -2251,12 +3339,11 @@ import { updateItemStatus } from '@/src/modules/production/services/itemService'
  * @param projectId - プロジェクトID（オプション）
  */
 export async function updateProcess(
-    itemId: string | number,
+    itemId: string,
     nextProcess: string,
-    projectId?: number
+    projectId?: string
 ) {
-    // 文字列IDを数値に変換
-    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+    const id = itemId;
 
     // Production Service を使用してステータスを更新
     await updateItemStatus(id, nextProcess as ProcessStatus);
@@ -2269,6 +3356,113 @@ export async function updateProcess(
     if (projectId) {
         revalidatePath(`/project/${projectId}`);
     }
+}
+</file>
+
+<file path="src/modules/production/components/MovePartModal.tsx">
+import React from 'react';
+import { Unit } from '@/app/types';
+import { X, FolderOutput, Folder } from 'lucide-react';
+
+interface MovePartModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onMove: (unitId: string | null) => void;
+    units: Unit[];
+    currentUnitId?: string | null;
+    partNumber: string;
+}
+
+export function MovePartModal({
+    isOpen,
+    onClose,
+    onMove,
+    units,
+    currentUnitId,
+    partNumber
+}: MovePartModalProps) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="bg-gray-50 border-b border-gray-100 p-4 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-900">ユニット移動</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">部品: <span className="font-mono text-blue-600">{partNumber}</span></p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-1 rounded-full hover:bg-gray-200 transition-colors text-gray-400 hover:text-gray-600"
+                    >
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <div className="p-2 max-h-[60vh] overflow-y-auto">
+                    <div className="grid gap-1">
+                        {/* 未分類へ移動 */}
+                        <button
+                            onClick={() => onMove(null)}
+                            disabled={!currentUnitId}
+                            className={`
+                                flex items-center gap-3 w-full p-3 rounded-lg text-left transition-all border
+                                ${!currentUnitId
+                                    ? 'bg-blue-50 border-blue-200 text-blue-700 cursor-default'
+                                    : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-600'
+                                }
+                            `}
+                        >
+                            <div className={`p-2 rounded-md ${!currentUnitId ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                                <FolderOutput size={18} />
+                            </div>
+                            <div className="flex-1">
+                                <span className="text-sm font-bold block">未分類 (No Unit)</span>
+                                <span className="text-[10px] text-gray-400">ユニットから除外する</span>
+                            </div>
+                            {!currentUnitId && <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">CURRENT</span>}
+                        </button>
+
+                        <div className="h-px bg-gray-100 my-1 mx-2" />
+
+                        {/* 各ユニットへ移動 */}
+                        {units.length === 0 ? (
+                            <div className="text-center py-8 text-gray-400 text-xs italic">
+                                作成されたユニットはありません
+                            </div>
+                        ) : (
+                            units.map((unit) => {
+                                const isCurrent = unit.id === currentUnitId;
+                                return (
+                                    <button
+                                        key={unit.id}
+                                        onClick={() => onMove(unit.id)}
+                                        disabled={isCurrent}
+                                        className={`
+                                            flex items-center gap-3 w-full p-3 rounded-lg text-left transition-all border
+                                            ${isCurrent
+                                                ? 'bg-blue-50 border-blue-200 text-blue-700 cursor-default'
+                                                : 'bg-white border-transparent hover:bg-gray-50 hover:border-gray-200 text-gray-700'
+                                            }
+                                        `}
+                                    >
+                                        <div className={`p-2 rounded-md ${isCurrent ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'}`}>
+                                            <Folder size={18} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <span className="text-sm font-bold block truncate">{unit.name}</span>
+                                            {unit.description && <span className="text-[10px] text-gray-400 truncate block">{unit.description}</span>}
+                                        </div>
+                                        {isCurrent && <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">CURRENT</span>}
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }
 </file>
 
@@ -2285,9 +3479,9 @@ interface PreviewModalProps {
     isOpen: boolean
     onClose: () => void
     partNumber: string
-    itemId?: number
+    itemId?: string
     status?: string
-    projectId?: number
+    projectId?: string
 }
 
 export function PreviewModal({
@@ -2421,12 +3615,12 @@ import { ProcessStatus } from '@/src/shared/types';
 import { SwimlaneItem } from './SwimlaneItem';
 
 interface SwimlaneCellProps {
-    partId: number;
+    partId: string;
     status: ProcessStatus;
     items: PartItem[];
     isLast: boolean;
-    selectedIds: number[];
-    onToggleSelect: (itemId: number) => void;
+    selectedIds: string[];
+    onToggleSelect: (itemId: string) => void;
     onPreview: (item: any) => void;
 }
 
@@ -2473,98 +3667,6 @@ export function SwimlaneCell({ partId, status, items, isLast, selectedIds, onTog
 }
 </file>
 
-<file path="src/modules/production/components/swimlane/SwimlaneColumn.tsx">
-import { Part } from '@/src/modules/inventory/types';
-import { PartItem } from '@/src/modules/production/types';
-import { PROCESSES } from '@/app/constants';
-import { SwimlaneCell } from './SwimlaneCell';
-import FileDownloadButton from '@/src/shared/components/FileDownloadButton';
-
-interface SwimlaneColumnProps {
-    part: Part;
-    items: PartItem[];
-    selectedIds: number[];
-    onToggleSelect: (itemId: number) => void;
-    onPreview: (item: any) => void;
-}
-
-export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPreview }: SwimlaneColumnProps) {
-    // Find the "furthest" process index that has items
-    const lastActiveIndex = items.reduce((max, item) => {
-        const idx = PROCESSES.findIndex(p => p.key === item.status);
-        return Math.max(max, idx);
-    }, -1);
-
-    return (
-        <div className="
-      relative flex flex-col
-      w-[85vw] md:w-64 shrink-0 snap-center
-      border-r border-gray-200 bg-white
-    ">
-            {/* Column Header - Part Info */}
-            <div className="sticky top-0 z-20 h-24 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex flex-col justify-between group-hover:bg-white transition-colors">
-                <div className="min-w-0">
-                    <h3 className="font-black text-gray-900 text-xs tracking-tight truncate uppercase" title={part.part_number}>
-                        {part.part_number}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                            Active
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 mt-2">
-                    <div className="flex flex-wrap gap-1">
-                        {Array.from(new Set(items.map(i => i.storage_case).filter(Boolean))).map(sc => (
-                            <span key={sc} className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-600 font-bold rounded-md border border-blue-100">
-                                {sc}
-                            </span>
-                        ))}
-                    </div>
-                    <div className="text-[10px] text-gray-400 font-medium shrink-0">
-                        {items.length} units
-                    </div>
-                </div>
-            </div>
-
-            {/* Cells with Progress Line Overlay */}
-            <div className="relative flex-1 bg-gray-50/30">
-                {/* Vertical Progress Line (Connector) */}
-                {lastActiveIndex >= 0 && (
-                    <div
-                        className="absolute left-1/2 -translate-x-1/2 top-0 w-[3px] -z-0"
-                        style={{
-                            height: `${(lastActiveIndex + 0.5) * 80}px`,
-                            transition: 'height 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-                        }}
-                    >
-                        <div className="h-full w-full bg-gradient-to-b from-blue-100 via-blue-200 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
-                    </div>
-                )}
-
-                {/* Status Cells */}
-                <div className="flex flex-col">
-                    {PROCESSES.map((proc, index) => (
-                        <SwimlaneCell
-                            key={proc.key}
-                            partId={part.id}
-                            status={proc.key}
-                            items={items.filter(i => i.status === proc.key)}
-                            isLast={index === PROCESSES.length - 1}
-                            selectedIds={selectedIds}
-                            onToggleSelect={onToggleSelect}
-                            onPreview={onPreview}
-                        />
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-</file>
-
 <file path="src/modules/production/components/swimlane/SwimlaneItem.tsx">
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
@@ -2576,7 +3678,7 @@ interface SwimlaneItemProps {
     item: PartItem & { part_number?: string };
     isOverlay?: boolean;
     isSelected?: boolean;
-    onToggleSelect: (itemId: number) => void;
+    onToggleSelect: (itemId: string) => void;
     onPreview: (item: any) => void;
 }
 
@@ -2662,142 +3764,6 @@ export function SwimlaneItem({ item, isOverlay, isSelected, onToggleSelect, onPr
 }
 </file>
 
-<file path="src/modules/production/services/itemService.ts">
-/**
- * Production Module - Item Service
- * 工程アイテム（PartItem）の作成と管理
- */
-
-import { db } from '@/src/shared/lib/firebase';
-import {
-    collection,
-    getDocs,
-    doc,
-    setDoc,
-    updateDoc,
-    serverTimestamp
-} from 'firebase/firestore';
-import { PartItem } from '@/src/modules/production/types';
-import { Part } from '@/src/modules/inventory/types';
-import { ProcessStatus } from '@/src/shared/types';
-import { PROCESSES } from '@/app/constants';
-
-/**
- * 新しいアイテムIDを生成する
- * 
- * @returns 次に使用可能なアイテムID
- */
-async function generateNextItemId(): Promise<number> {
-    const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
-    const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
-    return existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
-}
-
-/**
- * 工程アイテムを作成する
- * 
- * @param partId - 部品ID
- * @param quantity - 作成する個数
- * @param storageBoxes - 割り当てられた保管ケースの配列
- * @param initialStatus - 初期ステータス
- * @returns 作成されたアイテムの配列
- */
-export async function createItems(
-    partId: number,
-    quantity: number,
-    storageBoxes: string[],
-    initialStatus: ProcessStatus = 'CUTTING'
-): Promise<PartItem[]> {
-    if (storageBoxes.length !== quantity) {
-        throw new Error(`Storage boxes count (${storageBoxes.length}) does not match quantity (${quantity})`);
-    }
-
-    let nextItemId = await generateNextItemId();
-    const createdItems: PartItem[] = [];
-
-    for (let i = 0; i < quantity; i++) {
-        const newItem: PartItem = {
-            id: nextItemId,
-            part_id: partId,
-            storage_case: storageBoxes[i],
-            status: initialStatus,
-            completed_at: null,
-            updated_at: serverTimestamp()
-        };
-
-        await setDoc(doc(db, 'partItems', String(nextItemId)), newItem);
-        createdItems.push(newItem);
-        nextItemId++;
-    }
-
-    console.log(`[ItemService] Created ${quantity} PartItems for Part ${partId}`);
-    return createdItems;
-}
-
-/**
- * アイテムのステータスを更新する
- * 
- * @param itemId - アイテムID
- * @param newStatus - 新しいステータス
- */
-export async function updateItemStatus(
-    itemId: number,
-    newStatus: ProcessStatus
-): Promise<void> {
-    const itemRef = doc(db, 'partItems', String(itemId));
-
-    await updateDoc(itemRef, {
-        status: newStatus,
-        updated_at: serverTimestamp(),
-        completed_at: newStatus === 'ASSEMBLED' ? serverTimestamp() : null
-    });
-
-    console.log(`[ItemService] Updated item ${itemId} status to ${newStatus}`);
-}
-
-/**
- * 複数アイテムのステータスを一括更新する
- * 
- * @param itemIds - アイテムIDの配列
- * @param newStatus - 新しいステータス
- */
-export async function updateMultipleItemsStatus(
-    itemIds: number[],
-    newStatus: ProcessStatus
-): Promise<void> {
-    const updatePromises = itemIds.map(itemId => updateItemStatus(itemId, newStatus));
-    await Promise.all(updatePromises);
-
-    console.log(`[ItemService] Updated ${itemIds.length} items to status ${newStatus}`);
-}
-
-/**
- * 部品とアイテムから進捗データを集計する
- */
-export function aggregateProgress(parts: Part[], partItems: PartItem[]): any[] {
-    return parts.map(part => {
-        const items = partItems.filter(item => item.part_id === part.id);
-
-        const processOrder = PROCESSES.map(p => p.key);
-        const currentProcess = items.length > 0
-            ? items.reduce((earliest: ProcessStatus, item: PartItem) => {
-                const earliestIdx = processOrder.indexOf(earliest);
-                const currentIdx = processOrder.indexOf(item.status);
-                return currentIdx < earliestIdx ? item.status : earliest;
-            }, 'ASSEMBLED' as ProcessStatus)
-            : 'UNPRINTED';
-
-        return {
-            id: part.id,
-            part_number: part.part_number,
-            status: currentProcess,
-            storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
-            count: items.length
-        };
-    });
-}
-</file>
-
 <file path="src/modules/production/services/productionService.ts">
 /**
  * Production Module - Production Service
@@ -2826,12 +3792,12 @@ import { PartItem } from '@/src/modules/production/types';
 export async function registerPrintedItems(
     fileBuffer: ArrayBuffer,
     partNumber: string,
-    projectId: number,
+    projectId: string,
     quantity: number,
     targetStatus: ProcessStatus = 'PRINTED'
 ): Promise<{ success: boolean; partNumber: string; downloadUrl: string }> {
 
-    // 1. Storageへのアップロード（StorageはFirestoreトランザクション外）
+    // 1. Storageへのアップロード
     const timestamp = Date.now();
     const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
     const storageRef = ref(storage, storagePath);
@@ -2847,17 +3813,14 @@ export async function registerPrintedItems(
             where('part_number', '==', partNumber),
             where('project_id', '==', projectId)
         );
-        // トランザクション内でのクエリ実行は制限があるため、ここでは簡易的に getDocs を使用
-        // 厳密な一貫性が必要な場合は、事前にIDを確定させるか、ID設計を見直す必要がある
         const partQuerySnapshot = await getDocs(q);
 
-        let partId: number;
+        let partId: string;
 
         if (partQuerySnapshot.empty) {
-            // 新規作成: ID採番（競合のリスクがあるが、現行ロジックを踏襲）
-            const allPartsSnapshot = await getDocs(collection(db, 'parts'));
-            const existingIds = allPartsSnapshot.docs.map(d => Number(d.id));
-            partId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+            // 新規作成
+            const partDocRef = doc(partsRef);
+            partId = partDocRef.id;
 
             const newPart: Part = {
                 id: partId,
@@ -2865,32 +3828,25 @@ export async function registerPrintedItems(
                 project_id: projectId
             };
 
-            const partDocRef = doc(db, 'parts', String(partId));
             transaction.set(partDocRef, newPart);
         } else {
-            partId = Number(partQuerySnapshot.docs[0].id);
+            partId = partQuerySnapshot.docs[0].id;
         }
 
-        // 2b. PartItem の作成: ID採番
-        const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
-        const existingItemIds = allItemsSnapshot.docs.map(d => Number(d.id));
-        let nextItemId = existingItemIds.length > 0 ? Math.max(...existingItemIds) + 1 : 1;
-
+        // 2b. PartItem の作成
         for (let i = 0; i < quantity; i++) {
-            // PartItemの型に準拠したオブジェクト作成
+            const itemRef = doc(collection(db, 'partItems'));
             const newItemStub = {
-                id: nextItemId,
+                id: itemRef.id,
                 part_id: partId,
                 storage_case: `AUTO-${partNumber}-${i + 1}`,
                 status: targetStatus,
                 completed_at: null,
                 updated_at: serverTimestamp(),
-                stl_url: downloadUrl // 追加プロパティ
+                stl_url: downloadUrl
             };
 
-            const itemDocRef = doc(db, 'partItems', String(nextItemId));
-            transaction.set(itemDocRef, newItemStub);
-            nextItemId++;
+            transaction.set(itemRef, newItemStub);
         }
     });
 
@@ -2907,12 +3863,13 @@ export async function registerPrintedItems(
 import { ProcessStatus } from '@/src/shared/types';
 
 export interface PartItem {
-    id: number;
-    part_id: number;
+    id: string;
+    part_id: string;
     storage_case: string;
     status: ProcessStatus;
     completed_at: Date | null;
     updated_at?: any;
+    stl_url?: string;
 }
 
 export interface ProgressData {
@@ -3143,29 +4100,6 @@ if (isEmulator) {
 }
 
 export { db, auth, storage };
-</file>
-
-<file path="src/shared/types/index.ts">
-/**
- * 共通型定義
- * プロジェクト全体で使用される基本的な型
- */
-
-export type ProcessStatus =
-    | 'UNPRINTED'
-    | 'PRINTED'
-    | 'CUTTING'
-    | 'SURFACE_TREATMENT'
-    | 'PAINTING'
-    | 'ASSEMBLED'
-    | 'DEFECTIVE';
-
-export interface Project {
-    id: number;
-    name: string;
-    description: string;
-    deadline: string;
-}
 </file>
 
 <file path="tailwind.config.js">
@@ -3532,6 +4466,309 @@ seed().catch((error) => {
 });
 </file>
 
+<file path="src/modules/inventory/types/index.ts">
+/**
+ * Inventory Module - 型定義
+ * 部品マスタと在庫に関する型
+ */
+
+export interface Part {
+    id: string;
+    part_number: string;
+    project_id: string;
+    unit_id?: string | null;
+}
+
+export interface ParsedFileInfo {
+    /** 元のファイル名 */
+    originalFileName: string;
+    /** 抽出された部品番号 */
+    partNumber: string;
+    /** 個数（デフォルト: 1） */
+    quantity: number;
+    /** 解析が成功したか */
+    isValid: boolean;
+    /** エラーメッセージ（解析失敗時） */
+    errorMessage?: string;
+    /** 割り当てられる保管ボックスのリスト */
+    storageBoxes?: string[];
+}
+</file>
+
+<file path="src/modules/production/components/swimlane/SwimlaneColumn.tsx">
+import { Part } from '@/src/modules/inventory/types';
+import { PartItem } from '@/src/modules/production/types';
+import { PROCESSES } from '@/app/constants';
+import { SwimlaneCell } from './SwimlaneCell';
+import FileDownloadButton from '@/src/shared/components/FileDownloadButton';
+
+import { MoveRight } from 'lucide-react';
+
+interface SwimlaneColumnProps {
+    part: Part;
+    items: PartItem[];
+    selectedIds: string[];
+    onToggleSelect: (itemId: string) => void;
+    onPreview: (item: any) => void;
+    onMove: (partId: string) => void;
+}
+
+export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPreview, onMove }: SwimlaneColumnProps) {
+    // Find the "furthest" process index that has items
+    const lastActiveIndex = items.reduce((max, item) => {
+        const idx = PROCESSES.findIndex(p => p.key === item.status);
+        return Math.max(max, idx);
+    }, -1);
+
+    return (
+        <div className="
+      relative flex flex-col
+      w-[85vw] md:w-64 shrink-0 snap-center
+      border-r border-gray-200 bg-white
+    ">
+            {/* Column Header - Part Info */}
+            <div className="sticky top-0 z-20 h-24 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex flex-col justify-between group-hover:bg-white transition-colors">
+                <div className="min-w-0 flex items-start justify-between gap-2">
+                    <div>
+                        <h3 className="font-black text-gray-900 text-xs tracking-tight truncate uppercase" title={part.part_number}>
+                            {part.part_number}
+                        </h3>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                                Active
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => onMove(part.id)}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        title="ユニットへ移動"
+                    >
+                        <MoveRight size={14} />
+                    </button>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 mt-2">
+                    <div className="flex flex-wrap gap-1">
+                        {Array.from(new Set(items.map(i => i.storage_case).filter(Boolean))).map(sc => (
+                            <span key={sc} className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-600 font-bold rounded-md border border-blue-100">
+                                {sc}
+                            </span>
+                        ))}
+                    </div>
+                    <div className="text-[10px] text-gray-400 font-medium shrink-0">
+                        {items.length} units
+                    </div>
+                </div>
+            </div>
+
+            {/* Cells with Progress Line Overlay */}
+            <div className="relative flex-1 bg-gray-50/30">
+                {/* Vertical Progress Line (Connector) */}
+                {lastActiveIndex >= 0 && (
+                    <div
+                        className="absolute left-1/2 -translate-x-1/2 top-0 w-[3px] -z-0"
+                        style={{
+                            height: `${(lastActiveIndex + 0.5) * 80}px`,
+                            transition: 'height 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }}
+                    >
+                        <div className="h-full w-full bg-gradient-to-b from-blue-100 via-blue-200 to-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.2)]" />
+                    </div>
+                )}
+
+                {/* Status Cells */}
+                <div className="flex flex-col">
+                    {PROCESSES.map((proc, index) => (
+                        <SwimlaneCell
+                            key={proc.key}
+                            partId={part.id}
+                            status={proc.key}
+                            items={items.filter(i => i.status === proc.key)}
+                            isLast={index === PROCESSES.length - 1}
+                            selectedIds={selectedIds}
+                            onToggleSelect={onToggleSelect}
+                            onPreview={onPreview}
+                        />
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="src/modules/production/services/itemService.ts">
+/**
+ * Production Module - Item Service
+ * 工程アイテム（PartItem）の作成と管理
+ */
+
+import { db } from '@/src/shared/lib/firebase';
+import {
+    collection,
+    getDocs,
+    doc,
+    setDoc,
+    updateDoc,
+    serverTimestamp
+} from 'firebase/firestore';
+import { PartItem } from '@/src/modules/production/types';
+import { Part } from '@/src/modules/inventory/types';
+import { ProcessStatus } from '@/src/shared/types';
+import { PROCESSES } from '@/app/constants';
+
+/**
+ * 工程アイテムを作成する
+ * 
+ * @param partId - 部品ID
+ * @param quantity - 作成する個数
+ * @param storageBoxes - 割り当てられた保管ケースの配列
+ * @param initialStatus - 初期ステータス
+ * @returns 作成されたアイテムの配列
+ */
+export async function createItems(
+    partId: string,
+    quantity: number,
+    storageBoxes: string[],
+    initialStatus: ProcessStatus = 'CUTTING'
+): Promise<PartItem[]> {
+    if (storageBoxes.length !== quantity) {
+        throw new Error(`Storage boxes count (${storageBoxes.length}) does not match quantity (${quantity})`);
+    }
+
+    const createdItems: PartItem[] = [];
+
+    for (let i = 0; i < quantity; i++) {
+        const itemRef = doc(collection(db, 'partItems'));
+        const newItem: PartItem = {
+            id: itemRef.id,
+            part_id: partId,
+            storage_case: storageBoxes[i],
+            status: initialStatus,
+            completed_at: null,
+            updated_at: serverTimestamp()
+        };
+
+        await setDoc(itemRef, newItem);
+        createdItems.push(newItem);
+    }
+
+    console.log(`[ItemService] Created ${quantity} PartItems for Part ${partId}`);
+    return createdItems;
+}
+
+/**
+ * アイテムのステータスを更新する
+ * 
+ * @param itemId - アイテムID
+ * @param newStatus - 新しいステータス
+ */
+export async function updateItemStatus(
+    itemId: string,
+    newStatus: ProcessStatus
+): Promise<void> {
+    const itemRef = doc(db, 'partItems', itemId);
+
+    await updateDoc(itemRef, {
+        status: newStatus,
+        updated_at: serverTimestamp(),
+        completed_at: newStatus === 'ASSEMBLED' ? serverTimestamp() : null
+    });
+
+    console.log(`[ItemService] Updated item ${itemId} status to ${newStatus}`);
+}
+
+/**
+ * 複数アイテムのステータスを一括更新する
+ * 
+ * @param itemIds - アイテムIDの配列
+ * @param newStatus - 新しいステータス
+ */
+export async function updateMultipleItemsStatus(
+    itemIds: string[],
+    newStatus: ProcessStatus
+): Promise<void> {
+    const updatePromises = itemIds.map(itemId => updateItemStatus(itemId, newStatus));
+    await Promise.all(updatePromises);
+
+    console.log(`[ItemService] Updated ${itemIds.length} items to status ${newStatus}`);
+}
+
+/**
+ * 部品とアイテムから進捗データを集計する
+ */
+export function aggregateProgress(parts: Part[], partItems: PartItem[]): any[] {
+    return parts.map(part => {
+        const items = partItems.filter(item => item.part_id === part.id);
+
+        const processOrder = PROCESSES.map(p => p.key);
+        const currentProcess = items.length > 0
+            ? items.reduce((earliest: ProcessStatus, item: PartItem) => {
+                const earliestIdx = processOrder.indexOf(earliest);
+                const currentIdx = processOrder.indexOf(item.status);
+                return currentIdx < earliestIdx ? item.status : earliest;
+            }, 'ASSEMBLED' as ProcessStatus)
+            : 'UNPRINTED';
+
+        return {
+            id: part.id,
+            part_number: part.part_number,
+            status: currentProcess,
+            storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
+            count: items.length,
+            unit_id: part.unit_id
+        };
+    });
+}
+</file>
+
+<file path="src/shared/types/index.ts">
+/**
+ * 共通型定義
+ * プロジェクト全体で使用される基本的な型
+ */
+
+export type ProcessStatus =
+    | 'UNPRINTED'
+    | 'PRINTED'
+    | 'CUTTING'
+    | 'SURFACE_TREATMENT'
+    | 'PAINTING'
+    | 'ASSEMBLED'
+    | 'DEFECTIVE';
+
+export interface Project {
+    id: string;
+    name: string;
+    description: string;
+    deadline: string;
+    created_at?: any;
+    updated_at?: any;
+}
+
+export interface Part {
+    id: string;
+    part_number: string;
+    project_id: string;
+    unit_id?: string | null;
+}
+
+export interface Unit {
+    id: string;
+    name: string;
+    project_id: string;
+    description?: string;
+}
+
+export interface Box {
+    id: string;
+    status: 'AVAILABLE' | 'IN_USE' | 'MAINTENANCE';
+    updated_at: any;
+}
+</file>
+
 <file path="tsconfig.json">
 {
   "compilerOptions": {
@@ -3704,37 +4941,6 @@ export const PROCESSES: { key: ProcessStatus; name: string }[] = [
 ];
 </file>
 
-<file path="app/utils.ts">
-// app/utils.ts
-import { Part, PartItem, ProgressData, ProcessStatus } from './types';
-import { PROCESSES } from './constants';
-
-export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] => {
-  return parts.map(part => {
-    const items = partItems.filter(item => item.part_id === part.id);
-
-    // この部品の中で最も「進んでいない」工程を現在の工程とする
-    // (全て完了していれば READY となる)
-    const processOrder = PROCESSES.map(p => p.key);
-    const currentProcess = items.length > 0
-      ? items.reduce((earliest, item) => {
-        return processOrder.indexOf(item.status) < processOrder.indexOf(earliest)
-          ? item.status
-          : earliest;
-      }, 'READY' as ProcessStatus)
-      : 'UNPRINTED';
-
-    return {
-      id: part.id,
-      part_number: part.part_number,
-      status: currentProcess, // Rename field
-      storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
-      count: items.length
-    };
-  });
-};
-</file>
-
 <file path="lib/firebase.ts">
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
@@ -3775,8 +4981,100 @@ if (isEmulator) {
 export { db, auth, storage };
 </file>
 
+<file path="app/utils.ts">
+// app/utils.ts
+import { Part, PartItem, ProgressData, ProcessStatus } from './types';
+import { PROCESSES } from './constants';
+
+export const aggregateProgress = (parts: Part[], partItems: PartItem[]): any[] => {
+  return parts.map(part => {
+    const items = partItems.filter(item => item.part_id === part.id);
+
+    // この部品の中で最も「進んでいない」工程を現在の工程とする
+    // (全て完了していれば READY となる)
+    const processOrder = PROCESSES.map(p => p.key);
+    const currentProcess = items.length > 0
+      ? items.reduce((earliest, item) => {
+        return processOrder.indexOf(item.status) < processOrder.indexOf(earliest)
+          ? item.status
+          : earliest;
+      }, 'READY' as ProcessStatus)
+      : 'UNPRINTED';
+
+    return {
+      id: part.id,
+      part_number: part.part_number,
+      status: currentProcess, // Rename field
+      storage_cases: Array.from(new Set(items.map(i => i.storage_case))),
+      count: items.length,
+      unit_id: part.unit_id
+    };
+  });
+};
+
+export const calculateUnitProgress = (parts: Part[], partItems: PartItem[]): number => {
+  if (parts.length === 0) return 0;
+
+  const aggregated = aggregateProgress(parts, partItems);
+  const readyCount = aggregated.filter(p => p.status === 'READY').length;
+
+  return Math.round((readyCount / parts.length) * 100);
+};
+</file>
+
+<file path="app/actions/consumeItem.ts">
+'use server'
+
+import { consumeItem as consumeItemNew } from '@/src/modules/production/actions/consumeItem';
+
+/**
+ * @deprecated Use src/modules/production/actions/consumeItem
+ */
+export async function consumeItem(itemId: string | number) {
+  return consumeItemNew(itemId);
+}
+</file>
+
+<file path="app/data.ts">
+// app/data.ts
+import { Part, PartItem, Project } from './types';
+
+export const projects: Project[] = [
+  { id: '1', name: '次世代ドローン開発', description: '高解像度カメラ搭載の新型ドローン開発プロジェクト', deadline: '2026-06-30' },
+  { id: '2', name: '搬送ロボット製作', description: '倉庫内自動配送を行う自律走行ロボットの試作', deadline: '2026-04-15' }
+];
+
+export const parts: Part[] = [
+  { id: '1', part_number: 'DRONE-ARM-01', project_id: '1' },
+  { id: '2', part_number: 'DRONE-BODY-01', project_id: '1' },
+  { id: '3', part_number: 'DRONE-PROP-01', project_id: '1' },
+  { id: '4', part_number: 'ROBO-WHEEL-X', project_id: '2' }
+];
+
+export const partItems: PartItem[] = [
+  // DRONE-ARM-01 (id: 1) - 分散配置
+  { id: '101', part_id: '1', storage_case: 'Case-A1', status: 'UNPRINTED', completed_at: null },
+  { id: '102', part_id: '1', storage_case: 'Case-A1', status: 'PRINTED', completed_at: null },
+  { id: '103', part_id: '1', storage_case: 'Case-A2', status: 'PRINTED', completed_at: null },
+  { id: '104', part_id: '1', storage_case: 'Case-A3', status: 'SURFACE_TREATMENT', completed_at: null },
+  { id: '105', part_id: '1', storage_case: 'Case-A4', status: 'ASSEMBLED', completed_at: new Date() },
+
+  // DRONE-BODY-01 (id: 2) - 特定工程に集中
+  { id: '201', part_id: '2', storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
+  { id: '202', part_id: '2', storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
+  { id: '203', part_id: '2', storage_case: 'Case-B2', status: 'PAINTING', completed_at: null },
+
+  // DRONE-PROP-01 (id: 3) - 少ないアイテム、不良あり
+  { id: '301', part_id: '3', storage_case: 'Case-C1', status: 'UNPRINTED', completed_at: null },
+  { id: '302', part_id: '3', storage_case: 'Case-C2', status: 'DEFECTIVE', completed_at: null },
+
+  // ROBO-WHEEL-X (id: 4) - 別プロジェクト
+  { id: '401', part_id: '4', storage_case: 'Case-R1', status: 'ASSEMBLED', completed_at: new Date(new Date().setDate(new Date().getDate() - 2)) }
+];
+</file>
+
 <file path="lib/mockStore.ts">
-import { Part, PartItem, Project, ProcessStatus } from '@/app/types';
+import { Part, PartItem, Project, ProcessStatus, Unit } from '@/app/types';
 import { db } from './firebase';
 import {
     collection,
@@ -3785,6 +5083,7 @@ import {
     getDoc,
     updateDoc,
     setDoc,
+    addDoc,
     query,
     where,
     Timestamp,
@@ -3808,19 +5107,48 @@ export const mockStore = {
     getProjects: async (): Promise<Project[]> => {
         const snapshot = await getDocs(collection(db, 'projects'));
         return snapshot.docs.map(doc => ({
-            id: Number(doc.id),
+            id: doc.id,
             ...dateConverter(doc.data())
         })) as Project[];
     },
 
-    getProject: async (id: number): Promise<Project | null> => {
-        const docRef = doc(db, 'projects', String(id));
+    getProject: async (id: string): Promise<Project | null> => {
+        const docRef = doc(db, 'projects', id);
         const span = await getDoc(docRef);
         if (!span.exists()) return null;
-        return { id: Number(span.id), ...dateConverter(span.data()) } as Project;
+        return { id: span.id, ...dateConverter(span.data()) } as Project;
     },
 
-    getParts: async (projectId?: number): Promise<Part[]> => {
+    getUnitsByProject: async (projectId: string): Promise<Unit[]> => {
+        const q = query(collection(db, 'units'), where('project_id', '==', projectId));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        })) as Unit[];
+    },
+
+    addUnit: async (projectId: string, name: string): Promise<Unit> => {
+        const docRef = await addDoc(collection(db, 'units'), {
+            project_id: projectId,
+            name: name,
+            description: ''
+        });
+        return {
+            id: docRef.id,
+            project_id: projectId,
+            name: name
+        } as Unit;
+    },
+
+    assignPartToUnit: async (partId: string, unitId: string | null): Promise<void> => {
+        const docRef = doc(db, 'parts', partId);
+        await updateDoc(docRef, {
+            unit_id: unitId
+        });
+    },
+
+    getParts: async (projectId?: string): Promise<Part[]> => {
         let q;
         if (projectId) {
             q = query(collection(db, 'parts'), where('project_id', '==', projectId));
@@ -3829,25 +5157,23 @@ export const mockStore = {
         }
         const snapshot = await getDocs(q);
         return snapshot.docs.map(doc => ({
-            id: Number(doc.id),
+            id: doc.id,
             ...dateConverter(doc.data())
         })) as Part[];
     },
 
-    getPartItems: async (projectId?: number): Promise<PartItem[]> => {
+    getPartItems: async (projectId?: string): Promise<PartItem[]> => {
         // プロジェクトID指定がある場合、まず対象のPartを取得
-        let targetPartIds: number[] | null = null;
+        let targetPartIds: string[] | null = null;
         if (projectId) {
             const parts = await mockStore.getParts(projectId);
             targetPartIds = parts.map(p => p.id);
             if (targetPartIds.length === 0) return [];
         }
 
-        // Firestoreの 'in' 句は最大10個までなので、ここでは全件取得してJSでフィルタリングする方式を採用
-        // (プロトタイプのため簡易実装)
         const snapshot = await getDocs(collection(db, 'partItems'));
         const items = snapshot.docs.map(doc => ({
-            id: Number(doc.id),
+            id: doc.id,
             ...dateConverter(doc.data())
         })) as PartItem[];
 
@@ -3857,32 +5183,32 @@ export const mockStore = {
         return items;
     },
 
-    getPartItem: async (id: number): Promise<(PartItem & { parts: Part }) | null> => {
-        const itemRef = doc(db, 'partItems', String(id));
+    getPartItem: async (id: string): Promise<(PartItem & { parts: Part }) | null> => {
+        const itemRef = doc(db, 'partItems', id);
         const itemSnap = await getDoc(itemRef);
 
         if (!itemSnap.exists()) return null;
-        const itemData = { id: Number(itemSnap.id), ...dateConverter(itemSnap.data()) } as PartItem;
+        const itemData = { id: itemSnap.id, ...dateConverter(itemSnap.data()) } as PartItem;
 
         // 関連するPartを取得
-        const partRef = doc(db, 'parts', String(itemData.part_id));
+        const partRef = doc(db, 'parts', itemData.part_id);
         const partSnap = await getDoc(partRef);
 
         if (!partSnap.exists()) {
             throw new Error(`Part not found for item ${id}`);
         }
-        const partData = { id: Number(partSnap.id), ...dateConverter(partSnap.data()) } as Part;
+        const partData = { id: partSnap.id, ...dateConverter(partSnap.data()) } as Part;
 
         return { ...itemData, parts: partData };
     },
 
-    updatePartItem: async (id: number, updates: Partial<PartItem>): Promise<void> => {
-        const docRef = doc(db, 'partItems', String(id));
+    updatePartItem: async (id: string, updates: Partial<PartItem>): Promise<void> => {
+        const docRef = doc(db, 'partItems', id);
         await updateDoc(docRef, updates);
     },
 
-    updatePartItemStatus: async (id: string | number, newStatus: string): Promise<void> => {
-        const docRef = doc(db, 'partItems', String(id));
+    updatePartItemStatus: async (id: string, newStatus: string): Promise<void> => {
+        const docRef = doc(db, 'partItems', id);
         await updateDoc(docRef, {
             status: newStatus as ProcessStatus,
             updated_at: serverTimestamp()
@@ -3890,117 +5216,14 @@ export const mockStore = {
     },
 
     addPartItem: async (item: Omit<PartItem, 'id'>): Promise<PartItem> => {
-        // IDの自動採番（Max + 1）
-        const snapshot = await getDocs(collection(db, 'partItems'));
-        const ids = snapshot.docs.map(d => Number(d.id));
-        const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
-
-        const newItem = { ...item, id: newId };
-        const docRef = doc(db, 'partItems', String(newId));
-        await setDoc(docRef, newItem);
-
-        return newItem as PartItem;
+        const docRef = await addDoc(collection(db, 'partItems'), item);
+        return {
+            id: docRef.id,
+            ...item
+        } as PartItem;
     },
 
-    // 互換性のためのダミーメソッド
-    saveToLocalStorage: () => {
-        console.warn('saveToLocalStorage is deprecated in Firestore mode');
-    },
-
-    loadFromLocalStorage: () => {
-        console.warn('loadFromLocalStorage is deprecated in Firestore mode');
-    }
 };
-</file>
-
-<file path="app/actions/consumeItem.ts">
-'use server'
-
-import { consumeItem as consumeItemNew } from '@/src/modules/production/actions/consumeItem';
-
-/**
- * @deprecated Use src/modules/production/actions/consumeItem
- */
-export async function consumeItem(itemId: string | number) {
-  return consumeItemNew(itemId);
-}
-</file>
-
-<file path="app/data.ts">
-// app/data.ts
-import { Part, PartItem, Project } from './types';
-
-export const projects: Project[] = [
-  { id: 1, name: '次世代ドローン開発', description: '高解像度カメラ搭載の新型ドローン開発プロジェクト', deadline: '2026-06-30' },
-  { id: 2, name: '搬送ロボット製作', description: '倉庫内自動配送を行う自律走行ロボットの試作', deadline: '2026-04-15' }
-];
-
-export const parts: Part[] = [
-  { id: 1, part_number: 'DRONE-ARM-01', project_id: 1 },
-  { id: 2, part_number: 'DRONE-BODY-01', project_id: 1 },
-  { id: 3, part_number: 'DRONE-PROP-01', project_id: 1 },
-  { id: 4, part_number: 'ROBO-WHEEL-X', project_id: 2 }
-];
-
-export const partItems: PartItem[] = [
-  // DRONE-ARM-01 (id: 1) - 分散配置
-  { id: 101, part_id: 1, storage_case: 'Case-A1', status: 'UNPRINTED', completed_at: null },
-  { id: 102, part_id: 1, storage_case: 'Case-A1', status: 'PRINTED', completed_at: null },
-  { id: 103, part_id: 1, storage_case: 'Case-A2', status: 'PRINTED', completed_at: null },
-  { id: 104, part_id: 1, storage_case: 'Case-A3', status: 'SURFACE_TREATMENT', completed_at: null },
-  { id: 105, part_id: 1, storage_case: 'Case-A4', status: 'ASSEMBLED', completed_at: new Date() },
-
-  // DRONE-BODY-01 (id: 2) - 特定工程に集中
-  { id: 201, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
-  { id: 202, part_id: 2, storage_case: 'Case-B1', status: 'SURFACE_TREATMENT', completed_at: null },
-  { id: 203, part_id: 2, storage_case: 'Case-B2', status: 'PAINTING', completed_at: null },
-
-  // DRONE-PROP-01 (id: 3) - 少ないアイテム、不良あり
-  { id: 301, part_id: 3, storage_case: 'Case-C1', status: 'UNPRINTED', completed_at: null },
-  { id: 302, part_id: 3, storage_case: 'Case-C2', status: 'DEFECTIVE', completed_at: null },
-
-  // ROBO-WHEEL-X (id: 4) - 別プロジェクト
-  { id: 401, part_id: 4, storage_case: 'Case-R1', status: 'ASSEMBLED', completed_at: new Date(new Date().setDate(new Date().getDate() - 2)) }
-];
-</file>
-
-<file path="app/types.ts">
-export type ProcessStatus =
-  | 'UNPRINTED'
-  | 'PRINTED'
-  | 'CUTTING'
-  | 'SURFACE_TREATMENT'
-  | 'PAINTING'
-  | 'ASSEMBLED'
-  | 'DEFECTIVE';
-
-export interface Project {
-  id: number;
-  name: string;
-  description: string;
-  deadline: string;
-}
-
-export interface Part {
-  id: number;
-  part_number: string;
-  project_id: number;
-}
-
-export interface PartItem {
-  id: number;
-  part_id: number;
-  storage_case: string;
-  status: ProcessStatus;
-  completed_at: Date | null;
-  updated_at?: any;
-}
-
-export interface ProgressData {
-  part_number: string;
-  storage_cases: string[];
-  counts: Record<ProcessStatus, number>;
-}
 </file>
 
 <file path="app/actions/createPrinted.ts">
@@ -4023,7 +5246,7 @@ import { createPrinted as createPrintedNew } from '@/src/modules/production/acti
 export async function createPrinted(
   fileBuffer: ArrayBuffer,
   fileName: string,
-  projectId: number,
+  projectId: string,
   qty: number,
   targetStatus: ProcessStatus = 'PRINTED'
 ): Promise<{ success: boolean; partNumber: string }> {
@@ -4064,15 +5287,12 @@ export async function updateProcess(
 </file>
 
 <file path="app/page.tsx">
-import Link from 'next/link';
-import { mockStore } from '@/lib/mockStore';
+import { ProjectsList } from '@/src/modules/project/components/ProjectsList';
 
 /**
  * プロジェクト一覧ダッシュボード
  */
 export default async function ProjectsDashboardPage() {
-  const projects = await mockStore.getProjects();
-
   return (
     <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
       <header className="mb-12 text-center">
@@ -4084,53 +5304,60 @@ export default async function ProjectsDashboardPage() {
         </p>
       </header>
 
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-        {projects.map((project) => (
-          <Link key={project.id} href={`/project/${project.id}`}>
-            <div className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden cursor-pointer flex flex-col h-full transform hover:-translate-y-1">
-              <div className="p-8 flex-grow">
-                <div className="flex justify-between items-start mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
-                    {project.name}
-                  </h2>
-                  <span className="bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                    進行中
-                  </span>
-                </div>
-                <p className="text-gray-600 mb-8 leading-relaxed">
-                  {project.description}
-                </p>
-
-                {/* 簡易進捗表示（ダミー） */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium text-gray-700">全体進捗</span>
-                    <span className="font-bold text-blue-600">65%</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-3">
-                    <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full w-[65%] shadow-sm"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-8 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center group-hover:bg-blue-50 transition-colors">
-                <div className="text-sm">
-                  <span className="text-gray-500">納期: </span>
-                  <span className="font-semibold text-gray-800">{project.deadline}</span>
-                </div>
-                <span className="text-blue-600 font-bold flex items-center group-hover:translate-x-1 transition-transform">
-                  詳細を見る
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </span>
-              </div>
-            </div>
-          </Link>
-        ))}
+      <div className="max-w-6xl mx-auto">
+        <ProjectsList />
       </div>
     </div>
   );
+}
+</file>
+
+<file path="app/types.ts">
+export type ProcessStatus =
+  | 'UNPRINTED'
+  | 'PRINTED'
+  | 'CUTTING'
+  | 'SURFACE_TREATMENT'
+  | 'PAINTING'
+  | 'ASSEMBLED'
+  | 'DEFECTIVE';
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  deadline: string;
+  created_at?: any;
+  updated_at?: any;
+}
+
+export interface Unit {
+  id: string;
+  name: string;
+  project_id: string;
+  description?: string;
+}
+
+export interface Part {
+  id: string;
+  part_number: string;
+  project_id: string;
+  unit_id?: string | null;
+}
+
+export interface PartItem {
+  id: string;
+  part_id: string;
+  storage_case: string;
+  status: ProcessStatus;
+  completed_at: Date | null;
+  updated_at?: any;
+}
+
+export interface ProgressData {
+  part_number: string;
+  storage_cases: string[];
+  counts: Record<ProcessStatus, number>;
 }
 </file>
 
@@ -4241,7 +5468,9 @@ export default async function ItemPage(props: { params: Promise<{ id: string }> 
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "tsx scripts/seed-initial-data.ts",
+    "seed:clear": "tsx scripts/seed-initial-data.ts --clear"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -4265,6 +5494,7 @@ export default async function ItemPage(props: { params: Promise<{ id: string }> 
     "autoprefixer": "^10.4.23",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
+    "tsx": "^4.7.1",
     "typescript": "^5.3.0"
   }
 }
@@ -4286,8 +5516,7 @@ import { Suspense } from 'react';
 function PrintRegistrationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const projectIdStr = searchParams.get('project_id');
-  const projectId = projectIdStr ? parseInt(projectIdStr) : null;
+  const projectId = searchParams.get('project_id');
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [parsedInfos, setParsedInfos] = useState<(ParsedFileInfo & { file: File })[]>([]);
@@ -4462,8 +5691,8 @@ function PrintRegistrationContent() {
             type="submit"
             disabled={isSubmitting || selectedFiles.length === 0 || parsedInfos.some(i => !i.isValid)}
             className={`w-full text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all text-xl ${isSubmitting || selectedFiles.length === 0 || parsedInfos.some(i => !i.isValid)
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:transform active:scale-[0.98]'
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:transform active:scale-[0.98]'
               }`}
           >
             {isSubmitting ? (
@@ -4511,8 +5740,8 @@ interface PageProps {
  */
 export default async function ProjectDetailPage(props: PageProps) {
     const params = await props.params;
-    const projectId = parseInt(params.id);
-    if (isNaN(projectId)) {
+    const projectId = params.id;
+    if (!projectId) {
         notFound();
     }
 
@@ -4524,6 +5753,7 @@ export default async function ProjectDetailPage(props: PageProps) {
     // データの取得
     const parts = await mockStore.getParts(projectId);
     const partItems = await mockStore.getPartItems(projectId);
+    const units = await mockStore.getUnitsByProject(projectId);
 
     const totalInventory = partItems.length;
     const inProgress = partItems.filter(item => item.status !== 'ASSEMBLED').length;
@@ -4539,6 +5769,7 @@ export default async function ProjectDetailPage(props: PageProps) {
 
     return (
         <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
+            {/* ... (header and summary cards) */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <div>
                     <Link href="/" className="text-blue-600 hover:text-blue-800 mb-2 inline-block font-medium">
@@ -4576,6 +5807,7 @@ export default async function ProjectDetailPage(props: PageProps) {
                 parts={parts}
                 partItems={partItems}
                 projectId={projectId}
+                initialUnits={units}
             />
         </div>
     );
@@ -4585,7 +5817,7 @@ export default async function ProjectDetailPage(props: PageProps) {
 <file path="app/project/[id]/ProjectClientContent.tsx">
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     DndContext,
     DragOverlay,
@@ -4600,32 +5832,39 @@ import {
 import {
     sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
+import { Plus, FolderPlus, ChevronRight, ChevronDown, MoreHorizontal, MoveRight } from 'lucide-react';
 import { CartModal } from '@/src/modules/logistics/components/CartModal';
 import { PreviewModal } from '@/src/modules/production/components/PreviewModal';
+import { MovePartModal } from '@/src/modules/production/components/MovePartModal';
 import { Part } from '@/src/modules/inventory/types';
-import { PartItem } from '@/src/modules/production/types';
+import { PartItem, Unit } from '@/app/types';
 import { ProcessStatus } from '@/src/shared/types';
 import { updateItemStatus } from '@/src/modules/production/actions/updateItemStatus';
 import { SwimlaneColumn } from '@/src/modules/production/components/swimlane/SwimlaneColumn';
 import { SwimlaneItem } from '@/src/modules/production/components/swimlane/SwimlaneItem';
 import { PROCESSES } from '@/app/constants';
+import { calculateUnitProgress } from '@/app/utils';
+import { mockStore } from '@/lib/mockStore';
 
 // --- Main Component ---
 
 export default function ProjectClientContent({
     progressData,
-    parts,
+    parts: initialParts,
     partItems: initialItems,
-    projectId
+    projectId,
+    initialUnits
 }: {
     progressData: any[],
     parts: Part[],
     partItems: PartItem[],
-    projectId: number
+    projectId: string,
+    initialUnits: Unit[]
 }) {
-    // --- Deduplicate items to ensure 1 part = 1 item in 1 status ---
+    const [units, setUnits] = useState<Unit[]>(initialUnits);
+    const [parts, setParts] = useState<Part[]>(initialParts);
     const [items, setItems] = useState<PartItem[]>(() => {
-        const latestItemsMap = new Map<number, PartItem>();
+        const latestItemsMap = new Map<string, PartItem>();
         initialItems.forEach(item => {
             const currentLatest = latestItemsMap.get(item.part_id);
             if (!currentLatest) {
@@ -4633,7 +5872,6 @@ export default function ProjectClientContent({
             } else {
                 const currentIdx = PROCESSES.findIndex(p => p.key === currentLatest.status);
                 const newIdx = PROCESSES.findIndex(p => p.key === item.status);
-                // Keep the one furthest along in the process chain
                 if (newIdx > currentIdx) {
                     latestItemsMap.set(item.part_id, item);
                 }
@@ -4642,21 +5880,62 @@ export default function ProjectClientContent({
         return Array.from(latestItemsMap.values());
     });
 
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [previewItem, setPreviewItem] = useState<any | null>(null);
+    const [expandedUnits, setExpandedUnits] = useState<Record<string, boolean>>({ 'unclassified': true });
+
+    // Unit Movement State
+    const [movingPartId, setMovingPartId] = useState<string | null>(null);
 
     const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 5,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
+
+    const handleAddUnit = async () => {
+        const name = prompt('ユニット名を入力してください:');
+        if (!name) return;
+        try {
+            const newUnit = await mockStore.addUnit(projectId, name);
+            setUnits(prev => [...prev, newUnit]);
+            setExpandedUnits(prev => ({ ...prev, [newUnit.id]: true }));
+        } catch (error) {
+            alert('ユニットの作成に失敗しました');
+        }
+    };
+
+    const handleOpenMoveModal = (partId: string) => {
+        setMovingPartId(partId);
+    };
+
+    const handleCloseMoveModal = () => {
+        setMovingPartId(null);
+    };
+
+    const handleMovePartConfirm = async (unitId: string | null) => {
+        if (!movingPartId) return;
+        try {
+            await mockStore.assignPartToUnit(movingPartId, unitId);
+            setParts(prev => prev.map(p => p.id === movingPartId ? { ...p, unit_id: unitId } : p));
+
+            // Expand the target unit automatically
+            if (unitId) {
+                setExpandedUnits(prev => ({ ...prev, [unitId]: true }));
+            } else {
+                setExpandedUnits(prev => ({ ...prev, 'unclassified': true }));
+            }
+
+            handleCloseMoveModal();
+        } catch (error) {
+            alert('ユニット移動に失敗しました');
+        }
+    };
+
+    const toggleUnit = (unitId: string) => {
+        setExpandedUnits(prev => ({ ...prev, [unitId]: !prev[unitId] }));
+    };
 
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as string);
@@ -4665,11 +5944,10 @@ export default function ProjectClientContent({
     const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveId(null);
-
         if (!over) return;
 
         const activeIdStr = active.id as string;
-        const itemId = parseInt(activeIdStr.split('-')[1], 10);
+        const itemId = activeIdStr.split('-')[1];
         const activeItem = items.find(i => i.id === itemId);
         if (!activeItem) return;
 
@@ -4677,125 +5955,163 @@ export default function ProjectClientContent({
         const overIdStr = over.id as string;
 
         if (overIdStr.startsWith('container-')) {
-            const parts = overIdStr.split('-');
-            const targetPartId = parseInt(parts[1], 10);
-
-            // STRICT DND: Only allow movement within the same part column
+            const partsList = overIdStr.split('-');
+            const targetPartId = partsList[1];
             if (targetPartId !== activeItem.part_id) return;
-
-            targetStatus = parts.slice(2).join('-');
+            targetStatus = partsList.slice(2).join('-');
         } else if (overIdStr.startsWith('item-')) {
-            const overItemId = parseInt(overIdStr.split('-')[1], 10);
+            const overItemId = overIdStr.split('-')[1];
             const overItem = items.find(i => i.id === overItemId);
-
-            // STRICT DND: Only allow movement within the same part column
             if (overItem && overItem.part_id !== activeItem.part_id) return;
-
-            if (overItem) {
-                targetStatus = overItem.status;
-            }
+            if (overItem) targetStatus = overItem.status;
         }
 
         if (targetStatus && targetStatus !== activeItem.status) {
             const originalStatus = activeItem.status;
-
-            // Optimistic update
             setItems(prev => prev.map(i =>
                 i.id === itemId ? { ...i, status: targetStatus as ProcessStatus } : i
             ));
 
             const result = await updateItemStatus(itemId, targetStatus);
             if (!result.success) {
-                // Rollback
-                setItems(prev => prev.map(i =>
-                    i.id === itemId ? { ...i, status: originalStatus } : i
-                ));
+                setItems(prev => prev.map(i => i.id === itemId ? { ...i, status: originalStatus } : i));
                 alert(`Failed to update status: ${result.error}`);
             }
         }
     };
 
-    const handleToggleSelect = (itemId: number) => {
-        setSelectedIds(prev => prev.includes(itemId)
-            ? prev.filter(id => id !== itemId)
-            : [...prev, itemId]
-        );
+    const handleToggleSelect = (itemId: string) => {
+        setSelectedIds(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]);
     };
 
-    const activeItem = activeId
-        ? items.find(i => `item-${i.id}` === activeId)
-        : null;
-
-    const cartItems = items
-        .filter(i => selectedIds.includes(i.id))
-        .map(i => {
-            const part = parts.find(p => p.id === i.part_id);
-            return {
-                id: i.id,
-                part_number: part?.part_number || `Part-${i.part_id}`,
-                status: i.status,
-                count: 1
-            };
+    const groupedParts = useMemo(() => {
+        const groups: Record<string, Part[]> = { 'unclassified': [] };
+        units.forEach(u => groups[u.id] = []);
+        parts.forEach(p => {
+            const uid = p.unit_id && groups[p.unit_id] ? p.unit_id : 'unclassified';
+            groups[uid].push(p);
         });
+        return groups;
+    }, [units, parts]);
+
+    const activeItem = activeId ? items.find(i => `item-${i.id}` === activeId) : null;
+    const cartItems = items.filter(i => selectedIds.includes(i.id)).map(i => {
+        const part = parts.find(p => p.id === i.part_id);
+        return { id: i.id, part_number: part?.part_number || `Part-${i.part_id}`, status: i.status, count: 1 };
+    });
 
     return (
-        <div className="relative flex flex-col h-[75vh] bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCorners}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-            >
-                <div className="flex-1 overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
-                    <div className="flex w-max min-w-full">
+        <div className="flex flex-col h-[75vh] bg-gray-50/50 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+            {/* Toolbar */}
+            <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center z-40">
+                <div className="flex items-center gap-4">
+                    <h2 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                        <FolderPlus size={18} className="text-blue-500" />
+                        工程マトリクス
+                    </h2>
+                    <button
+                        onClick={handleAddUnit}
+                        className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors border border-blue-100"
+                    >
+                        <Plus size={16} />
+                        ユニットを追加
+                    </button>
+                </div>
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                    Units Mode: Active
+                </div>
+            </div>
 
-                        {/* Legend Column */}
-                        <div className="sticky left-0 z-30 w-32 md:w-44 shrink-0 bg-white border-r border-gray-200 shadow-[4px_0_12px_rgba(0,0,0,0.03)]">
-                            <div className="h-24 border-b border-gray-200 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-md">
-                                <div className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-300 mb-1">Process</div>
-                                <div className="text-[10px] font-bold text-gray-400">Step Master</div>
+            <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+                <div className="flex-1 overflow-x-auto overflow-y-auto">
+                    <div className="flex w-max min-w-full relative">
+                        {/* Static Legend Column */}
+                        <div className="sticky left-0 z-30 w-32 md:w-44 shrink-0 bg-white border-r border-gray-200 shadow-md">
+                            <div className="h-16 border-b border-gray-200 flex flex-col items-center justify-center bg-gray-50/80 backdrop-blur-md">
+                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Process Chain</span>
                             </div>
-                            <div className="flex flex-col">
-                                {PROCESSES.map((proc, index) => (
-                                    <div
-                                        key={proc.key}
-                                        className="h-[80px] border-b border-gray-100 p-3 flex flex-col justify-center bg-white"
-                                    >
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="w-5 h-5 rounded-md bg-blue-50 text-blue-600 text-[10px] font-black flex items-center justify-center border border-blue-100">
-                                                {index + 1}
-                                            </span>
-                                            <div className="h-[1px] flex-1 bg-gray-100" />
-                                        </div>
-                                        <div className="text-[11px] font-black text-gray-900 leading-tight uppercase tracking-tight group-hover:text-blue-600 transition-colors">
-                                            {proc.name}
-                                        </div>
-                                        <div className="text-[9px] font-bold text-gray-300 mt-1 uppercase tracking-wider">
-                                            Stage 0{index + 1}
-                                        </div>
+                            {PROCESSES.map((proc, index) => (
+                                <div key={proc.key} className="h-[80px] border-b border-gray-100 p-3 flex flex-col justify-center">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="w-4 h-4 rounded bg-gray-100 text-gray-500 text-[9px] font-black flex items-center justify-center border border-gray-200">
+                                            {index + 1}
+                                        </span>
+                                        <div className="text-[10px] font-black text-gray-800 uppercase truncate">{proc.name}</div>
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            ))}
                         </div>
 
-                        {/* Parts Columns Grid */}
-                        <div className="flex divide-x divide-gray-100 snap-x snap-mandatory md:snap-none">
-                            {parts.map(part => (
-                                <SwimlaneColumn
-                                    key={part.id}
-                                    part={part}
-                                    items={items.filter(i => i.part_id === part.id)}
-                                    selectedIds={selectedIds}
-                                    onToggleSelect={handleToggleSelect}
-                                    onPreview={(item) => {
-                                        const part = parts.find(p => p.id === item.part_id);
-                                        setPreviewItem({
-                                            ...item,
-                                            part_number: part?.part_number
-                                        });
-                                    }}
-                                />
-                            ))}
+                        {/* Grouped Columns */}
+                        <div className="flex-1 flex flex-col">
+                            {[...units, { id: 'unclassified', name: '未分類' } as Unit].map(unit => {
+                                const unitParts = groupedParts[unit.id] || [];
+                                const isExpanded = expandedUnits[unit.id];
+                                const progress = calculateUnitProgress(unitParts, items);
+
+                                return (
+                                    <div key={unit.id} className="border-b border-gray-200 bg-white">
+                                        {/* Unit Header */}
+                                        <div
+                                            className="sticky top-0 z-20 flex items-center justify-between px-6 py-4 bg-white/95 backdrop-blur-sm cursor-pointer hover:bg-gray-50/80 transition-colors shadow-sm"
+                                            onClick={() => toggleUnit(unit.id)}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                {isExpanded ? <ChevronDown size={20} className="text-gray-400" /> : <ChevronRight size={20} className="text-gray-400" />}
+                                                <div>
+                                                    <h3 className="text-sm font-black text-gray-800 flex items-center gap-2 uppercase tracking-wide">
+                                                        {unit.name}
+                                                        <span className="text-[10px] text-gray-400 font-medium">({unitParts.length} Parts)</span>
+                                                    </h3>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-6">
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-32 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-green-500 transition-all duration-500"
+                                                                style={{ width: `${progress}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-[10px] font-black text-gray-900">{progress}%</span>
+                                                    </div>
+                                                    <span className="text-[9px] text-gray-400 font-bold uppercase">Ready Completion</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Unit Content */}
+                                        {isExpanded && (
+                                            <div className="flex pl-4 pr-10 py-4 bg-gray-50/30 overflow-x-visible">
+                                                {unitParts.length > 0 ? (
+                                                    <div className="flex divide-x divide-gray-200/50">
+                                                        {unitParts.map(part => (
+                                                            <div key={part.id} className="relative group">
+                                                                <SwimlaneColumn
+                                                                    part={part}
+                                                                    items={items.filter(i => i.part_id === part.id)}
+                                                                    selectedIds={selectedIds}
+                                                                    onToggleSelect={handleToggleSelect}
+                                                                    onPreview={(item) => {
+                                                                        const p = parts.find(pt => pt.id === item.part_id);
+                                                                        setPreviewItem({ ...item, part_number: p?.part_number });
+                                                                    }}
+                                                                    onMove={handleOpenMoveModal}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-24 flex items-center justify-center w-full text-gray-400 text-xs font-medium italic">
+                                                        このユニットに部品は登録されていません
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
@@ -4840,7 +6156,6 @@ export default function ProjectClientContent({
                 onClose={() => setIsCartOpen(false)}
                 items={cartItems}
                 onDownload={() => {
-                    console.log('Downloading Zip for items:', selectedIds);
                     alert("Zipダウンロードを開始します");
                 }}
             />
@@ -4853,6 +6168,17 @@ export default function ProjectClientContent({
                 status={previewItem?.status}
                 projectId={projectId}
             />
+
+            {movingPartId && (
+                <MovePartModal
+                    isOpen={!!movingPartId}
+                    onClose={handleCloseMoveModal}
+                    onMove={handleMovePartConfirm}
+                    units={units}
+                    currentUnitId={parts.find(p => p.id === movingPartId)?.unit_id}
+                    partNumber={parts.find(p => p.id === movingPartId)?.part_number || ''}
+                />
+            )}
         </div>
     );
 }

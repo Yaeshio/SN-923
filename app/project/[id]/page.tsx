@@ -17,8 +17,8 @@ interface PageProps {
  */
 export default async function ProjectDetailPage(props: PageProps) {
     const params = await props.params;
-    const projectId = parseInt(params.id);
-    if (isNaN(projectId)) {
+    const projectId = params.id;
+    if (!projectId) {
         notFound();
     }
 

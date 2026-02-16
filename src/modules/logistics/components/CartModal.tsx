@@ -2,7 +2,7 @@ import { ProcessStatus } from '@/src/shared/types';
 import { PROCESSES } from '@/app/constants';
 
 interface CartItem {
-    id: number;
+    id: string;
     part_number: string;
     status: ProcessStatus;
     count: number;

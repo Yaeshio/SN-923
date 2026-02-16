@@ -21,16 +21,25 @@ const storage = getStorage(app);
 
 const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
 
+console.log(`[Firebase] Initializing with Project ID: ${projectId}, IsEmulator: ${isEmulator}`);
+
 if (isEmulator) {
-    const g = global as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const g = globalThis as any;
     if (!g._firebase_emulators_connected) {
-        // 環境変数からポートを取得、なければデフォルト
         // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
-        connectFirestoreEmulator(db, '127.0.0.1', 8080);
-        connectAuthEmulator(auth, "http://127.0.0.1:9099");
-        connectStorageEmulator(storage, '127.0.0.1', 9199);
-        g._firebase_emulators_connected = true;
-        console.log(`Connected to Firebase Emulators: ${projectId}`);
+        console.log(`[Firebase] Connecting to Firestore Emulator: ${projectId}`);
+        try {
+            connectFirestoreEmulator(db, '127.0.0.1', 8080);
+            connectAuthEmulator(auth, "http://127.0.0.1:9099");
+            connectStorageEmulator(storage, '127.0.0.1', 9199);
+            g._firebase_emulators_connected = true;
+            console.log(`[Firebase] Successfully connected to Firebase Emulators: ${projectId}`);
+        } catch (error) {
+            console.error('[Firebase] Failed to connect to emulators:', error);
+        }
+    } else {
+        console.log('[Firebase] Emulators already connected, skipping initialization.');
     }
 }
 

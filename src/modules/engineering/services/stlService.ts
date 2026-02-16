@@ -121,7 +121,7 @@ export function filterValidParsedInfos(parsedInfos: ParsedFileInfo[]): ParsedFil
 export async function uploadStlFile(
     fileBuffer: ArrayBuffer,
     partNumber: string,
-    projectId: number
+    projectId: string
 ): Promise<string> {
     const timestamp = Date.now();
     const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;

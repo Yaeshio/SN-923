@@ -8,7 +8,7 @@ interface SwimlaneItemProps {
     item: PartItem & { part_number?: string };
     isOverlay?: boolean;
     isSelected?: boolean;
-    onToggleSelect: (itemId: number) => void;
+    onToggleSelect: (itemId: string) => void;
     onPreview: (item: any) => void;
 }
 

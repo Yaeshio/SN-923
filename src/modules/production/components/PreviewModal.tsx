@@ -10,9 +10,9 @@ interface PreviewModalProps {
     isOpen: boolean
     onClose: () => void
     partNumber: string
-    itemId?: number
+    itemId?: string
     status?: string
-    projectId?: number
+    projectId?: string
 }
 
 export function PreviewModal({

@@ -1,0 +1,124 @@
+
+classDiagram
+
+
+class Project {
+            <<interface>>
+            +id: number
++name: string
++description: string
++deadline: string
+            
+        }
+class Unit {
+            <<interface>>
+            +id: string
++name: string
++project_id: number
++description?: string
+            
+        }
+class Part {
+            <<interface>>
+            +id: number
++part_number: string
++project_id: number
++unit_id?: string
+            
+        }
+class PartItem {
+            <<interface>>
+            +id: number
++part_id: number
++storage_case: string
++status: ProcessStatus
++completed_at: Date
++updated_at?: any
+            
+        }
+class ProgressData {
+            <<interface>>
+            +part_number: string
++storage_cases: string[]
++counts: Record~ProcessStatus, number~
+            
+        }
+class ParsedFileInfo {
+            <<interface>>
+            +originalFileName: string
++partNumber: string
++quantity: number
++isValid: boolean
++errorMessage?: string
++storageBoxes?: string[]
+            
+        }
+class Project {
+            <<interface>>
+            +id: number
++name: string
++description: string
++deadline: string
+            
+        }
+class Part {
+            <<interface>>
+            +id: number
++part_number: string
++project_id: number
++unit_id?: string
+            
+        }
+class Unit {
+            <<interface>>
+            +id: string
++name: string
++project_id: number
++description?: string
+            
+        }
+class ImportResult {
+            <<interface>>
+            +success: boolean
++fileName: string
++partNumber?: string
++partId?: number
++itemsCreated?: number
++error?: string
+            
+        }
+class Part {
+            <<interface>>
+            +id: number
++part_number: string
++project_id: number
++unit_id?: string
+            
+        }
+class ParsedFileInfo {
+            <<interface>>
+            +originalFileName: string
++partNumber: string
++quantity: number
++isValid: boolean
++errorMessage?: string
++storageBoxes?: string[]
+            
+        }
+class PartItem {
+            <<interface>>
+            +id: number
++part_id: number
++storage_case: string
++status: ProcessStatus
++completed_at: Date
++updated_at?: any
+            
+        }
+class ProgressData {
+            <<interface>>
+            +part_number: string
++storage_cases: string[]
++counts: Record~ProcessStatus, number~
+            
+        }

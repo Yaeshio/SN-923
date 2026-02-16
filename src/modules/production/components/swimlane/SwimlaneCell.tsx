@@ -6,12 +6,12 @@ import { ProcessStatus } from '@/src/shared/types';
 import { SwimlaneItem } from './SwimlaneItem';
 
 interface SwimlaneCellProps {
-    partId: number;
+    partId: string;
     status: ProcessStatus;
     items: PartItem[];
     isLast: boolean;
-    selectedIds: number[];
-    onToggleSelect: (itemId: number) => void;
+    selectedIds: string[];
+    onToggleSelect: (itemId: string) => void;
     onPreview: (item: any) => void;
 }
 

@@ -41,13 +41,13 @@ export default function ProjectClientContent({
     progressData: any[],
     parts: Part[],
     partItems: PartItem[],
-    projectId: number,
+    projectId: string,
     initialUnits: Unit[]
 }) {
     const [units, setUnits] = useState<Unit[]>(initialUnits);
     const [parts, setParts] = useState<Part[]>(initialParts);
     const [items, setItems] = useState<PartItem[]>(() => {
-        const latestItemsMap = new Map<number, PartItem>();
+        const latestItemsMap = new Map<string, PartItem>();
         initialItems.forEach(item => {
             const currentLatest = latestItemsMap.get(item.part_id);
             if (!currentLatest) {
@@ -63,14 +63,14 @@ export default function ProjectClientContent({
         return Array.from(latestItemsMap.values());
     });
 
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [previewItem, setPreviewItem] = useState<any | null>(null);
     const [expandedUnits, setExpandedUnits] = useState<Record<string, boolean>>({ 'unclassified': true });
 
     // Unit Movement State
-    const [movingPartId, setMovingPartId] = useState<number | null>(null);
+    const [movingPartId, setMovingPartId] = useState<string | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -89,7 +89,7 @@ export default function ProjectClientContent({
         }
     };
 
-    const handleOpenMoveModal = (partId: number) => {
+    const handleOpenMoveModal = (partId: string) => {
         setMovingPartId(partId);
     };
 
@@ -130,7 +130,7 @@ export default function ProjectClientContent({
         if (!over) return;
 
         const activeIdStr = active.id as string;
-        const itemId = parseInt(activeIdStr.split('-')[1], 10);
+        const itemId = activeIdStr.split('-')[1];
         const activeItem = items.find(i => i.id === itemId);
         if (!activeItem) return;
 
@@ -139,11 +139,11 @@ export default function ProjectClientContent({
 
         if (overIdStr.startsWith('container-')) {
             const partsList = overIdStr.split('-');
-            const targetPartId = parseInt(partsList[1], 10);
+            const targetPartId = partsList[1];
             if (targetPartId !== activeItem.part_id) return;
             targetStatus = partsList.slice(2).join('-');
         } else if (overIdStr.startsWith('item-')) {
-            const overItemId = parseInt(overIdStr.split('-')[1], 10);
+            const overItemId = overIdStr.split('-')[1];
             const overItem = items.find(i => i.id === overItemId);
             if (overItem && overItem.part_id !== activeItem.part_id) return;
             if (overItem) targetStatus = overItem.status;
@@ -163,7 +163,7 @@ export default function ProjectClientContent({
         }
     };
 
-    const handleToggleSelect = (itemId: number) => {
+    const handleToggleSelect = (itemId: string) => {
         setSelectedIds(prev => prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]);
     };
 

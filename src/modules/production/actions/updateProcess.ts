@@ -17,12 +17,11 @@ import { updateItemStatus } from '@/src/modules/production/services/itemService'
  * @param projectId - プロジェクトID（オプション）
  */
 export async function updateProcess(
-    itemId: string | number,
+    itemId: string,
     nextProcess: string,
-    projectId?: number
+    projectId?: string
 ) {
-    // 文字列IDを数値に変換
-    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+    const id = itemId;
 
     // Production Service を使用してステータスを更新
     await updateItemStatus(id, nextProcess as ProcessStatus);

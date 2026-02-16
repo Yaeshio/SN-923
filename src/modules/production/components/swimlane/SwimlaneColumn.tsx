@@ -9,10 +9,10 @@ import { MoveRight } from 'lucide-react';
 interface SwimlaneColumnProps {
     part: Part;
     items: PartItem[];
-    selectedIds: number[];
-    onToggleSelect: (itemId: number) => void;
+    selectedIds: string[];
+    onToggleSelect: (itemId: string) => void;
     onPreview: (item: any) => void;
-    onMove: (partId: number) => void;
+    onMove: (partId: string) => void;
 }
 
 export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPreview, onMove }: SwimlaneColumnProps) {

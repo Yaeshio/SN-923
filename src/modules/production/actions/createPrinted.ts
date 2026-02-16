@@ -22,7 +22,7 @@ import { parseFileName } from '@/src/modules/engineering/services/stlService';
 export async function createPrinted(
     fileBuffer: ArrayBuffer,
     fileName: string,
-    projectId: number,
+    projectId: string,
     qty: number,
     targetStatus: ProcessStatus = 'PRINTED'
 ): Promise<{ success: boolean; partNumber: string }> {

@@ -15,16 +15,16 @@ import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
  * @param itemId - 部品アイテムのID
  * @param newStatus - 新しいステータス
  */
-export async function updateItemStatus(itemId: string | number, newStatus: string) {
+export async function updateItemStatus(itemId: string, newStatus: string) {
     try {
-        const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+        const id = itemId;
 
         // ステータスを更新
         await updateStatus(id, newStatus as any);
 
         // ステータスがASSEMBLED（完成）の場合、保管ボックスを解放
         if (newStatus === 'ASSEMBLED') {
-            const itemRef = doc(db, 'partItems', String(id));
+            const itemRef = doc(db, 'partItems', id);
             await updateDoc(itemRef, {
                 storage_case: '',
                 updated_at: serverTimestamp()

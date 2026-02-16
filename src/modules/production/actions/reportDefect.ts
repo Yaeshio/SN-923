@@ -15,11 +15,11 @@ import { updateItemStatus, createItems } from '@/src/modules/production/services
  * @param itemId - 不良が発生したアイテムのID
  * @param reason - 不良の理由
  */
-export async function reportDefect(itemId: number | string, reason: string) {
-    const id = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+export async function reportDefect(itemId: string, reason: string) {
+    const id = itemId;
 
     // 1. 元のアイテム情報を取得
-    const itemRef = doc(db, 'partItems', String(id));
+    const itemRef = doc(db, 'partItems', id);
     const itemSnap = await getDoc(itemRef);
 
     if (!itemSnap.exists()) {

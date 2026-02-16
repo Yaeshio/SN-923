@@ -1,0 +1,225 @@
+<svg version="1.1" baseProfile="full" width="1792.0" height="209.0" viewBox="0 0 1792 209" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events">
+<desc >#.interface: fill=lightblue
+#.enumeration: fill=lightgreen
+#.type: fill=lightgray
+
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;Project|+id: number;+name: string;+description: string;+deadline: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;Unit|+id: string;+name: string;+project_id: number;+description?: string|]
+[&lt;interface&gt;ImportResult|+success: boolean;+fileName: string;+partNumber?: string;+partId?: number;+itemsCreated?: number;+error?: string|]
+[&lt;interface&gt;Part|+id: number;+part_number: string;+project_id: number;+unit_id?: string|]
+[&lt;interface&gt;ParsedFileInfo|+originalFileName: string;+partNumber: string;+quantity: number;+isValid: boolean;+errorMessage?: string;+storageBoxes?: string\[\]|]
+[&lt;interface&gt;PartItem|+id: number;+part_id: number;+storage_case: string;+status: ProcessStatus;+completed_at: Date;+updated_at?: any|]
+[&lt;interface&gt;ProgressData|+part_number: string;+storage_cases: string\[\];+counts: Record&lt;ProcessStatus, number&gt;|]</desc>
+<g stroke-width="1.0" text-align="left" font="12pt Helvetica, Arial, sans-serif" font-size="12pt" font-family="Helvetica" font-weight="normal" font-style="normal">
+<g font-family="Helvetica" font-size="12pt" font-weight="bold" font-style="normal" stroke-width="3.0" stroke-linejoin="round" stroke-linecap="round" stroke="#33322E">
+<g stroke="transparent" fill="transparent">
+<rect x="0.0" y="0.0" height="209.0" width="1792.0" stroke="none"></rect>
+</g>
+<g transform="translate(8, 8)" fill="#33322E">
+<g transform="translate(20, 20)">
+<g data-name="Project">
+<g fill="lightblue" stroke="#33322E" data-name="Project">
+<rect x="0.0" y="16.0" height="121.0" width="167.0" data-name="Project"></rect>
+<path d="M0.0 48.0 L167.0 48.0" fill="none" data-name="Project"></path>
+<path d="M0.0 129.0 L167.0 129.0" fill="none" data-name="Project"></path>
+</g>
+<g transform="translate(0, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Project" data-compartment="0">
+<a id="src\shared\types\index.ts.Project" xlink:href="src\shared\types\index.ts"><text x="75.5" y="14.1" stroke="none" text-anchor="middle" data-name="Project" data-compartment="0">Project</text></a>
+
+</g>
+</g>
+<g transform="translate(0, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Project" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Project" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Project" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Project" data-compartment="1">+description: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Project" data-compartment="1">+deadline: string</text>
+
+</g>
+</g>
+<g transform="translate(0, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Project" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Project" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Unit">
+<g fill="lightblue" stroke="#33322E" data-name="Unit">
+<rect x="207.0" y="16.0" height="121.0" width="177.0" data-name="Unit"></rect>
+<path d="M207.0 48.0 L384.0 48.0" fill="none" data-name="Unit"></path>
+<path d="M207.0 129.0 L384.0 129.0" fill="none" data-name="Unit"></path>
+</g>
+<g transform="translate(207, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Unit" data-compartment="0">
+<a id="src\shared\types\index.ts.Unit" xlink:href="src\shared\types\index.ts"><text x="80.5" y="14.1" stroke="none" text-anchor="middle" data-name="Unit" data-compartment="0">Unit</text></a>
+
+</g>
+</g>
+<g transform="translate(207, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Unit" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Unit" data-compartment="1">+id: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Unit" data-compartment="1">+name: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Unit" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Unit" data-compartment="1">+description?: string</text>
+
+</g>
+</g>
+<g transform="translate(207, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Unit" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Unit" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="Part">
+<g fill="lightblue" stroke="#33322E" data-name="Part">
+<rect x="424.0" y="16.0" height="121.0" width="181.0" data-name="Part"></rect>
+<path d="M424.0 48.0 L605.0 48.0" fill="none" data-name="Part"></path>
+<path d="M424.0 129.0 L605.0 129.0" fill="none" data-name="Part"></path>
+</g>
+<g transform="translate(424, 16)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="Part" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.Part" xlink:href="src\modules\inventory\types\index.ts"><text x="82.5" y="14.1" stroke="none" text-anchor="middle" data-name="Part" data-compartment="0">Part</text></a>
+
+</g>
+</g>
+<g transform="translate(424, 48)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="Part" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="Part" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="Part" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="Part" data-compartment="1">+project_id: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="Part" data-compartment="1">+unit_id?: string</text>
+
+</g>
+</g>
+<g transform="translate(424, 129)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="Part" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="Part" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="PartItem">
+<g fill="lightblue" stroke="#33322E" data-name="PartItem">
+<rect x="645.0" y="0.0" height="153.0" width="198.0" data-name="PartItem"></rect>
+<path d="M645.0 32.0 L843.0 32.0" fill="none" data-name="PartItem"></path>
+<path d="M645.0 145.0 L843.0 145.0" fill="none" data-name="PartItem"></path>
+</g>
+<g transform="translate(645, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="PartItem" data-compartment="0">
+<a id="src\modules\production\types\index.ts.PartItem" xlink:href="src\modules\production\types\index.ts"><text x="91.0" y="14.1" stroke="none" text-anchor="middle" data-name="PartItem" data-compartment="0">PartItem</text></a>
+
+</g>
+</g>
+<g transform="translate(645, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="PartItem" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="PartItem" data-compartment="1">+id: number</text>
+<text x="0.0" y="30.3" stroke="none" data-name="PartItem" data-compartment="1">+part_id: number</text>
+<text x="0.0" y="46.5" stroke="none" data-name="PartItem" data-compartment="1">+storage_case: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="PartItem" data-compartment="1">+status: ProcessStatus</text>
+<text x="0.0" y="78.9" stroke="none" data-name="PartItem" data-compartment="1">+completed_at: Date</text>
+<text x="0.0" y="95.1" stroke="none" data-name="PartItem" data-compartment="1">+updated_at?: any</text>
+
+</g>
+</g>
+<g transform="translate(645, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="PartItem" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="PartItem" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ProgressData">
+<g fill="lightblue" stroke="#33322E" data-name="ProgressData">
+<rect x="883.0" y="24.0" height="105.0" width="350.0" data-name="ProgressData"></rect>
+<path d="M883.0 56.0 L1233.0 56.0" fill="none" data-name="ProgressData"></path>
+<path d="M883.0 121.0 L1233.0 121.0" fill="none" data-name="ProgressData"></path>
+</g>
+<g transform="translate(883, 24)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ProgressData" data-compartment="0">
+<a id="src\modules\production\types\index.ts.ProgressData" xlink:href="src\modules\production\types\index.ts"><text x="167.0" y="14.1" stroke="none" text-anchor="middle" data-name="ProgressData" data-compartment="0">ProgressData</text></a>
+
+</g>
+</g>
+<g transform="translate(883, 56)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ProgressData" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ProgressData" data-compartment="1">+part_number: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ProgressData" data-compartment="1">+storage_cases: string[]</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ProgressData" data-compartment="1">+counts: Record&lt;ProcessStatus, number&gt;</text>
+
+</g>
+</g>
+<g transform="translate(883, 121)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ProgressData" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ProgressData" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ParsedFileInfo">
+<g fill="lightblue" stroke="#33322E" data-name="ParsedFileInfo">
+<rect x="1273.0" y="0.0" height="153.0" width="212.0" data-name="ParsedFileInfo"></rect>
+<path d="M1273.0 32.0 L1485.0 32.0" fill="none" data-name="ParsedFileInfo"></path>
+<path d="M1273.0 145.0 L1485.0 145.0" fill="none" data-name="ParsedFileInfo"></path>
+</g>
+<g transform="translate(1273, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ParsedFileInfo" data-compartment="0">
+<a id="src\modules\inventory\types\index.ts.ParsedFileInfo" xlink:href="src\modules\inventory\types\index.ts"><text x="98.0" y="14.1" stroke="none" text-anchor="middle" data-name="ParsedFileInfo" data-compartment="0">ParsedFileInfo</text></a>
+
+</g>
+</g>
+<g transform="translate(1273, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ParsedFileInfo" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+originalFileName: string</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+partNumber: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+quantity: number</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+isValid: boolean</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+errorMessage?: string</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ParsedFileInfo" data-compartment="1">+storageBoxes?: string[]</text>
+
+</g>
+</g>
+<g transform="translate(1273, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ParsedFileInfo" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ParsedFileInfo" data-compartment="2">
+
+</g>
+</g>
+</g>
+<g data-name="ImportResult">
+<g fill="lightblue" stroke="#33322E" data-name="ImportResult">
+<rect x="1525.0" y="0.0" height="153.0" width="211.0" data-name="ImportResult"></rect>
+<path d="M1525.0 32.0 L1736.0 32.0" fill="none" data-name="ImportResult"></path>
+<path d="M1525.0 145.0 L1736.0 145.0" fill="none" data-name="ImportResult"></path>
+</g>
+<g transform="translate(1525, 0)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="0">
+<g transform="translate(8, 8)" fill="#33322E" text-align="center" data-name="ImportResult" data-compartment="0">
+<a id="src\modules\engineering\actions\importStl.ts.ImportResult" xlink:href="src\modules\engineering\actions\importStl.ts"><text x="97.5" y="14.1" stroke="none" text-anchor="middle" data-name="ImportResult" data-compartment="0">ImportResult</text></a>
+
+</g>
+</g>
+<g transform="translate(1525, 32)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="1">
+<g transform="translate(8, 8)" fill="#33322E" text-align="left" data-name="ImportResult" data-compartment="1">
+<text x="0.0" y="14.1" stroke="none" data-name="ImportResult" data-compartment="1">+success: boolean</text>
+<text x="0.0" y="30.3" stroke="none" data-name="ImportResult" data-compartment="1">+fileName: string</text>
+<text x="0.0" y="46.5" stroke="none" data-name="ImportResult" data-compartment="1">+partNumber?: string</text>
+<text x="0.0" y="62.7" stroke="none" data-name="ImportResult" data-compartment="1">+partId?: number</text>
+<text x="0.0" y="78.9" stroke="none" data-name="ImportResult" data-compartment="1">+itemsCreated?: number</text>
+<text x="0.0" y="95.1" stroke="none" data-name="ImportResult" data-compartment="1">+error?: string</text>
+
+</g>
+</g>
+<g transform="translate(1525, 145)" font-family="Helvetica" font-size="12pt" font-weight="normal" font-style="normal" data-name="ImportResult" data-compartment="2">
+<g transform="translate(8, 8)" fill="#33322E" data-name="ImportResult" data-compartment="2">
+
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</g>
+</svg>

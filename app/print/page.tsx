@@ -13,8 +13,7 @@ import { Suspense } from 'react';
 function PrintRegistrationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const projectIdStr = searchParams.get('project_id');
-  const projectId = projectIdStr ? parseInt(projectIdStr) : null;
+  const projectId = searchParams.get('project_id');
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [parsedInfos, setParsedInfos] = useState<(ParsedFileInfo & { file: File })[]>([]);
@@ -189,8 +188,8 @@ function PrintRegistrationContent() {
             type="submit"
             disabled={isSubmitting || selectedFiles.length === 0 || parsedInfos.some(i => !i.isValid)}
             className={`w-full text-white font-bold py-4 px-6 rounded-xl shadow-lg transition-all text-xl ${isSubmitting || selectedFiles.length === 0 || parsedInfos.some(i => !i.isValid)
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:transform active:scale-[0.98]'
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:transform active:scale-[0.98]'
               }`}
           >
             {isSubmitting ? (

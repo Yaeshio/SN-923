@@ -29,7 +29,7 @@ export interface ImportResult {
     success: boolean;
     fileName: string;
     partNumber?: string;
-    partId?: number;
+    partId?: string;
     itemsCreated?: number;
     error?: string;
 }
@@ -46,7 +46,7 @@ export interface ImportResult {
 export async function importSingleStl(
     fileBuffer: ArrayBuffer,
     fileName: string,
-    projectId: number,
+    projectId: string,
     defaultStatus: ProcessStatus = 'CUTTING'
 ): Promise<ImportResult> {
     try {
@@ -64,7 +64,7 @@ export async function importSingleStl(
         const { partNumber, quantity } = parsed;
 
         // 2. Engineering: Firebase Storage にアップロード
-        const downloadUrl = await uploadStlFile(fileBuffer, partNumber, projectId);
+        const downloadUrl = await uploadStlFile(fileBuffer, partNumber, projectId as any);
         console.log(`[ImportSTL] Uploaded file: ${downloadUrl}`);
 
         // 3. Inventory: 部品マスタの確認・作成
@@ -108,7 +108,7 @@ export async function importSingleStl(
  */
 export async function importMultipleStl(
     filesData: Array<{ buffer: ArrayBuffer; name: string }>,
-    projectId: number,
+    projectId: string,
     defaultStatus: ProcessStatus = 'CUTTING'
 ): Promise<ImportResult[]> {
     const results: ImportResult[] = [];
