@@ -14,33 +14,66 @@ const firebaseConfig = {
     appId: "1:123456789:web:abcdef"
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
-
 const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
 
 console.log(`[Firebase] Initializing with Project ID: ${projectId}, IsEmulator: ${isEmulator}`);
 
+let app;
+if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+} else {
+    app = getApps()[0];
+}
+
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
+
 if (isEmulator) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof window === 'undefined') {
+        // Node / Server Context
+        if (!process.env.FIRESTORE_EMULATOR_HOST) {
+            process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080';
+            process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
+            process.env.FIREBASE_STORAGE_EMULATOR_HOST = '127.0.0.1:9199';
+        }
+    }
+
+    // インスタンスごとに一度だけ接続を試みる
     const g = globalThis as any;
-    if (!g._firebase_emulators_connected) {
-        // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
-        console.log(`[Firebase] Connecting to Firestore Emulator: ${projectId}`);
+
+    // Firestore
+    if (!(db as any)._emulator_connected) {
         try {
             connectFirestoreEmulator(db, '127.0.0.1', 8080);
-            connectAuthEmulator(auth, "http://127.0.0.1:9099");
-            connectStorageEmulator(storage, '127.0.0.1', 9199);
-            g._firebase_emulators_connected = true;
-            console.log(`[Firebase] Successfully connected to Firebase Emulators: ${projectId}`);
-        } catch (error) {
-            console.error('[Firebase] Failed to connect to emulators:', error);
+            (db as any)._emulator_connected = true;
+            console.log(`[Firebase] Connected Firestore to Emulator (127.0.0.1:8080)`);
+        } catch (e: any) {
+            if (e.code === 'failed-precondition') {
+                (db as any)._emulator_connected = true;
+            }
         }
-    } else {
-        console.log('[Firebase] Emulators already connected, skipping initialization.');
+    }
+
+    // Auth
+    if (!(auth as any)._emulator_connected) {
+        try {
+            connectAuthEmulator(auth, "http://127.0.0.1:9099");
+            (auth as any)._emulator_connected = true;
+            console.log(`[Firebase] Connected Auth to Emulator (127.0.0.1:9099)`);
+        } catch (e) { }
+    }
+
+    // Storage
+    if (!(storage as any)._emulator_connected) {
+        try {
+            connectStorageEmulator(storage, '127.0.0.1', 9199);
+            (storage as any)._emulator_connected = true;
+            console.log(`[Firebase] Connected Storage to Emulator (127.0.0.1:9199)`);
+        } catch (e) { }
     }
 }
 
 export { db, auth, storage };
+
+

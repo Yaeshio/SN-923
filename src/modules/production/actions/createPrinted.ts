@@ -49,8 +49,14 @@ export async function createPrinted(
 
         return { success: true, partNumber: result.partNumber };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[CreatePrinted] Error:', error);
-        throw error;
+        // クライアントにエラーメッセージを返す
+        return {
+            success: false,
+            partNumber: '',
+            error: error.message || '部品の登録に失敗しました'
+        } as any;
     }
 }
+

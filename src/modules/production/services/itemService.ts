@@ -1,8 +1,3 @@
-/**
- * Production Module - Item Service
- * 工程アイテム（PartItem）の作成と管理
- */
-
 import { db } from '@/src/shared/lib/firebase';
 import {
     collection,
@@ -10,12 +5,15 @@ import {
     doc,
     setDoc,
     updateDoc,
-    serverTimestamp
+    serverTimestamp,
+    runTransaction
 } from 'firebase/firestore';
 import { PartItem } from '@/src/modules/production/types';
 import { Part } from '@/src/modules/inventory/types';
 import { ProcessStatus } from '@/src/shared/types';
 import { PROCESSES } from '@/app/constants';
+import { BoxService } from '@/src/modules/inventory/services/boxService';
+
 
 /**
  * 工程アイテムを作成する
@@ -43,6 +41,7 @@ export async function createItems(
         const newItem: PartItem = {
             id: itemRef.id,
             part_id: partId,
+            box_id: null, // 明示的に割り当てる場合は別のフローを使用
             storage_case: storageBoxes[i],
             status: initialStatus,
             completed_at: null,
@@ -59,6 +58,7 @@ export async function createItems(
 
 /**
  * アイテムのステータスを更新する
+ * ステータスが完了（ASSEMBLED または READY）になった場合、ボックスを自動的に解放する
  * 
  * @param itemId - アイテムID
  * @param newStatus - 新しいステータス
@@ -67,16 +67,36 @@ export async function updateItemStatus(
     itemId: string,
     newStatus: ProcessStatus
 ): Promise<void> {
-    const itemRef = doc(db, 'partItems', itemId);
+    await runTransaction(db, async (transaction) => {
+        const itemRef = doc(db, 'partItems', itemId);
+        const itemSnap = await transaction.get(itemRef);
 
-    await updateDoc(itemRef, {
-        status: newStatus,
-        updated_at: serverTimestamp(),
-        completed_at: newStatus === 'ASSEMBLED' ? serverTimestamp() : null
+        if (!itemSnap.exists()) {
+            throw new Error('Item not found');
+        }
+
+        const itemData = itemSnap.data() as PartItem;
+        const isCompleted = newStatus === 'ASSEMBLED' || (newStatus as string) === 'READY';
+
+        const updates: any = {
+            status: newStatus,
+            updated_at: serverTimestamp(),
+            completed_at: isCompleted ? serverTimestamp() : null
+        };
+
+        // ボックスの解放処理
+        if (isCompleted && itemData.box_id) {
+            await BoxService.releaseBox(itemData.box_id, transaction);
+            updates.box_id = null;
+            updates.storage_case = ''; // 互換性のためのフィールドもクリア
+        }
+
+        transaction.update(itemRef, updates);
     });
 
     console.log(`[ItemService] Updated item ${itemId} status to ${newStatus}`);
 }
+
 
 /**
  * 複数アイテムのステータスを一括更新する

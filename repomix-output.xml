@@ -41,7 +41,6 @@ The content is organized as follows:
 
 <directory_structure>
 .continue/agents/new-config.yaml
-.env,local
 .firebaserc
 .gitignore
 app/actions/consumeItem.ts
@@ -75,7 +74,9 @@ emulator_data/firebase-export-metadata.json
 emulator_data/firestore_export/all_namespaces/all_kinds/all_namespaces_all_kinds.export_metadata
 emulator_data/firestore_export/all_namespaces/all_kinds/output-0
 emulator_data/firestore_export/firestore_export.overall_export_metadata
+emulator_data/storage_export/blobs/1ef33a25-d873-47a3-8c65-fed2cca276cb
 emulator_data/storage_export/buckets.json
+emulator_data/storage_export/metadata/1ef33a25-d873-47a3-8c65-fed2cca276cb.json
 firebase-data/auth_export/accounts.json
 firebase-data/auth_export/config.json
 firebase-data/firebase-export-metadata.json
@@ -122,6 +123,7 @@ src/modules/engineering/components/StlImportModal.tsx
 src/modules/engineering/services/stlService.ts
 src/modules/inventory/actions/storageActions.ts
 src/modules/inventory/components/StorageBoxGrid.tsx
+src/modules/inventory/services/__tests__/boxService.test.ts
 src/modules/inventory/services/boxService.ts
 src/modules/inventory/services/partService.ts
 src/modules/inventory/types/index.ts
@@ -140,6 +142,7 @@ src/modules/production/services/itemService.ts
 src/modules/production/services/productionService.ts
 src/modules/production/types/index.ts
 src/modules/project/components/ProjectsList.tsx
+src/scripts/seedBoxes.ts
 src/shared/components/FileDownloadButton.tsx
 src/shared/components/ModelViewer.tsx
 src/shared/components/SummaryCard.tsx
@@ -154,6 +157,113 @@ types-diagram.mmd
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="emulator_data/storage_export/metadata/1ef33a25-d873-47a3-8c65-fed2cca276cb.json">
+{
+  "name": "projects/proto-2024/stl/SN-603-03_1771242467064.stl",
+  "bucket": "demo-bom3d-sn923.appspot.com",
+  "metageneration": 1,
+  "generation": 1771242467099,
+  "contentType": "application/octet-stream",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "1c8ae8d6-10b5-4393-9ff2-a6859e89293e"
+  ],
+  "etag": "jmGyq7Y+ImUNYRVFPyiDLDE5g3c",
+  "customMetadata": {},
+  "timeCreated": "2026-02-16T11:47:47.099Z",
+  "updated": "2026-02-16T11:47:47.099Z",
+  "size": 154484,
+  "md5Hash": "eJgrvhNrV8DbsbMz2jz0gw==",
+  "crc32c": "3178662713"
+}
+</file>
+
+<file path="src/scripts/seedBoxes.ts">
+/**
+ * Boxコレクション シーディングスクリプト
+ * 
+ * 物理的な箱（Box）のマスターデータをFirestoreに投入します。
+ * 
+ * 役割:
+ * - 既に存在する boxes コレクションの内容をクリアする
+ * - BOX-01 から BOX-20 までの初期データを生成する
+ * 
+ * 実行方法:
+ * npx tsx src/scripts/seedBoxes.ts
+ */
+
+import { db } from '../shared/lib/firebase';
+import {
+    collection,
+    writeBatch,
+    doc,
+    getDocs,
+    serverTimestamp,
+    query
+} from 'firebase/firestore';
+
+// エミュレーター環境用の設定を強制適用
+(process.env as any).NEXT_PUBLIC_FIREBASE_PROJECT_ID = "demo-bom3d-sn923";
+(process.env as any).NODE_ENV = 'development';
+
+async function seedBoxes() {
+    console.log('--- Box Database Seeding Start ---');
+
+    try {
+        const boxesRef = collection(db, 'boxes');
+
+        // 1. 既存の全ボックスを削除（重複防止と定義変更への対応）
+        console.log('Fetching existing boxes for clearing...');
+        const snapshot = await getDocs(query(boxesRef));
+
+        if (!snapshot.empty) {
+            console.log(`Clearing ${snapshot.size} existing boxes...`);
+            const clearBatch = writeBatch(db);
+            snapshot.docs.forEach((d) => {
+                clearBatch.delete(d.ref);
+            });
+            await clearBatch.commit();
+            console.log('✔️  Existing boxes cleared successfully.');
+        }
+
+        // 2. 新規データ（BOX-01 〜 BOX-20）の投入
+        console.log('Generating 20 new boxes (BOX-01 to BOX-20)...');
+        const batch = writeBatch(db);
+        const count = 20;
+
+        for (let i = 1; i <= count; i++) {
+            const boxId = `BOX-${String(i).padStart(2, '0')}`;
+            const boxRef = doc(db, 'boxes', boxId);
+
+            const boxData = {
+                id: boxId,
+                name: `棚A-${i}`, // 管理用の名称
+                is_occupied: false,
+                current_item_id: null,
+                last_used_at: serverTimestamp()
+            };
+
+            batch.set(boxRef, boxData);
+        }
+
+        await batch.commit();
+        console.log(`✔️  ${count} boxes have been successfully seeded.`);
+        console.log('--- Seeding Completed Successfully! ---');
+
+    } catch (error) {
+        console.error('❌  Seeding failed with error:');
+        console.error(error);
+        process.exit(1);
+    }
+
+    process.exit(0);
+}
+
+// 実行
+seedBoxes();
+</file>
 
 <file path=".continue/agents/new-config.yaml">
 # This is an example configuration file
@@ -179,15 +289,6 @@ models:
 # https://docs.continue.dev/customization/mcp-tools
 mcpServers:
   - uses: anthropic/memory-mcp
-</file>
-
-<file path=".env,local">
-# Firebase Project ID (Emulator用に 'demo-' を付ける)
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-bom3d-sn923
-
-# 各種エミュレータのポート番号（デフォルト）
-NEXT_PUBLIC_FIREBASE_FIRESTORE_EMULATOR_HOST=localhost:8080
-NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=http://localhost:9099
 </file>
 
 <file path=".gitignore">
@@ -2014,19 +2115,225 @@ export default function StorageBoxGrid({ boxes }: StorageBoxGridProps) {
 }
 </file>
 
+<file path="src/modules/inventory/services/__tests__/boxService.test.ts">
+/**
+ * BoxService ユニットテスト
+ * 
+ * 物理的な箱（Box）の管理機能に関するユニットテスト。
+ * TDDに基づき、実装本体がない状態で「失敗するテスト」として定義します。
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+// まだ BoxService は実装されていないため、インポートエラーは許容されます
+// @ts-ignore
+import { BoxService } from '../boxService';
+import { db } from '@/src/shared/lib/firebase';
+import * as firestore from 'firebase/firestore';
+
+// Firebase Firestoreのモック化
+vi.mock('@/src/shared/lib/firebase', () => ({
+    db: {
+        type: 'firestore-mock'
+    }
+}));
+
+vi.mock('firebase/firestore', () => ({
+    collection: vi.fn(),
+    query: vi.fn(),
+    where: vi.fn(),
+    limit: vi.fn(),
+    getDocs: vi.fn(),
+    doc: vi.fn(),
+    runTransaction: vi.fn(),
+    serverTimestamp: vi.fn(() => 'mock-timestamp'),
+}));
+
+describe('BoxService', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    describe('findAndOccupyEmptyBox', () => {
+        const partItemId = 'PART-ITEM-001';
+
+        it('【正常系】空きボックスが存在する場合、正しく1つ確保され、ステータスが更新されること', async () => {
+            const mockBoxId = 'BOX-001';
+            const mockBoxData = { id: mockBoxId, name: '棚A-1', is_occupied: false, current_item_id: null };
+
+            // 1. getDocs で空きボックスの一覧（1件）を取得するモック
+            (firestore.getDocs as any).mockResolvedValueOnce({
+                empty: false,
+                docs: [{
+                    id: mockBoxId,
+                    data: () => mockBoxData,
+                    ref: { id: mockBoxId }
+                }]
+            });
+
+            // 2. runTransaction のモック
+            (firestore.runTransaction as any).mockImplementationOnce(async (dbInst: any, updateFn: any) => {
+                const transaction = {
+                    get: vi.fn().mockResolvedValue({
+                        exists: () => true,
+                        id: mockBoxId,
+                        data: () => mockBoxData
+                    }),
+                    update: vi.fn()
+                };
+                return await updateFn(transaction);
+            });
+
+            const result = await BoxService.findAndOccupyEmptyBox(partItemId);
+
+            // 検証:
+            // - 返り値が期待したボックス情報であること
+            expect(result.id).toBe(mockBoxId);
+            // - トランザクションが実行されていること
+            expect(firestore.runTransaction).toHaveBeenCalled();
+            // - クエリで is_occupied: false を条件にしていること
+            expect(firestore.where).toHaveBeenCalledWith('is_occupied', '==', false);
+        });
+
+        it('【異常系】ボックスがすべて使用中の場合、"No available boxes" エラーを投げること', async () => {
+            // 空きボックスが見つからない状態をシミュレート
+            (firestore.getDocs as any).mockResolvedValueOnce({
+                empty: true,
+                docs: []
+            });
+
+            await expect(BoxService.findAndOccupyEmptyBox(partItemId))
+                .rejects.toThrow('No available boxes');
+        });
+
+        it('【境界値】同時に複数の割り当てが走っても二重割り当てされないよう、トランザクションを使用していること', async () => {
+            (firestore.getDocs as any).mockResolvedValueOnce({
+                empty: false,
+                docs: [{ id: 'BOX-001', data: () => ({ is_occupied: false }), ref: { id: 'BOX-001' } }]
+            });
+
+            await BoxService.findAndOccupyEmptyBox(partItemId);
+
+            // トランザクションの呼び出しを確認
+            expect(firestore.runTransaction).toHaveBeenCalled();
+        });
+    });
+
+    describe('releaseBox', () => {
+        const boxId = 'BOX-001';
+
+        it('【正常系】部品の工程完了時、ボックスが正しく解放され、再利用可能になること', async () => {
+            // 実行
+            await BoxService.releaseBox(boxId);
+
+            // 検証:
+            // - トランザクション（またはアトミックな更新）が実行されていること
+            expect(firestore.runTransaction).toHaveBeenCalled();
+
+            // トランザクション内部で update が呼ばれ、is_occupied が false、item_id が null になっていることを想定
+            // (具体的な検証は実装の詳細に依存するが、ここでは関数の存在を確認)
+            expect(firestore.doc).toHaveBeenCalledWith(expect.anything(), 'boxes', boxId);
+        });
+    });
+});
+</file>
+
 <file path="src/modules/inventory/services/boxService.ts">
 /**
  * Inventory Module - Box Service
- * 保管ケース（ボックス）の採番と管理
+ * 保管ケース（ボックス）の管理
  */
 
 import { db } from '@/src/shared/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import {
+    collection,
+    getDocs,
+    query,
+    where,
+    limit,
+    doc,
+    runTransaction,
+    serverTimestamp,
+    Transaction
+} from 'firebase/firestore';
+import { Box } from '../types';
+
+export const BoxService = {
+    /**
+     * 空いているボックスを探し、指定された部品を割り当てる
+     * 検索と更新をトランザクション内で行い、レースコンディションを防止する
+     */
+    async findAndOccupyEmptyBox(itemId: string, transaction?: Transaction): Promise<Box> {
+        // 1. 先に空きボックスをクエリで探す (Firestoreの制限上、トランザクション内でクエリはできないため)
+        const boxesRef = collection(db, 'boxes');
+        const q = query(boxesRef, where('is_occupied', '==', false), limit(1));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            throw new Error('No available boxes');
+        }
+
+        const boxDoc = snapshot.docs[0];
+        const boxId = boxDoc.id;
+        const boxRef = doc(db, 'boxes', boxId);
+
+        const updateLogic = async (tx: Transaction) => {
+            const docSnap = await tx.get(boxRef);
+            if (!docSnap.exists()) {
+                throw new Error('Box not found');
+            }
+
+            const data = docSnap.data() as Omit<Box, 'id'>;
+            if (data.is_occupied) {
+                // クエリで見つけた時点では空いていたが、既に他で埋められた場合
+                throw new Error('No available boxes');
+            }
+
+            const updateData = {
+                is_occupied: true,
+                current_item_id: itemId,
+                last_used_at: serverTimestamp()
+            };
+
+            tx.update(boxRef, updateData);
+
+            return {
+                id: boxId,
+                ...data,
+                ...updateData
+            } as Box;
+        };
+
+        if (transaction) {
+            return await updateLogic(transaction);
+        } else {
+            return await runTransaction(db, updateLogic);
+        }
+    },
+
+    /**
+     * 指定されたボックスを解放する
+     */
+    async releaseBox(boxId: string, transaction?: Transaction): Promise<void> {
+        const boxRef = doc(db, 'boxes', boxId);
+
+        const updateLogic = async (tx: Transaction) => {
+            tx.update(boxRef, {
+                is_occupied: false,
+                current_item_id: null,
+                last_used_at: serverTimestamp()
+            });
+        };
+
+        if (transaction) {
+            await updateLogic(transaction);
+        } else {
+            await runTransaction(db, updateLogic);
+        }
+    }
+};
+
 
 /**
- * 使用中のボックスIDを取得する
- * 
- * @returns 使用中のボックスIDのSet
+ * 使用中のボックスIDを取得する (旧互換用)
  */
 export async function getUsedBoxes(): Promise<Set<string>> {
     const allItemsSnapshot = await getDocs(collection(db, 'partItems'));
@@ -2043,10 +2350,7 @@ export async function getUsedBoxes(): Promise<Set<string>> {
 }
 
 /**
- * 次に利用可能なボックスIDを探す
- * 
- * @param usedBoxes - 使用中のボックスIDのSet
- * @returns 次に利用可能なボックスID
+ * 次に利用可能なボックスIDを探す (旧互換用)
  */
 export function findNextAvailableBox(usedBoxes: Set<string>): string {
     let boxNumber = 1;
@@ -2060,10 +2364,7 @@ export function findNextAvailableBox(usedBoxes: Set<string>): string {
 }
 
 /**
- * 指定された個数分のボックスを確保する
- * 
- * @param quantity - 必要なボックスの個数
- * @returns 確保されたボックスIDの配列
+ * 指定された個数分のボックスを確保する (旧互換用)
  */
 export async function allocateBoxes(quantity: number): Promise<string[]> {
     const usedBoxes = await getUsedBoxes();
@@ -2071,7 +2372,7 @@ export async function allocateBoxes(quantity: number): Promise<string[]> {
 
     for (let i = 0; i < quantity; i++) {
         const boxId = findNextAvailableBox(usedBoxes);
-        usedBoxes.add(boxId); // 次の検索で重複しないように追加
+        usedBoxes.add(boxId);
         allocatedBoxes.push(boxId);
     }
 
@@ -2080,10 +2381,7 @@ export async function allocateBoxes(quantity: number): Promise<string[]> {
 }
 
 /**
- * プレビュー用：ボックス割り当てをシミュレートする（DB更新なし）
- * 
- * @param quantities - 各ファイルに必要なボックス数の配列
- * @returns 各ファイルに割り当てられるボックスIDの2次元配列
+ * プレビュー用：ボックス割り当てをシミュレートする（DB更新なし） (旧互換用)
  */
 export async function previewBoxAllocation(quantities: number[]): Promise<string[][]> {
     const usedBoxes = await getUsedBoxes();
@@ -3867,9 +4165,14 @@ export async function createPrinted(
 
         return { success: true, partNumber: result.partNumber };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[CreatePrinted] Error:', error);
-        throw error;
+        // クライアントにエラーメッセージを返す
+        return {
+            success: false,
+            partNumber: '',
+            error: error.message || '部品の登録に失敗しました'
+        } as any;
     }
 }
 </file>
@@ -3939,8 +4242,7 @@ export async function reportDefect(itemId: string, reason: string) {
 
 import { revalidatePath } from 'next/cache';
 import { updateItemStatus as updateStatus } from '@/src/modules/production/services/itemService';
-import { db } from '@/src/shared/lib/firebase';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+
 
 /**
  * 部品アイテムのステータスを更新するサーバーアクション
@@ -3951,18 +4253,8 @@ export async function updateItemStatus(itemId: string, newStatus: string) {
     try {
         const id = itemId;
 
-        // ステータスを更新
+        // ステータスを更新 (itemService側でボックス解放もハンドルされる)
         await updateStatus(id, newStatus as any);
-
-        // ステータスがASSEMBLED（完成）の場合、保管ボックスを解放
-        if (newStatus === 'ASSEMBLED') {
-            const itemRef = doc(db, 'partItems', id);
-            await updateDoc(itemRef, {
-                storage_case: '',
-                updated_at: serverTimestamp()
-            });
-            console.log(`[UpdateItemStatus] Released storage box for item ${id}`);
-        }
 
         revalidatePath('/');
         revalidatePath('/storage');
@@ -4334,6 +4626,8 @@ import { ProcessStatus } from '@/src/shared/types';
 import { Part } from '@/src/modules/inventory/types';
 import { PartItem } from '@/src/modules/production/types';
 
+import { BoxService } from '@/src/modules/inventory/services/boxService';
+
 /**
  * STLファイルをアップロードし、部品を作成（未存在時）し、指定個数のアイテムを作成する
  * これらをアトミックなトランザクションとして実行する
@@ -4346,7 +4640,7 @@ export async function registerPrintedItems(
     targetStatus: ProcessStatus = 'PRINTED'
 ): Promise<{ success: boolean; partNumber: string; downloadUrl: string }> {
 
-    // 1. Storageへのアップロード
+    // 1. Storageへのアップロード (トランザクションの外で行う)
     const timestamp = Date.now();
     const storagePath = `projects/${projectId}/stl/${partNumber}_${timestamp}.stl`;
     const storageRef = ref(storage, storagePath);
@@ -4354,77 +4648,65 @@ export async function registerPrintedItems(
     const downloadUrl = await getDownloadURL(storageRef);
 
     // 2. Firestoreトランザクション
-    await runTransaction(db, async (transaction) => {
-        // 2a. 部品(Part)の存在確認
-        const partsRef = collection(db, 'parts');
-        const q = query(
-            partsRef,
-            where('part_number', '==', partNumber),
-            where('project_id', '==', projectId)
-        );
-        const partQuerySnapshot = await getDocs(q);
+    try {
+        await runTransaction(db, async (transaction) => {
+            // 2a. 部品(Part)の存在確認
+            const partsRef = collection(db, 'parts');
+            const q = query(
+                partsRef,
+                where('part_number', '==', partNumber),
+                where('project_id', '==', projectId)
+            );
+            const partQuerySnapshot = await getDocs(q);
 
-        let partId: string;
+            let partId: string;
 
-        if (partQuerySnapshot.empty) {
-            // 新規作成
-            const partDocRef = doc(partsRef);
-            partId = partDocRef.id;
+            if (partQuerySnapshot.empty) {
+                // 新規作成
+                const partDocRef = doc(partsRef);
+                partId = partDocRef.id;
 
-            const newPart: Part = {
-                id: partId,
-                part_number: partNumber,
-                project_id: projectId
-            };
+                const newPart: Part = {
+                    id: partId,
+                    part_number: partNumber,
+                    project_id: projectId
+                };
 
-            transaction.set(partDocRef, newPart);
-        } else {
-            partId = partQuerySnapshot.docs[0].id;
-        }
+                transaction.set(partDocRef, newPart);
+            } else {
+                partId = partQuerySnapshot.docs[0].id;
+            }
 
-        // 2b. PartItem の作成
-        for (let i = 0; i < quantity; i++) {
-            const itemRef = doc(collection(db, 'partItems'));
-            const newItemStub = {
-                id: itemRef.id,
-                part_id: partId,
-                storage_case: `AUTO-${partNumber}-${i + 1}`,
-                status: targetStatus,
-                completed_at: null,
-                updated_at: serverTimestamp(),
-                stl_url: downloadUrl
-            };
+            // 2b. PartItem の作成
+            for (let i = 0; i < quantity; i++) {
+                const itemRef = doc(collection(db, 'partItems'));
 
-            transaction.set(itemRef, newItemStub);
-        }
-    });
+                // BoxServiceを使用して空きボックスを確保
+                // findAndOccupyEmptyBox は内部で getDocs (非トランザクション読込) を行うが、
+                // トランザクションを渡すことで、実際の占有更新はアトミックに行われる
+                const box = await BoxService.findAndOccupyEmptyBox(itemRef.id, transaction);
 
-    return { success: true, partNumber, downloadUrl };
-}
-</file>
+                const newItemStub = {
+                    id: itemRef.id,
+                    part_id: partId,
+                    box_id: box.id,
+                    storage_case: box.name, // 互換性のためにボックス名をセット
+                    status: targetStatus,
+                    completed_at: null,
+                    updated_at: serverTimestamp(),
+                    stl_url: downloadUrl
+                };
 
-<file path="src/modules/production/types/index.ts">
-/**
- * Production Module - 型定義
- * 工程アイテムと進捗に関する型
- */
+                transaction.set(itemRef, newItemStub);
+            }
+        });
 
-import { ProcessStatus } from '@/src/shared/types';
-
-export interface PartItem {
-    id: string;
-    part_id: string;
-    storage_case: string;
-    status: ProcessStatus;
-    completed_at: Date | null;
-    updated_at?: any;
-    stl_url?: string;
-}
-
-export interface ProgressData {
-    part_number: string;
-    storage_cases: string[];
-    counts: Record<ProcessStatus, number>;
+        return { success: true, partNumber, downloadUrl };
+    } catch (error: any) {
+        console.error('[ProductionService] Failed to register items:', error);
+        // ボックスが足りない場合などのエラーを再スローし、アクション側でハンドルさせる
+        throw error;
+    }
 }
 </file>
 
@@ -4445,32 +4727,63 @@ const firebaseConfig = {
     appId: "1:123456789:web:abcdef"
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
-
 const isEmulator = process.env.NODE_ENV === 'development' || projectId.startsWith('demo-');
 
 console.log(`[Firebase] Initializing with Project ID: ${projectId}, IsEmulator: ${isEmulator}`);
 
+let app;
+if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+} else {
+    app = getApps()[0];
+}
+
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
+
 if (isEmulator) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof window === 'undefined') {
+        // Node / Server Context
+        if (!process.env.FIRESTORE_EMULATOR_HOST) {
+            process.env.FIRESTORE_EMULATOR_HOST = '127.0.0.1:8080';
+            process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099';
+            process.env.FIREBASE_STORAGE_EMULATOR_HOST = '127.0.0.1:9199';
+        }
+    }
+
+    // インスタンスごとに一度だけ接続を試みる
     const g = globalThis as any;
-    if (!g._firebase_emulators_connected) {
-        // localhost よりも 127.0.0.1 のほうが安定するケースがあるため変更
-        console.log(`[Firebase] Connecting to Firestore Emulator: ${projectId}`);
+
+    // Firestore
+    if (!(db as any)._emulator_connected) {
         try {
             connectFirestoreEmulator(db, '127.0.0.1', 8080);
-            connectAuthEmulator(auth, "http://127.0.0.1:9099");
-            connectStorageEmulator(storage, '127.0.0.1', 9199);
-            g._firebase_emulators_connected = true;
-            console.log(`[Firebase] Successfully connected to Firebase Emulators: ${projectId}`);
-        } catch (error) {
-            console.error('[Firebase] Failed to connect to emulators:', error);
+            (db as any)._emulator_connected = true;
+            console.log(`[Firebase] Connected Firestore to Emulator (127.0.0.1:8080)`);
+        } catch (e: any) {
+            if (e.code === 'failed-precondition') {
+                (db as any)._emulator_connected = true;
+            }
         }
-    } else {
-        console.log('[Firebase] Emulators already connected, skipping initialization.');
+    }
+
+    // Auth
+    if (!(auth as any)._emulator_connected) {
+        try {
+            connectAuthEmulator(auth, "http://127.0.0.1:9099");
+            (auth as any)._emulator_connected = true;
+            console.log(`[Firebase] Connected Auth to Emulator (127.0.0.1:9099)`);
+        } catch (e) { }
+    }
+
+    // Storage
+    if (!(storage as any)._emulator_connected) {
+        try {
+            connectStorageEmulator(storage, '127.0.0.1', 9199);
+            (storage as any)._emulator_connected = true;
+            console.log(`[Firebase] Connected Storage to Emulator (127.0.0.1:9199)`);
+        } catch (e) { }
     }
 }
 
@@ -4649,35 +4962,6 @@ export const PROCESSES: { key: ProcessStatus; name: string }[] = [
 ];
 </file>
 
-<file path="src/modules/inventory/types/index.ts">
-/**
- * Inventory Module - 型定義
- * 部品マスタと在庫に関する型
- */
-
-export interface Part {
-    id: string;
-    part_number: string;
-    project_id: string;
-    unit_id?: string | null;
-}
-
-export interface ParsedFileInfo {
-    /** 元のファイル名 */
-    originalFileName: string;
-    /** 抽出された部品番号 */
-    partNumber: string;
-    /** 個数（デフォルト: 1） */
-    quantity: number;
-    /** 解析が成功したか */
-    isValid: boolean;
-    /** エラーメッセージ（解析失敗時） */
-    errorMessage?: string;
-    /** 割り当てられる保管ボックスのリスト */
-    storageBoxes?: string[];
-}
-</file>
-
 <file path="src/modules/production/components/swimlane/SwimlaneColumn.tsx">
 import { Part } from '@/src/modules/inventory/types';
 import { PartItem } from '@/src/modules/production/types';
@@ -4783,11 +5067,6 @@ export function SwimlaneColumn({ part, items, selectedIds, onToggleSelect, onPre
 </file>
 
 <file path="src/modules/production/services/itemService.ts">
-/**
- * Production Module - Item Service
- * 工程アイテム（PartItem）の作成と管理
- */
-
 import { db } from '@/src/shared/lib/firebase';
 import {
     collection,
@@ -4795,12 +5074,15 @@ import {
     doc,
     setDoc,
     updateDoc,
-    serverTimestamp
+    serverTimestamp,
+    runTransaction
 } from 'firebase/firestore';
 import { PartItem } from '@/src/modules/production/types';
 import { Part } from '@/src/modules/inventory/types';
 import { ProcessStatus } from '@/src/shared/types';
 import { PROCESSES } from '@/app/constants';
+import { BoxService } from '@/src/modules/inventory/services/boxService';
+
 
 /**
  * 工程アイテムを作成する
@@ -4828,6 +5110,7 @@ export async function createItems(
         const newItem: PartItem = {
             id: itemRef.id,
             part_id: partId,
+            box_id: null, // 明示的に割り当てる場合は別のフローを使用
             storage_case: storageBoxes[i],
             status: initialStatus,
             completed_at: null,
@@ -4844,6 +5127,7 @@ export async function createItems(
 
 /**
  * アイテムのステータスを更新する
+ * ステータスが完了（ASSEMBLED または READY）になった場合、ボックスを自動的に解放する
  * 
  * @param itemId - アイテムID
  * @param newStatus - 新しいステータス
@@ -4852,16 +5136,36 @@ export async function updateItemStatus(
     itemId: string,
     newStatus: ProcessStatus
 ): Promise<void> {
-    const itemRef = doc(db, 'partItems', itemId);
+    await runTransaction(db, async (transaction) => {
+        const itemRef = doc(db, 'partItems', itemId);
+        const itemSnap = await transaction.get(itemRef);
 
-    await updateDoc(itemRef, {
-        status: newStatus,
-        updated_at: serverTimestamp(),
-        completed_at: newStatus === 'ASSEMBLED' ? serverTimestamp() : null
+        if (!itemSnap.exists()) {
+            throw new Error('Item not found');
+        }
+
+        const itemData = itemSnap.data() as PartItem;
+        const isCompleted = newStatus === 'ASSEMBLED' || (newStatus as string) === 'READY';
+
+        const updates: any = {
+            status: newStatus,
+            updated_at: serverTimestamp(),
+            completed_at: isCompleted ? serverTimestamp() : null
+        };
+
+        // ボックスの解放処理
+        if (isCompleted && itemData.box_id) {
+            await BoxService.releaseBox(itemData.box_id, transaction);
+            updates.box_id = null;
+            updates.storage_case = ''; // 互換性のためのフィールドもクリア
+        }
+
+        transaction.update(itemRef, updates);
     });
 
     console.log(`[ItemService] Updated item ${itemId} status to ${newStatus}`);
 }
+
 
 /**
  * 複数アイテムのステータスを一括更新する
@@ -4904,6 +5208,37 @@ export function aggregateProgress(parts: Part[], partItems: PartItem[]): any[] {
             unit_id: part.unit_id
         };
     });
+}
+</file>
+
+<file path="src/modules/production/types/index.ts">
+/**
+ * Production Module - 型定義
+ * 工程アイテムと進捗に関する型
+ */
+
+import { ProcessStatus } from '@/src/shared/types';
+
+export interface PartItem {
+    id: string;
+    part_id: string;
+    /** 
+     * @deprecated 今後は box_id を優先して使用してください。
+     * このフィールドは既存コードとの互換性のために保持されています。
+     */
+    storage_case: string;
+    /** 新しく導入する Box の ID */
+    box_id: string | null;
+    status: ProcessStatus;
+    completed_at: Date | null;
+    updated_at?: any;
+    stl_url?: string;
+}
+
+export interface ProgressData {
+    part_number: string;
+    storage_cases: string[];
+    counts: Record<ProcessStatus, number>;
 }
 </file>
 
@@ -4991,6 +5326,51 @@ export const calculateUnitProgress = (parts: Part[], partItems: PartItem[]): num
 
   return Math.round((readyCount / parts.length) * 100);
 };
+</file>
+
+<file path="src/modules/inventory/types/index.ts">
+/**
+ * Inventory Module - 型定義
+ * 部品マスタと在庫に関する型
+ */
+
+export interface Part {
+    id: string;
+    part_number: string;
+    project_id: string;
+    unit_id?: string | null;
+}
+
+export interface ParsedFileInfo {
+    /** 元のファイル名 */
+    originalFileName: string;
+    /** 抽出された部品番号 */
+    partNumber: string;
+    /** 個数（デフォルト: 1） */
+    quantity: number;
+    /** 解析が成功したか */
+    isValid: boolean;
+    /** エラーメッセージ（解析失敗時） */
+    errorMessage?: string;
+    /** 割り当てられる保管ボックスのリスト */
+    storageBoxes?: string[];
+}
+
+/**
+ * 物理的な箱（パーツ保管用）の型定義
+ */
+export interface Box {
+    /** FirestoreのドキュメントID (例: "BOX-001") */
+    id: string;
+    /** 物理的な箱の名称 (例: "棚A-1") */
+    name: string;
+    /** 現在部品が入っているかどうか */
+    is_occupied: boolean;
+    /** 紐付いている PartItem の ID */
+    current_item_id: string | null;
+    /** 最終更新日時（FirestoreのTimestamp想定） */
+    last_used_at?: any;
+}
 </file>
 
 <file path="app/actions/consumeItem.ts">
