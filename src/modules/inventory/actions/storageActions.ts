@@ -1,4 +1,4 @@
-'use server'
+'use server';
 
 /**
  * Inventory Module - Storage Actions
@@ -34,50 +34,86 @@ export async function releaseStorageCase(itemId: number) {
 }
 
 /**
- * 保管ボックスの使用状況を取得する
- * @param maxBoxNumber - 最大ボックス番号
+ * 単一の保管ボックスの使用状況を効率的に確認する
+ * @param boxName - 確認するボックス名 (例: "棚A-1")
+ * @returns 'occupied' | 'available' | 'error'
  */
-export async function getStorageBoxStatus(maxBoxNumber: number = 100) {
+export async function getBoxStatus(boxName: string) {
     try {
-        // 全アイテムと全部品を取得
-        const itemsSnap = await getDocs(collection(db, 'partItems'));
-        const partsSnap = await getDocs(collection(db, 'parts'));
+        if (!boxName) {
+            return 'available';
+        }
+        // 特定のボックス名を持つ partItems をクエリ
+        const itemsRef = collection(db, 'partItems');
+        const q = query(itemsRef, where('storage_case', '==', boxName));
+        const querySnapshot = await getDocs(q);
 
+        // ドキュメントが存在すれば 'occupied', なければ 'available'
+        if (querySnapshot.empty) {
+            return 'available';
+        } else {
+            return 'occupied';
+        }
+    } catch (error) {
+        console.error(`[StorageActions] Failed to get status for box ${boxName}:`, error);
+        return 'error';
+    }
+}
+
+
+/**
+ * 保管ボックス全体のリストと使用状況を動的に取得する
+ */
+export async function getStorageBoxes() {
+    try {
+        // 1. 登録されている全ボックスのマスターデータを取得
+        const boxesSnap = await getDocs(collection(db, 'boxes'));
+        if (boxesSnap.empty) {
+            return { success: true, boxes: [] };
+        }
+        const allBoxIds = boxesSnap.docs.map(doc => doc.id);
+        
+        // 2. 使用中のアイテム情報を全て取得
+        const itemsRef = collection(db, 'partItems');
+        const q = query(itemsRef, where('storage_case', '!=', ''));
+        const usedItemsSnap = await getDocs(q);
+        const usedItems = usedItemsSnap.docs.map(doc => doc.data());
+
+        // 3. 部品情報を取得してMapに格納
+        const partsSnap = await getDocs(collection(db, 'parts'));
         const partMap = new Map();
         partsSnap.forEach(doc => {
             const data = doc.data();
             partMap.set(data.id, data.part_number);
         });
 
+        // 4. 使用中ボックスの情報をまとめる
         const boxMap = new Map();
-        itemsSnap.forEach(doc => {
-            const data = doc.data();
-            if (data.storage_case && data.storage_case.trim() !== '') {
-                boxMap.set(data.storage_case, {
-                    itemId: data.id,
-                    partNumber: partMap.get(data.part_id) || 'Unknown',
-                    status: data.status
+        usedItems.forEach(item => {
+            if (item.storage_case) {
+                boxMap.set(item.storage_case, {
+                    itemId: item.id,
+                    partNumber: partMap.get(item.part_id) || 'Unknown',
+                    status: item.status
                 });
             }
         });
 
-        const boxes = [];
-        for (let i = 1; i <= maxBoxNumber; i++) {
-            const boxId = `BOX-${String(i).padStart(3, '0')}`;
+        // 5. 全ボックスの最終的なリストを生成
+        const boxes = allBoxIds.map(boxId => {
             const usage = boxMap.get(boxId);
-
-            boxes.push({
+            return {
                 boxId,
                 isUsed: !!usage,
                 itemId: usage?.itemId || null,
                 partNumber: usage?.partNumber || null,
                 status: usage?.status || null
-            });
-        }
+            };
+        });
 
         return { success: true, boxes };
     } catch (error) {
-        console.error('[StorageActions] Failed to get status:', error);
+        console.error('[StorageActions] Failed to get storage boxes:', error);
         return { success: false, error: (error as Error).message, boxes: [] };
     }
 }

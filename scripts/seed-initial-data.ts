@@ -1,4 +1,4 @@
-import { db } from '../lib/firebase';
+import { db } from '../src/shared/lib/firebase';
 import {
     collection,
     doc,
@@ -45,6 +45,8 @@ async function seed() {
     if (shouldClear) {
         await clearCollection('projects');
         await clearCollection('boxes');
+        await clearCollection('parts');
+        await clearCollection('partItems');
     }
 
     // 1. projects
@@ -93,8 +95,31 @@ async function seed() {
         await setDoc(boxRef, boxData);
         createdCount++;
     }
-
     console.log(`✔️  Boxes: ${createdCount} created, ${skippedCount} skipped.`);
+
+    // 3. parts and partItems
+    console.log('Seeding parts and partItems...');
+    const partsData = [
+        { id: 'part-A-001', part_number: 'PART-A', project_id: projectId },
+        { id: 'part-B-002', part_number: 'PART-B', project_id: projectId },
+    ];
+    for (const part of partsData) {
+        await setDoc(doc(db, 'parts', part.id), { ...part, created_at: serverTimestamp() });
+    }
+    console.log(`✔️  Parts seeded: ${partsData.length}`);
+
+    const partItemsData = [
+        { id: 'item-001', part_id: 'part-A-001', status: 'IN_STOCK', storage_case: 'BOX-001' },
+        { id: 'item-002', part_id: 'part-A-001', status: 'IN_STOCK', storage_case: '' },
+        { id: 'item-003', part_id: 'part-B-002', status: 'IN_STOCK', storage_case: 'BOX-003' },
+        { id: 'item-004', part_id: 'part-B-002', status: 'DEFECT', storage_case: 'BOX-005' },
+    ];
+
+    for (const item of partItemsData) {
+        await setDoc(doc(db, 'partItems', item.id), { ...item, created_at: serverTimestamp() });
+    }
+    console.log(`✔️  PartItems seeded: ${partItemsData.length}`);
+    
     console.log('--- Seeding Completed! ---');
     process.exit(0);
 }
